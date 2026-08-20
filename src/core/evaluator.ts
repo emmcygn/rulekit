@@ -1,4 +1,4 @@
-import type { Condition, Leaf, PatientFacts, FactValue, CodeEntry, CodeRef } from "./schema.js";
+import type { Condition, Leaf, PatientFacts, FactValue, CodeEntry, CodeRef, Criterion, RuleSet, Verdict, Overall } from "./schema.js";
 import { andTri, orTri, notTri, type Tri } from "./tri.js";
 
 export type TraceNode = {
@@ -79,4 +79,32 @@ export function evalCondition(cond: Condition, facts: PatientFacts): TraceNode {
     return { kind: "not", result: notTri(child.result), detail: "not", children: [child] };
   }
   return evalLeaf(cond, facts);
+}
+
+export type CriterionResult = { id: string; ref?: string; kind: "inclusion" | "exclusion"; verdict: Verdict; unmodeled: boolean; trace?: TraceNode };
+export type Evaluation = { patient: string; results: CriterionResult[]; overall: Overall };
+
+function toVerdict(kind: "inclusion" | "exclusion", result: Tri): Verdict {
+  if (result === "unknown") return "unknown";
+  const conditionTrue = result === "true";
+  if (kind === "inclusion") return conditionTrue ? "pass" : "fail";
+  return conditionTrue ? "fail" : "pass"; // exclusion fired = fail
+}
+
+export function evalCriterion(c: Criterion, facts: PatientFacts): CriterionResult {
+  if (c.unmodeled === true || c.when === undefined) {
+    return { id: c.id, ref: c.ref, kind: c.kind, verdict: "unknown", unmodeled: true };
+  }
+  const trace = evalCondition(c.when, facts);
+  return { id: c.id, ref: c.ref, kind: c.kind, verdict: toVerdict(c.kind, trace.result), unmodeled: false, trace };
+}
+
+export function evalPatient(rs: RuleSet, facts: PatientFacts): Evaluation {
+  const results = rs.criteria.map((c) => evalCriterion(c, facts));
+  const overall: Overall = results.some((r) => r.verdict === "fail")
+    ? "ineligible"
+    : results.some((r) => r.verdict === "unknown")
+      ? "undetermined"
+      : "eligible";
+  return { patient: facts.patient, results, overall };
 }
