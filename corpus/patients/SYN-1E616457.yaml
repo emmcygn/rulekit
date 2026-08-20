@@ -1,0 +1,183 @@
+# rulekit corpus patient — flattened from Synthea FHIR R4 sample data (Apache-2.0).
+# reference date 2026-06-30; recency is measured on the shifted timeline (see docs/data-pipeline.md).
+# heart-failure subset: cardiology facts injected by mutateForHf(seed=42).
+patient: SYN-1E616457
+facts:
+  age: 92
+  sex: male
+  conditions:
+    - code: "230690007"
+      system: snomed
+      daysAgo: 389
+    - code: "44465007"
+      system: snomed
+      daysAgo: 503
+    - code: "88805009"
+      system: snomed
+      daysAgo: 593
+    - code: "64859006"
+      system: snomed
+      daysAgo: 913
+    - code: "126906006"
+      system: snomed
+      daysAgo: 9628
+    - code: "92691004"
+      system: snomed
+      daysAgo: 9628
+    - code: "127013003"
+      system: snomed
+      daysAgo: 17874
+    - code: "237602007"
+      system: snomed
+      daysAgo: 17874
+    - code: "302870006"
+      system: snomed
+      daysAgo: 17874
+    - code: "431855005"
+      system: snomed
+      daysAgo: 17874
+    - code: "44054006"
+      system: snomed
+      daysAgo: 18476
+    - code: "15777000"
+      system: snomed
+      daysAgo: 19211
+    - code: "59621000"
+      system: snomed
+      daysAgo: 27198
+  medications:
+    - code: "1719286"
+      system: rxnorm
+      daysAgo: 32
+    - code: "315971"
+      system: rxnorm
+      daysAgo: 572
+    - code: "866414"
+      system: rxnorm
+      daysAgo: 572
+    - code: "904419"
+      system: rxnorm
+      daysAgo: 913
+    - code: "1860480"
+      system: rxnorm
+      daysAgo: 9628
+    - code: "752899"
+      system: rxnorm
+      daysAgo: 9628
+    - code: "106892"
+      system: rxnorm
+      daysAgo: 17741
+    - code: "429503"
+      system: rxnorm
+      daysAgo: 27198
+  lab_albumin: 5.23
+  lab_albumin_unit: g/dL
+  lab_albumin_code: 1751-7
+  lab_albumin_days_ago: 32
+  lab_alt: 22.43
+  lab_alt_unit: U/L
+  lab_alt_code: 1742-6
+  lab_alt_days_ago: 32
+  lab_ast: 25.97
+  lab_ast_unit: U/L
+  lab_ast_code: 1920-8
+  lab_ast_days_ago: 32
+  lab_bilirubin_total: 0.92
+  lab_bilirubin_total_unit: mg/dL
+  lab_bilirubin_total_code: 1975-2
+  lab_bilirubin_total_days_ago: 32
+  lab_bmi: 26.22
+  lab_bmi_unit: kg/m2
+  lab_bmi_code: 39156-5
+  lab_bmi_days_ago: 108
+  lab_bun: 11.14
+  lab_bun_unit: mg/dL
+  lab_bun_code: 6299-2
+  lab_bun_days_ago: 32
+  lab_calcium: 9.14
+  lab_calcium_unit: mg/dL
+  lab_calcium_code: 49765-1
+  lab_calcium_days_ago: 32
+  lab_creatinine: 2.05
+  lab_creatinine_unit: mg/dL
+  lab_creatinine_code: 38483-4
+  lab_creatinine_days_ago: 32
+  lab_diastolic_bp: 74.44
+  lab_diastolic_bp_unit: mm[Hg]
+  lab_diastolic_bp_code: 8462-4
+  lab_diastolic_bp_days_ago: 108
+  lab_egfr: 6.08
+  lab_egfr_unit: mL/min
+  lab_egfr_code: 33914-3
+  lab_egfr_days_ago: 32
+  lab_glucose: 121.11
+  lab_glucose_unit: mg/dL
+  lab_glucose_code: 2339-0
+  lab_glucose_days_ago: 32
+  lab_hba1c: 3.6
+  lab_hba1c_unit: "%"
+  lab_hba1c_code: 4548-4
+  lab_hba1c_days_ago: 108
+  lab_hdl: 56.55
+  lab_hdl_unit: mg/dL
+  lab_hdl_code: 2085-9
+  lab_hdl_days_ago: 108
+  lab_height: 167.92
+  lab_height_unit: cm
+  lab_height_code: 8302-2
+  lab_height_days_ago: 108
+  lab_hematocrit: 35.35
+  lab_hematocrit_unit: "%"
+  lab_hematocrit_code: 4544-3
+  lab_hematocrit_days_ago: 472
+  lab_hemoglobin: 17.2
+  lab_hemoglobin_unit: g/dL
+  lab_hemoglobin_code: 718-7
+  lab_hemoglobin_days_ago: 472
+  lab_ldl: 124.39
+  lab_ldl_unit: mg/dL
+  lab_ldl_code: 18262-6
+  lab_ldl_days_ago: 108
+  lab_lvef: 41.68
+  lab_lvef_unit: "%"
+  lab_lvef_code: 10230-1
+  lab_lvef_days_ago: 212
+  lab_nt_probnp: 1122.46
+  lab_nt_probnp_unit: pg/mL
+  lab_nt_probnp_code: 33762-6
+  lab_nt_probnp_days_ago: 593
+  lab_platelets: 308.45
+  lab_platelets_unit: 10*3/uL
+  lab_platelets_code: 777-3
+  lab_platelets_days_ago: 472
+  lab_potassium: 5.1
+  lab_potassium_unit: mmol/L
+  lab_potassium_code: 6298-4
+  lab_potassium_days_ago: 32
+  lab_sodium: 141.77
+  lab_sodium_unit: mmol/L
+  lab_sodium_code: 2947-0
+  lab_sodium_days_ago: 32
+  lab_systolic_bp: 116.14
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 108
+  lab_total_cholesterol: 218.99
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 108
+  lab_triglycerides: 190.29
+  lab_triglycerides_unit: mg/dL
+  lab_triglycerides_code: 2571-8
+  lab_triglycerides_days_ago: 108
+  lab_wbc: 9.1
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 472
+  lab_weight: 73.92
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 108
+  hf_symptom_duration_months: 58
+  hf_index_event_days_ago: 45
+  index_hospital_days: 20
