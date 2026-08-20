@@ -1,0 +1,13 @@
+# Schema-invalid: a confirmed fact with no reviewer and no timestamp. The audit
+# trail is the whole point of the status field, so this never parses.
+patient: SYN-902
+facts:
+  - fact: nyha_class
+    value: II
+    status: confirmed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: symptoms consistent with NYHA class III heart failure
+    reviewedBy: null

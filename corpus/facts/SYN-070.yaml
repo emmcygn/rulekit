@@ -1,0 +1,101 @@
+# Generated from clinic-2026-08-05 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:16:07Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-070
+asOf: 2026-08-05
+facts:
+  - fact: nyha_class
+    value: II
+    status: proposed
+    confidence: 0.74
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: Currently he is NYHA class II
+    reviewedBy: null
+  - fact: lvef
+    value: 44
+    unit: "%"
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: "Echocardiogram 2026-07-02: LVEF 44%, improved from 26% in 2024."
+    reviewedBy: null
+  - fact: egfr
+    value: 74
+    unit: mL/min/1.73m2
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: eGFR 74 mL/min/1.73m2
+    reviewedBy: null
+  - fact: nt_probnp
+    value: 520
+    unit: pg/mL
+    status: proposed
+    confidence: 0.95
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: NT-proBNP 520 pg/mL
+    reviewedBy: null
+  - fact: hospitalized_for_hf_last_12mo
+    value: false
+    status: proposed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: He has had no heart failure hospitalization in the past twelve months.
+    reviewedBy: null
+  - fact: on_arni
+    value: true
+    status: proposed
+    confidence: 0.91
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: sacubitril/valsartan 97/103 mg twice daily
+    reviewedBy: null
+  - fact: on_beta_blocker
+    value: true
+    status: proposed
+    confidence: 0.91
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: carvedilol 25 mg twice daily
+    reviewedBy: null
+  - fact: on_sglt2_inhibitor
+    value: true
+    status: proposed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: empagliflozin 10 mg daily
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 124
+    unit: mmHg
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: BP 124/74 mmHg
+    reviewedBy: null
+  - fact: potassium
+    value: 4.4
+    unit: mmol/L
+    status: proposed
+    confidence: 0.94
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-08-05
+      quote: potassium 4.4 mmol/L
+    reviewedBy: null

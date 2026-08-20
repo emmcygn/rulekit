@@ -1,0 +1,47 @@
+# A clean facts file: every quote still matches its note, every value matches
+# the declared type and unit, every measurement is inside its declared window.
+patient: SYN-900
+asOf: 2026-03-12
+facts:
+  - fact: age
+    value: 64
+    unit: years
+    status: confirmed
+    extractedBy: pipeline
+
+  - fact: egfr
+    value: 58
+    unit: mL/min/1.73m2
+    measuredAt: 2026-01-28
+    validWithinDays: 90
+    status: confirmed
+    extractedBy: pipeline
+
+  - fact: nyha_class
+    value: III
+    status: confirmed
+    confidence: 0.94
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: symptoms consistent with NYHA class III heart failure
+    reviewedBy: e.cuyugan
+    reviewedAt: 2026-08-20T14:31:00Z
+
+  - fact: lvef
+    value: 32
+    unit: "%"
+    status: proposed
+    confidence: 0.98
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: LVEF 32% by biplane Simpson's method
+    reviewedBy: null
+
+  - fact: on_anticoagulant
+    value: false
+    status: confirmed
+    extractedBy: human
+    reviewedBy: e.cuyugan
+    reviewedAt: 2026-08-20T14:33:00Z

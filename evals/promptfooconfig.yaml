@@ -1,0 +1,29 @@
+# rulekit extraction eval — OFFLINE by default.
+#
+#   npm run build && npx promptfoo eval -c evals/promptfooconfig.yaml
+#   (or just: npm run eval)
+#
+# This config makes no network call and needs no API key. The provider serves
+# the committed responses in evals/recorded/. For a live run against the real
+# model, see promptfooconfig.live.yaml and evals/README.md.
+description: rulekit facts compiler — extraction eval (recorded responses)
+
+prompts:
+  # The versioned prompt file, rendered through the production renderer.
+  - id: file://prompt.js
+    label: extract-facts.v1
+
+providers:
+  - id: file://providers/recorded.js
+    label: recorded/claude-opus-5
+
+tests: file://tests.js
+
+defaultTest:
+  options:
+    # Nothing here is model-graded — every assertion is deterministic code.
+    # An LLM judge would put a second unreviewed model in the loop, which is
+    # the thing this project exists to argue against.
+    provider: null
+
+outputPath: null

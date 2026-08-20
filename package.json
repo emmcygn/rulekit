@@ -18,7 +18,12 @@
     "corpus:normalize": "tsx scripts/normalize.ts",
     "corpus:build": "npm run corpus:fetch && npm run corpus:flatten && npm run corpus:mess && npm run corpus:normalize",
     "chia:coverage": "tsx scripts/chia-coverage.ts",
-    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.scripts.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.scripts.json",
+    "facts": "tsx src/cli-facts/index.ts",
+    "facts:check": "tsx src/cli-facts/index.ts check corpus/facts",
+    "facts:eval": "tsx src/cli-facts/index.ts eval --min-precision 0.95 --min-recall 0.95",
+    "extract:corpus": "tsx scripts/extract-corpus.ts",
+    "eval": "npm run build && promptfoo eval -c evals/promptfooconfig.yaml"
   },
   "keywords": [],
   "author": "",
@@ -28,12 +33,14 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.2.0",
     "eslint": "^10.8.1",
+    "promptfoo": "^0.122.0",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.11"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
     "commander": "^15.0.0",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"

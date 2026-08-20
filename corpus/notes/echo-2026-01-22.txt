@@ -1,0 +1,30 @@
+---
+doc: echo-2026-01-22
+patient: SYN-011
+kind: echo-report
+date: 2026-01-22
+synthetic: true
+trap: range-value
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+LAKESHORE GENERAL (FICTIONAL) — DEPARTMENT OF CARDIOVASCULAR IMAGING
+TRANSTHORACIC ECHOCARDIOGRAM (LIMITED / PORTABLE)
+
+Patient: SYN-011            Study date: 2026-01-22
+Indication: new dyspnea, rule out cardiomyopathy.
+
+TECHNICAL NOTE: Study performed portable at the bedside. Image quality is poor secondary to body habitus and limited windows. Endocardial border definition was inadequate for quantitative volumetric assessment; contrast was not administered.
+
+FINDINGS
+
+Left ventricle: normal cavity size. EF visually estimated at 40-45%. Quantitative biplane Simpson's measurement was attempted and abandoned due to inadequate endocardial definition. Mild global hypokinesis without a clear regional pattern.
+
+Right ventricle: normal size and function by qualitative assessment.
+
+Valves: mild mitral regurgitation. No aortic stenosis.
+
+IMPRESSION
+1. Mildly reduced left ventricular systolic function, visually estimated only. A quantitative EF is not reportable from this study.
+2. Recommend repeat transthoracic echocardiogram with contrast, or cardiac MRI, if a precise ejection fraction is required for therapeutic or enrollment decisions.
+
+Reported by: R. Okonjo, MD (fictional), Cardiovascular Imaging.

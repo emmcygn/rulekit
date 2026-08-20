@@ -1,0 +1,84 @@
+# Generated from clinic-2026-05-16 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:14:58Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-023
+asOf: 2026-05-16
+facts:
+  - fact: nyha_class
+    value: II
+    status: proposed
+    confidence: 0.79
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: her current functional class is NYHA class II
+    reviewedBy: null
+  - fact: on_beta_blocker
+    value: true
+    status: proposed
+    confidence: 0.83
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: we will stop metoprolol succinate today and start carvedilol 3.125 mg
+        twice daily
+    reviewedBy: null
+  - fact: on_sglt2_inhibitor
+    value: true
+    status: proposed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: empagliflozin 10 mg daily
+    reviewedBy: null
+  - fact: egfr
+    value: 71
+    unit: mL/min/1.73m2
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: eGFR 71 mL/min/1.73m2
+    reviewedBy: null
+  - fact: lvef
+    value: 41
+    unit: "%"
+    status: proposed
+    confidence: 0.92
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: "Most recent echocardiogram 2026-04-30: LVEF 41%."
+    reviewedBy: null
+  - fact: potassium
+    value: 4.6
+    unit: mmol/L
+    status: proposed
+    confidence: 0.95
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: potassium 4.6 mmol/L
+    reviewedBy: null
+  - fact: nt_probnp
+    value: 810
+    unit: pg/mL
+    status: proposed
+    confidence: 0.95
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: NT-proBNP 810 pg/mL
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 96
+    unit: mmHg
+    status: proposed
+    confidence: 0.88
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-05-16
+      quote: BP 96/58 mmHg seated
+    reviewedBy: null

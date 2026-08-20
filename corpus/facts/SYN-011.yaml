@@ -1,0 +1,24 @@
+# SYN-011 — the range trap, caught.
+#
+# The extraction proposed lvef 40-45% from echo-2026-01-22. The grounding gate
+# killed it: the quote is genuine, but "40-45" does not parse to the declared
+# type, and a midpoint would be fabricated precision.
+#
+# The tombstone below is kept deliberately. A rejected entry is history, not
+# data — the evaluator never sees it, `facts check` does not re-verify it, and
+# it stops the same wrong extraction being re-proposed and re-reviewed. The
+# audit trail is this file's git history.
+patient: SYN-011
+asOf: 2026-01-22
+facts:
+  - fact: lvef
+    value: "40-45"
+    unit: "%"
+    status: rejected
+    confidence: 0.71
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-01-22
+      quote: EF visually estimated at 40-45%
+    reviewedBy: e.cuyugan
+    reviewedAt: 2026-08-20T14:36:00Z

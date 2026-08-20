@@ -27,3 +27,28 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+      # Dogfood the facts CLI over the shipped corpus: schema, quote grounding
+      # re-verified against corpus/notes/, and recency windows.
+      - run: npm run facts:check
+
+      # The extraction eval, twice over. Both are offline — the recorded
+      # responses in evals/recorded/ are committed, no API key exists here, and
+      # neither step makes a network call.
+      #   promptfoo:  per-case pass/fail, exits 100 on a regression
+      #   facts eval: corpus-level precision/recall floors
+      - run: npm run eval
+      - run: npm run facts:eval
+
+  review-pane:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-components/review-pane
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm test

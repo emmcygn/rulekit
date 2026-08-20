@@ -12,6 +12,6 @@ export default tseslint.config(
       }],
     },
   },
-  // web/ is a self-contained package with its own toolchain (see web/package.json).
-  { ignores: ["dist/**", "web/**"] },
+  // web/ and web-components/ are self-contained packages with their own toolchains.
+  { ignores: ["dist/**", "web/**", "web-components/**"] },
 );

@@ -1,0 +1,38 @@
+{
+  "doc": "echo-2026-03-12",
+  "model": "claude-opus-5",
+  "prompt": "extract-facts.v1",
+  "recordedAt": "2026-08-20T09:14:02Z",
+  "parsed_output": {
+    "facts": [
+      {
+        "fact": "nyha_class",
+        "value": "III",
+        "unit": "",
+        "confidence": 0.94,
+        "quote": "symptoms consistent with NYHA class III heart failure"
+      },
+      {
+        "fact": "lvef",
+        "value": "32",
+        "unit": "%",
+        "confidence": 0.98,
+        "quote": "LVEF 32% by biplane Simpson's method"
+      },
+      {
+        "fact": "nt_probnp",
+        "value": "2140",
+        "unit": "pg/mL",
+        "confidence": 0.96,
+        "quote": "Serum NT-proBNP drawn the same morning was 2140 pg/mL."
+      },
+      {
+        "fact": "hospitalized_for_hf_last_12mo",
+        "value": "true",
+        "unit": "",
+        "confidence": 0.89,
+        "quote": "He was hospitalized for decompensated heart failure in November 2025."
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+# Schema-valid but ungrounded. Four distinct problems `facts check` must find:
+#   nyha_class   quote does not appear in echo-2026-03-12 (fabricated evidence)
+#   frailty_idx  not declared in the fact model
+#   lvef         unit "ml" is not the declared "%"
+#   egfr         measured 2025-01-04, 432 days before asOf, window is 90 days
+patient: SYN-901
+asOf: 2026-03-12
+facts:
+  - fact: nyha_class
+    value: IV
+    status: proposed
+    confidence: 0.88
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: the cardiologist documented NYHA class IV heart failure
+    reviewedBy: null
+
+  - fact: frailty_idx
+    value: 4
+    status: proposed
+    confidence: 0.6
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: "Right ventricle: mildly dilated"
+    reviewedBy: null
+
+  - fact: lvef
+    value: 32
+    unit: ml
+    status: proposed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: LVEF 32% by biplane Simpson's method
+    reviewedBy: null
+
+  - fact: egfr
+    value: 58
+    unit: mL/min/1.73m2
+    measuredAt: 2025-01-04
+    validWithinDays: 90
+    status: confirmed
+    extractedBy: pipeline

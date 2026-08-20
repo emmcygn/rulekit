@@ -1,0 +1,36 @@
+---
+doc: clinic-2026-05-16
+patient: SYN-023
+kind: clinic-note
+date: 2026-05-16
+synthetic: true
+trap: medication-change
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+RIVERBEND CARDIOLOGY ASSOCIATES (FICTIONAL)
+HEART FAILURE CLINIC — TITRATION VISIT
+
+Patient: SYN-023            Date of service: 2026-05-16
+Clinician: L. Fenwick, NP (fictional)
+
+SUBJECTIVE
+
+57-year-old woman with non-ischemic dilated cardiomyopathy, here for beta-blocker titration. She reports fatigue and dizziness on standing since the metoprolol dose was increased in March.
+
+Her functional status has improved over the past year. At her 2025 visit she had marked limitation and was documented as NYHA class III. Today she describes slight limitation with ordinary activity only, and her current functional class is NYHA class II.
+
+OBJECTIVE
+
+Vitals: BP 96/58 mmHg seated, 88/54 mmHg standing, HR 52 bpm.
+Laboratory, drawn 2026-05-14: eGFR 71 mL/min/1.73m2, potassium 4.6 mmol/L, NT-proBNP 810 pg/mL.
+Most recent echocardiogram 2026-04-30: LVEF 41%.
+
+ASSESSMENT AND PLAN
+
+Symptomatic bradycardia and orthostasis on metoprolol succinate. Beta blockade remains indicated; the agent, not the class, is the problem.
+
+Plan: we will stop metoprolol succinate today and start carvedilol 3.125 mg twice daily, taken with food. She remains on a beta blocker throughout — this is a within-class switch, not a discontinuation. Recheck blood pressure and heart rate in two weeks before any further titration.
+
+Continue lisinopril 10 mg daily, spironolactone 25 mg daily, empagliflozin 10 mg daily.
+
+Electronically signed by L. Fenwick, NP (fictional).

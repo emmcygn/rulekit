@@ -1,0 +1,40 @@
+---
+doc: clinic-2026-08-05
+patient: SYN-070
+kind: clinic-note
+date: 2026-08-05
+synthetic: true
+trap: history-vs-current
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+RIVERBEND CARDIOLOGY ASSOCIATES (FICTIONAL)
+HEART FAILURE CLINIC — ANNUAL REVIEW
+
+Patient: SYN-070            Date of service: 2026-08-05
+Clinician: D. Osei, MD (fictional)
+
+SUBJECTIVE
+
+66-year-old man with HFrEF, two years out from an admission with cardiogenic pulmonary edema.
+
+Interval history: he was NYHA class IV at the time of his 2024 admission, requiring intravenous diuresis and a brief period of non-invasive ventilation. He was discharged as class III and improved steadily through 2025 on titrated quadruple therapy. Currently he is NYHA class II, with slight limitation on ordinary activity and no symptoms at rest.
+
+He has had no heart failure hospitalization in the past twelve months.
+
+OBJECTIVE
+
+Vitals: BP 124/74 mmHg, HR 68 bpm.
+Laboratory, drawn 2026-08-01: eGFR 74 mL/min/1.73m2, potassium 4.4 mmol/L, NT-proBNP 520 pg/mL.
+Echocardiogram 2026-07-02: LVEF 44%, improved from 26% in 2024.
+
+MEDICATIONS
+  sacubitril/valsartan 97/103 mg twice daily
+  carvedilol 25 mg twice daily
+  spironolactone 25 mg daily
+  empagliflozin 10 mg daily
+
+ASSESSMENT AND PLAN
+
+HFrEF with recovered but not normalized ejection fraction, currently NYHA class II on full quadruple therapy. Do not de-escalate: the improvement is therapy-dependent. Continue all four agents at current doses. Repeat echocardiogram in twelve months.
+
+Electronically signed by D. Osei, MD (fictional).

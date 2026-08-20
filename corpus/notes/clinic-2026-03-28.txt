@@ -1,0 +1,42 @@
+---
+doc: clinic-2026-03-28
+patient: SYN-044
+kind: clinic-note
+date: 2026-03-28
+synthetic: true
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+RIVERBEND CARDIOLOGY ASSOCIATES (FICTIONAL)
+CARDIO-RENAL CLINIC — JOINT VISIT
+
+Patient: SYN-044            Date of service: 2026-03-28
+Clinicians: D. Osei, MD (fictional) and S. Rahman, MD (fictional), Nephrology
+
+SUBJECTIVE
+
+74-year-old man with advanced HFrEF and chronic kidney disease stage 4, seen jointly. He is symptomatic at rest, unable to complete any physical activity without discomfort, and has dyspnea washing at the sink; this is NYHA class IV heart failure. He was admitted twice in the past year for decompensation, most recently in January 2026.
+
+OBJECTIVE
+
+Vitals: BP 102/62 mmHg, HR 88 bpm, weight 79.4 kg (up 3.1 kg from dry weight).
+Exam: JVP 12 cm, bibasilar crackles, 2+ pitting edema to the mid-shin.
+
+Laboratory, drawn 2026-03-26:
+  Creatinine 2.34 mg/dL
+  eGFR 27 mL/min/1.73m2
+  Potassium 5.2 mmol/L
+  NT-proBNP 6890 pg/mL
+
+Echocardiogram 2026-02-11: LVEF 24%, severe biventricular dysfunction.
+
+MEDICATIONS
+  furosemide 80 mg twice daily
+  metolazone 2.5 mg twice weekly
+  carvedilol 6.25 mg twice daily
+  apixaban 2.5 mg twice daily for atrial fibrillation, renally dosed
+
+ASSESSMENT AND PLAN
+
+Advanced HFrEF, NYHA class IV, with cardiorenal syndrome and CKD stage 4. RAAS inhibition remains held for hyperkalemia and declining function. Increase furosemide, add a second metolazone dose this week, recheck chemistry in five days. Advanced-therapies evaluation discussed; he declines transplant workup at this time and wishes to focus on symptom control. Palliative care referral placed.
+
+Electronically signed by D. Osei, MD (fictional).

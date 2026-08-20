@@ -2,3 +2,7 @@ node_modules/
 dist/
 data/synthea/
 data/chia/
+
+# promptfoo local state
+.promptfoo/
+evals/output/

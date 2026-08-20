@@ -1,0 +1,26 @@
+# Generated from echo-2026-07-21 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:15:53Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-063
+asOf: 2026-07-21
+facts:
+  - fact: lvef
+    value: 38
+    unit: "%"
+    status: proposed
+    confidence: 0.97
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-07-21
+      quote: LVEF 38% by biplane Simpson's method
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 122
+    unit: mmHg
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-07-21
+      quote: Blood pressure at the time of study was 122/76 mmHg.
+    reviewedBy: null

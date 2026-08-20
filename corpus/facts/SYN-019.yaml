@@ -1,0 +1,54 @@
+# Generated from clinic-2026-04-02 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:14:44Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-019
+asOf: 2026-04-02
+facts:
+  - fact: on_anticoagulant
+    value: false
+    status: proposed
+    confidence: 0.88
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-04-02
+      quote: There has been no anticoagulant use since the GI bleed in March 2024
+    reviewedBy: null
+  - fact: nyha_class
+    value: III
+    status: proposed
+    confidence: 0.91
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-04-02
+      quote: consistent with NYHA class III symptoms
+    reviewedBy: null
+  - fact: egfr
+    value: 62
+    unit: mL/min/1.73m2
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-04-02
+      quote: eGFR 62 mL/min/1.73m2
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 126
+    unit: mmHg
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-04-02
+      quote: BP 126/78 mmHg
+    reviewedBy: null
+  - fact: potassium
+    value: 4.1
+    unit: mmol/L
+    status: proposed
+    confidence: 0.94
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-04-02
+      quote: potassium 4.1 mmol/L
+    reviewedBy: null

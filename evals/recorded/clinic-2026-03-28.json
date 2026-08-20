@@ -1,0 +1,66 @@
+{
+  "doc": "clinic-2026-03-28",
+  "model": "claude-opus-5",
+  "prompt": "extract-facts.v1",
+  "recordedAt": "2026-08-20T09:15:26Z",
+  "parsed_output": {
+    "facts": [
+      {
+        "fact": "nyha_class",
+        "value": "IV",
+        "unit": "",
+        "confidence": 0.95,
+        "quote": "this is NYHA class IV heart failure"
+      },
+      {
+        "fact": "egfr",
+        "value": "27",
+        "unit": "mL/min/1.73m2",
+        "confidence": 0.97,
+        "quote": "eGFR 27 mL/min/1.73m2"
+      },
+      {
+        "fact": "lvef",
+        "value": "24",
+        "unit": "%",
+        "confidence": 0.93,
+        "quote": "Echocardiogram 2026-02-11: LVEF 24%, severe biventricular dysfunction."
+      },
+      {
+        "fact": "potassium",
+        "value": "5.2",
+        "unit": "mmol/L",
+        "confidence": 0.96,
+        "quote": "Potassium 5.2 mmol/L"
+      },
+      {
+        "fact": "nt_probnp",
+        "value": "6890",
+        "unit": "pg/mL",
+        "confidence": 0.96,
+        "quote": "NT-proBNP 6890 pg/mL"
+      },
+      {
+        "fact": "on_anticoagulant",
+        "value": "true",
+        "unit": "",
+        "confidence": 0.91,
+        "quote": "apixaban 2.5 mg twice daily for atrial fibrillation, renally dosed"
+      },
+      {
+        "fact": "hospitalized_for_hf_last_12mo",
+        "value": "true",
+        "unit": "",
+        "confidence": 0.92,
+        "quote": "He was admitted twice in the past year for decompensation"
+      },
+      {
+        "fact": "systolic_bp",
+        "value": "102",
+        "unit": "mmHg",
+        "confidence": 0.93,
+        "quote": "BP 102/62 mmHg"
+      }
+    ]
+  }
+}
