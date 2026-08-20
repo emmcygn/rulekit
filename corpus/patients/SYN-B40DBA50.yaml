@@ -1,0 +1,79 @@
+# rulekit corpus patient — flattened from Synthea FHIR R4 sample data (Apache-2.0).
+# reference date 2026-06-30; recency is measured on the shifted timeline (see docs/data-pipeline.md).
+# unmutated.
+patient: SYN-B40DBA50
+facts:
+  age: 82
+  sex: female
+  conditions:
+    - code: "64859006"
+      system: snomed
+      daysAgo: 754
+    - code: "39848009"
+      system: snomed
+      daysAgo: 1213
+    - code: "444814009"
+      system: snomed
+      daysAgo: 1853
+    - code: "68496003"
+      system: snomed
+      daysAgo: 2759
+    - code: "162864005"
+      system: snomed
+      daysAgo: 17652
+  medications:
+    - code: "904419"
+      system: rxnorm
+      daysAgo: 754
+  lab_bmi: 27.79
+  lab_bmi_unit: kg/m2
+  lab_bmi_code: 39156-5
+  lab_bmi_days_ago: 12
+  lab_diastolic_bp: 77.91
+  lab_diastolic_bp_unit: mm[Hg]
+  lab_diastolic_bp_code: 8462-4
+  lab_diastolic_bp_days_ago: 12
+  lab_hdl: 72.1
+  lab_hdl_unit: mg/dL
+  lab_hdl_code: 2085-9
+  lab_hdl_days_ago: 754
+  lab_height: 169.3
+  lab_height_unit: cm
+  lab_height_code: 8302-2
+  lab_height_days_ago: 12
+  lab_hematocrit: 37.86
+  lab_hematocrit_unit: "%"
+  lab_hematocrit_code: 4544-3
+  lab_hematocrit_days_ago: 12
+  lab_hemoglobin: 16.27
+  lab_hemoglobin_unit: g/dL
+  lab_hemoglobin_code: 718-7
+  lab_hemoglobin_days_ago: 12
+  lab_ldl: 74.79
+  lab_ldl_unit: mg/dL
+  lab_ldl_code: 18262-6
+  lab_ldl_days_ago: 754
+  lab_platelets: 215.14
+  lab_platelets_unit: 10*3/uL
+  lab_platelets_code: 777-3
+  lab_platelets_days_ago: 12
+  lab_systolic_bp: 112.45
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 12
+  lab_total_cholesterol: 171
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 754
+  lab_triglycerides: 120.53
+  lab_triglycerides_unit: mg/dL
+  lab_triglycerides_code: 2571-8
+  lab_triglycerides_days_ago: 754
+  lab_wbc: 5.36
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 12
+  lab_weight: 79.66
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 12

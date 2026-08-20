@@ -1,0 +1,158 @@
+# rulekit corpus patient — flattened from Synthea FHIR R4 sample data (Apache-2.0).
+# reference date 2026-06-30; recency is measured on the shifted timeline (see docs/data-pipeline.md).
+# heart-failure subset: cardiology facts injected by mutateForHf(seed=42).
+patient: SYN-DEA35965
+facts:
+  age: 73
+  sex: female
+  conditions:
+    - code: "88805009"
+      system: snomed
+      daysAgo: 224
+    - code: "62106007"
+      system: snomed
+      daysAgo: 937
+    - code: "10509002"
+      system: snomed
+      daysAgo: 2235
+    - code: "64859006"
+      system: snomed
+      daysAgo: 4908
+    - code: "55680006"
+      system: snomed
+      daysAgo: 8200
+    - code: "124171000119105"
+      system: snomed
+      daysAgo: 8579
+    - code: "82423001"
+      system: snomed
+      daysAgo: 8644
+    - code: "162864005"
+      system: snomed
+      daysAgo: 10060
+    - code: "79586000"
+      system: snomed
+      daysAgo: 18866
+    - code: "19169002"
+      system: snomed
+      daysAgo: 19013
+  medications:
+    - code: "1719286"
+      system: rxnorm
+      daysAgo: 23
+    - code: "315971"
+      system: rxnorm
+      daysAgo: 203
+    - code: "866414"
+      system: rxnorm
+      daysAgo: 203
+    - code: "904419"
+      system: rxnorm
+      daysAgo: 4908
+  lab_albumin: 5.12
+  lab_albumin_unit: g/dL
+  lab_albumin_code: 1751-7
+  lab_albumin_days_ago: 23
+  lab_alt: 31.97
+  lab_alt_unit: U/L
+  lab_alt_code: 1742-6
+  lab_alt_days_ago: 23
+  lab_ast: 6.85
+  lab_ast_unit: U/L
+  lab_ast_code: 1920-8
+  lab_ast_days_ago: 23
+  lab_bilirubin_total: 0.13
+  lab_bilirubin_total_unit: mg/dL
+  lab_bilirubin_total_code: 1975-2
+  lab_bilirubin_total_days_ago: 23
+  lab_bmi: 28.38
+  lab_bmi_unit: kg/m2
+  lab_bmi_code: 39156-5
+  lab_bmi_days_ago: 85
+  lab_bun: 12.4
+  lab_bun_unit: mg/dL
+  lab_bun_code: 6299-2
+  lab_bun_days_ago: 23
+  lab_calcium: 8.93
+  lab_calcium_unit: mg/dL
+  lab_calcium_code: 49765-1
+  lab_calcium_days_ago: 23
+  lab_creatinine: 0.63
+  lab_creatinine_unit: mg/dL
+  lab_creatinine_code: 38483-4
+  lab_creatinine_days_ago: 23
+  lab_diastolic_bp: 77.44
+  lab_diastolic_bp_unit: mm[Hg]
+  lab_diastolic_bp_code: 8462-4
+  lab_diastolic_bp_days_ago: 85
+  lab_egfr: 26.19
+  lab_egfr_unit: mL/min
+  lab_egfr_code: 33914-3
+  lab_egfr_days_ago: 23
+  lab_glucose: 80.81
+  lab_glucose_unit: mg/dL
+  lab_glucose_code: 2339-0
+  lab_glucose_days_ago: 23
+  lab_hdl: 59.32
+  lab_hdl_unit: mg/dL
+  lab_hdl_code: 2085-9
+  lab_hdl_days_ago: 827
+  lab_height: 167.8
+  lab_height_unit: cm
+  lab_height_code: 8302-2
+  lab_height_days_ago: 85
+  lab_hematocrit: 42
+  lab_hematocrit_unit: "%"
+  lab_hematocrit_code: 4544-3
+  lab_hematocrit_days_ago: 456
+  lab_hemoglobin: 16.57
+  lab_hemoglobin_unit: g/dL
+  lab_hemoglobin_code: 718-7
+  lab_hemoglobin_days_ago: 456
+  lab_ldl: 108.39
+  lab_ldl_unit: mg/dL
+  lab_ldl_code: 18262-6
+  lab_ldl_days_ago: 827
+  lab_lvef: 30.18
+  lab_lvef_unit: "%"
+  lab_lvef_code: 10230-1
+  lab_lvef_days_ago: 203
+  lab_nt_probnp: 1404.11
+  lab_nt_probnp_unit: pg/mL
+  lab_nt_probnp_code: 33762-6
+  lab_nt_probnp_days_ago: 224
+  lab_platelets: 390.82
+  lab_platelets_unit: 10*3/uL
+  lab_platelets_code: 777-3
+  lab_platelets_days_ago: 456
+  lab_potassium: 5.11
+  lab_potassium_unit: mmol/L
+  lab_potassium_code: 6298-4
+  lab_potassium_days_ago: 23
+  lab_sodium: 141.02
+  lab_sodium_unit: mmol/L
+  lab_sodium_code: 2947-0
+  lab_sodium_days_ago: 23
+  lab_systolic_bp: 119.1
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 85
+  lab_total_cholesterol: 189.78
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 827
+  lab_triglycerides: 110.34
+  lab_triglycerides_unit: mg/dL
+  lab_triglycerides_code: 2571-8
+  lab_triglycerides_days_ago: 827
+  lab_wbc: 9.26
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 456
+  lab_weight: 79.92
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 85
+  hf_symptom_duration_months: 23
+  hf_index_event_days_ago: 45
+  index_hospital_days: 8

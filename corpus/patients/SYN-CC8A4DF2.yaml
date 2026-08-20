@@ -1,0 +1,88 @@
+# rulekit corpus patient — flattened from Synthea FHIR R4 sample data (Apache-2.0).
+# reference date 2026-06-30; recency is measured on the shifted timeline (see docs/data-pipeline.md).
+# unmutated.
+patient: SYN-CC8A4DF2
+facts:
+  age: 107
+  sex: male
+  conditions:
+    - code: "49436004"
+      system: snomed
+      daysAgo: 2240
+    - code: "230690007"
+      system: snomed
+      daysAgo: 5089
+    - code: "40055000"
+      system: snomed
+      daysAgo: 10917
+    - code: "68496003"
+      system: snomed
+      daysAgo: 15176
+    - code: "59621000"
+      system: snomed
+      daysAgo: 32795
+  medications:
+    - code: "197604"
+      system: rxnorm
+      daysAgo: 2240
+    - code: "855332"
+      system: rxnorm
+      daysAgo: 2240
+    - code: "897718"
+      system: rxnorm
+      daysAgo: 2240
+    - code: "316049"
+      system: rxnorm
+      daysAgo: 32795
+  lab_bmi: 27.2
+  lab_bmi_unit: kg/m2
+  lab_bmi_code: 39156-5
+  lab_bmi_days_ago: 14
+  lab_diastolic_bp: 85.41
+  lab_diastolic_bp_unit: mm[Hg]
+  lab_diastolic_bp_code: 8462-4
+  lab_diastolic_bp_days_ago: 14
+  lab_hdl: 66.82
+  lab_hdl_unit: mg/dL
+  lab_hdl_code: 2085-9
+  lab_hdl_days_ago: 14
+  lab_height: 165.82
+  lab_height_unit: cm
+  lab_height_code: 8302-2
+  lab_height_days_ago: 14
+  lab_hematocrit: 36.33
+  lab_hematocrit_unit: "%"
+  lab_hematocrit_code: 4544-3
+  lab_hematocrit_days_ago: 14
+  lab_hemoglobin: 12.96
+  lab_hemoglobin_unit: g/dL
+  lab_hemoglobin_code: 718-7
+  lab_hemoglobin_days_ago: 14
+  lab_ldl: 73.82
+  lab_ldl_unit: mg/dL
+  lab_ldl_code: 18262-6
+  lab_ldl_days_ago: 14
+  lab_platelets: 153.14
+  lab_platelets_unit: 10*3/uL
+  lab_platelets_code: 777-3
+  lab_platelets_days_ago: 14
+  lab_systolic_bp: 109.27
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 14
+  lab_total_cholesterol: 167.31
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 14
+  lab_triglycerides: 133.4
+  lab_triglycerides_unit: mg/dL
+  lab_triglycerides_code: 2571-8
+  lab_triglycerides_days_ago: 14
+  lab_wbc: 3.89
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 14
+  lab_weight: 74.8
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 14

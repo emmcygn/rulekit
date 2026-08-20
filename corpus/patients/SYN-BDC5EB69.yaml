@@ -1,0 +1,162 @@
+# rulekit corpus patient — flattened from Synthea FHIR R4 sample data (Apache-2.0).
+# reference date 2026-06-30; recency is measured on the shifted timeline (see docs/data-pipeline.md).
+# unmutated.
+patient: SYN-BDC5EB69
+facts:
+  age: 83
+  sex: male
+  conditions:
+    - code: "22298006"
+      system: snomed
+      daysAgo: 34
+    - code: "399211009"
+      system: snomed
+      daysAgo: 34
+    - code: "359817006"
+      system: snomed
+      daysAgo: 750
+    - code: "70704007"
+      system: snomed
+      daysAgo: 1828
+    - code: "444814009"
+      system: snomed
+      daysAgo: 3173
+    - code: "39848009"
+      system: snomed
+      daysAgo: 3506
+    - code: "53741008"
+      system: snomed
+      daysAgo: 4724
+    - code: "55822004"
+      system: snomed
+      daysAgo: 14321
+    - code: "162864005"
+      system: snomed
+      daysAgo: 15791
+    - code: "40055000"
+      system: snomed
+      daysAgo: 22891
+    - code: "59621000"
+      system: snomed
+      daysAgo: 23778
+    - code: "428251008"
+      system: snomed
+      daysAgo: 25295
+    - code: "74400008"
+      system: snomed
+      daysAgo: 25295
+  medications:
+    - code: "259255"
+      system: rxnorm
+      daysAgo: 34
+    - code: "833036"
+      system: rxnorm
+      daysAgo: 34
+    - code: "316672"
+      system: rxnorm
+      daysAgo: 65
+    - code: "197361"
+      system: rxnorm
+      daysAgo: 4724
+    - code: "312961"
+      system: rxnorm
+      daysAgo: 4724
+    - code: "999969"
+      system: rxnorm
+      daysAgo: 23688
+  lab_albumin: 4.96
+  lab_albumin_unit: g/dL
+  lab_albumin_code: 1751-7
+  lab_albumin_days_ago: 65
+  lab_alt: 38.63
+  lab_alt_unit: U/L
+  lab_alt_code: 1742-6
+  lab_alt_days_ago: 65
+  lab_ast: 23.11
+  lab_ast_unit: U/L
+  lab_ast_code: 1920-8
+  lab_ast_days_ago: 65
+  lab_bilirubin_total: 0.86
+  lab_bilirubin_total_unit: mg/dL
+  lab_bilirubin_total_code: 1975-2
+  lab_bilirubin_total_days_ago: 65
+  lab_bmi: 27.31
+  lab_bmi_unit: kg/m2
+  lab_bmi_code: 39156-5
+  lab_bmi_days_ago: 272
+  lab_bun: 7.55
+  lab_bun_unit: mg/dL
+  lab_bun_code: 6299-2
+  lab_bun_days_ago: 65
+  lab_calcium: 8.72
+  lab_calcium_unit: mg/dL
+  lab_calcium_code: 49765-1
+  lab_calcium_days_ago: 65
+  lab_creatinine: 2.89
+  lab_creatinine_unit: mg/dL
+  lab_creatinine_code: 38483-4
+  lab_creatinine_days_ago: 65
+  lab_diastolic_bp: 89.76
+  lab_diastolic_bp_unit: mm[Hg]
+  lab_diastolic_bp_code: 8462-4
+  lab_diastolic_bp_days_ago: 272
+  lab_egfr: 74.13
+  lab_egfr_unit: mL/min
+  lab_egfr_code: 33914-3
+  lab_egfr_days_ago: 65
+  lab_glucose: 78.13
+  lab_glucose_unit: mg/dL
+  lab_glucose_code: 2339-0
+  lab_glucose_days_ago: 65
+  lab_hdl: 59.28
+  lab_hdl_unit: mg/dL
+  lab_hdl_code: 2085-9
+  lab_hdl_days_ago: 65
+  lab_height: 173.04
+  lab_height_unit: cm
+  lab_height_code: 8302-2
+  lab_height_days_ago: 272
+  lab_hematocrit: 47.79
+  lab_hematocrit_unit: "%"
+  lab_hematocrit_code: 4544-3
+  lab_hematocrit_days_ago: 272
+  lab_hemoglobin: 12.8
+  lab_hemoglobin_unit: g/dL
+  lab_hemoglobin_code: 718-7
+  lab_hemoglobin_days_ago: 272
+  lab_ldl: 124.75
+  lab_ldl_unit: mg/dL
+  lab_ldl_code: 18262-6
+  lab_ldl_days_ago: 65
+  lab_platelets: 315.19
+  lab_platelets_unit: 10*3/uL
+  lab_platelets_code: 777-3
+  lab_platelets_days_ago: 272
+  lab_potassium: 5.03
+  lab_potassium_unit: mmol/L
+  lab_potassium_code: 6298-4
+  lab_potassium_days_ago: 65
+  lab_sodium: 136.56
+  lab_sodium_unit: mmol/L
+  lab_sodium_code: 2947-0
+  lab_sodium_days_ago: 65
+  lab_systolic_bp: 115.69
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 272
+  lab_total_cholesterol: 175.62
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 65
+  lab_triglycerides: 166.55
+  lab_triglycerides_unit: mg/dL
+  lab_triglycerides_code: 2571-8
+  lab_triglycerides_days_ago: 65
+  lab_wbc: 4.55
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 272
+  lab_weight: 81.78
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 272

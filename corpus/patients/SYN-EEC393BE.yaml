@@ -1,0 +1,211 @@
+# rulekit corpus patient — flattened from Synthea FHIR R4 sample data (Apache-2.0).
+# reference date 2026-06-30; recency is measured on the shifted timeline (see docs/data-pipeline.md).
+# unmutated.
+patient: SYN-EEC393BE
+facts:
+  age: 84
+  sex: female
+  conditions:
+    - code: "75498004"
+      system: snomed
+      daysAgo: 34
+    - code: "127013003"
+      system: snomed
+      daysAgo: 1187
+    - code: "431855005"
+      system: snomed
+      daysAgo: 1187
+    - code: "444814009"
+      system: snomed
+      daysAgo: 1502
+    - code: "26929004"
+      system: snomed
+      daysAgo: 2209
+    - code: "195662009"
+      system: snomed
+      daysAgo: 2351
+    - code: "363406005"
+      system: snomed
+      daysAgo: 3109
+    - code: "713197008"
+      system: snomed
+      daysAgo: 3113
+    - code: "68496003"
+      system: snomed
+      daysAgo: 3563
+    - code: "55680006"
+      system: snomed
+      daysAgo: 4035
+    - code: "239872002"
+      system: snomed
+      daysAgo: 6861
+    - code: "97331000119101"
+      system: snomed
+      daysAgo: 7725
+    - code: "124171000119105"
+      system: snomed
+      daysAgo: 10154
+    - code: "82423001"
+      system: snomed
+      daysAgo: 10639
+    - code: "196416002"
+      system: snomed
+      daysAgo: 10801
+    - code: "1551000119108"
+      system: snomed
+      daysAgo: 11575
+    - code: "422034002"
+      system: snomed
+      daysAgo: 12688
+    - code: "368581000119106"
+      system: snomed
+      daysAgo: 12870
+    - code: "230690007"
+      system: snomed
+      daysAgo: 12940
+    - code: "19169002"
+      system: snomed
+      daysAgo: 13710
+    - code: "15777000"
+      system: snomed
+      daysAgo: 14130
+    - code: "80394007"
+      system: snomed
+      daysAgo: 14130
+    - code: "237602007"
+      system: snomed
+      daysAgo: 18456
+    - code: "302870006"
+      system: snomed
+      daysAgo: 18456
+    - code: "271737000"
+      system: snomed
+      daysAgo: 18673
+    - code: "44054006"
+      system: snomed
+      daysAgo: 18673
+    - code: "59621000"
+      system: snomed
+      daysAgo: 24322
+  medications:
+    - code: "106892"
+      system: rxnorm
+      daysAgo: 1173
+    - code: "310436"
+      system: rxnorm
+      daysAgo: 2209
+    - code: "1736776"
+      system: rxnorm
+      daysAgo: 3084
+    - code: "1803932"
+      system: rxnorm
+      daysAgo: 3084
+    - code: "849574"
+      system: rxnorm
+      daysAgo: 6861
+    - code: "860975"
+      system: rxnorm
+      daysAgo: 14865
+    - code: "746030"
+      system: rxnorm
+      daysAgo: 24292
+  lab_albumin: 4.58
+  lab_albumin_unit: g/dL
+  lab_albumin_code: 1751-7
+  lab_albumin_days_ago: 2933
+  lab_alt: 32.08
+  lab_alt_unit: U/L
+  lab_alt_code: 1742-6
+  lab_alt_days_ago: 2933
+  lab_ast: 35.72
+  lab_ast_unit: U/L
+  lab_ast_code: 1920-8
+  lab_ast_days_ago: 2933
+  lab_bilirubin_total: 0.12
+  lab_bilirubin_total_unit: mg/dL
+  lab_bilirubin_total_code: 1975-2
+  lab_bilirubin_total_days_ago: 2933
+  lab_bmi: 27.66
+  lab_bmi_unit: kg/m2
+  lab_bmi_code: 39156-5
+  lab_bmi_days_ago: 74
+  lab_bun: 13.79
+  lab_bun_unit: mg/dL
+  lab_bun_code: 6299-2
+  lab_bun_days_ago: 74
+  lab_calcium: 9.36
+  lab_calcium_unit: mg/dL
+  lab_calcium_code: 49765-1
+  lab_calcium_days_ago: 74
+  lab_creatinine: 0.7
+  lab_creatinine_unit: mg/dL
+  lab_creatinine_code: 38483-4
+  lab_creatinine_days_ago: 74
+  lab_diastolic_bp: 78.2
+  lab_diastolic_bp_unit: mm[Hg]
+  lab_diastolic_bp_code: 8462-4
+  lab_diastolic_bp_days_ago: 74
+  lab_egfr: 73.41
+  lab_egfr_unit: mL/min/{1.73_m2}
+  lab_egfr_code: 33914-3
+  lab_egfr_days_ago: 74
+  lab_glucose: 80.08
+  lab_glucose_unit: mg/dL
+  lab_glucose_code: 2339-0
+  lab_glucose_days_ago: 74
+  lab_hba1c: 2.41
+  lab_hba1c_unit: "%"
+  lab_hba1c_code: 4548-4
+  lab_hba1c_days_ago: 74
+  lab_hdl: 63.78
+  lab_hdl_unit: mg/dL
+  lab_hdl_code: 2085-9
+  lab_hdl_days_ago: 74
+  lab_height: 168.17
+  lab_height_unit: cm
+  lab_height_code: 8302-2
+  lab_height_days_ago: 74
+  lab_hematocrit: 41.08
+  lab_hematocrit_unit: "%"
+  lab_hematocrit_code: 4544-3
+  lab_hematocrit_days_ago: 844
+  lab_hemoglobin: 13.81
+  lab_hemoglobin_unit: g/dL
+  lab_hemoglobin_code: 718-7
+  lab_hemoglobin_days_ago: 844
+  lab_ldl: 101.79
+  lab_ldl_unit: mg/dL
+  lab_ldl_code: 18262-6
+  lab_ldl_days_ago: 74
+  lab_platelets: 238.19
+  lab_platelets_unit: 10*3/uL
+  lab_platelets_code: 777-3
+  lab_platelets_days_ago: 844
+  lab_potassium: 4.45
+  lab_potassium_unit: mmol/L
+  lab_potassium_code: 6298-4
+  lab_potassium_days_ago: 74
+  lab_sodium: 141.97
+  lab_sodium_unit: mmol/L
+  lab_sodium_code: 2947-0
+  lab_sodium_days_ago: 74
+  lab_systolic_bp: 115.41
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 74
+  lab_total_cholesterol: 190.88
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 74
+  lab_triglycerides: 126.54
+  lab_triglycerides_unit: mg/dL
+  lab_triglycerides_code: 2571-8
+  lab_triglycerides_days_ago: 74
+  lab_wbc: 7.52
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 844
+  lab_weight: 78.22
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 74

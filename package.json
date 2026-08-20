@@ -11,7 +11,14 @@
     "lint": "eslint .",
     "build": "tsc -p tsconfig.json",
     "rules": "tsx src/cli/index.ts",
-    "dogfood": "tsx src/cli/index.ts check rules/trials/demo-hf-001/ruleset@1.0.0.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/demo-hf-001 --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients"
+    "dogfood": "tsx src/cli/index.ts check rules/trials/demo-hf-001/ruleset@1.0.0.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/demo-hf-001 --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients",
+    "corpus:fetch": "tsx scripts/fetch-synthea.ts",
+    "corpus:flatten": "tsx scripts/flatten-synthea.ts",
+    "corpus:mess": "tsx scripts/mess-injector.ts",
+    "corpus:normalize": "tsx scripts/normalize.ts",
+    "corpus:build": "npm run corpus:fetch && npm run corpus:flatten && npm run corpus:mess && npm run corpus:normalize",
+    "chia:coverage": "tsx scripts/chia-coverage.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.scripts.json"
   },
   "keywords": [],
   "author": "",

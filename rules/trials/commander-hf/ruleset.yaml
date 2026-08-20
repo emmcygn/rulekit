@@ -1,0 +1,212 @@
+# COMMANDER HF (NCT01877915) — eligibility as code.
+#
+# Criteria are transcribed verbatim from the sponsor-submitted
+# `eligibilityCriteria` text on ClinicalTrials.gov, retrieved 2026-08-21 via
+# the CTG v2 API. Every criterion keeps its protocol position in `ref`
+# (AGE, I1-I6, E1-E5) and its source line in `verbatim`, whether or not it
+# could be modelled.
+#
+# Modelled: 8 of 12. The four marked `unmodeled: true` are not expressible in
+# the closed condition language and are recorded rather than dropped — a
+# criterion that silently disappears is how a screening tool starts lying. They
+# evaluate `unknown`, which is why most corpus patients land on
+# "undetermined" rather than "eligible": the protocol genuinely requires chart
+# review that structured facts cannot supply.
+#
+# Two modelled criteria are *partial* transcriptions; each carries a comment
+# saying what the model does not capture. Nothing here is a claim of clinical
+# fidelity — this is a demonstration of rule-governance tooling, not medical
+# software, and not for clinical, feasibility, or research screening use.
+
+ruleset: commander-hf-eligibility
+rulesetVersion: 1.0.0
+factModel: patient-facts/v1
+protocol: RIVAROXHFA3001
+status: completed
+effective: "2013-09-01"
+source:
+  nctId: NCT01877915
+  url: https://clinicaltrials.gov/study/NCT01877915
+
+criteria:
+  # ---- Registry structured eligibility fields -----------------------------
+  - id: age-range
+    ref: AGE
+    kind: inclusion
+    verbatim: "Ages Eligible for Study: 18 Years to 95 Years (Adult, Older Adult)"
+    when:
+      all:
+        - fact: age
+          op: gte
+          value: 18
+        - fact: age
+          op: lte
+          value: 95
+
+  # ---- Inclusion criteria -------------------------------------------------
+  - id: symptomatic-heart-failure
+    ref: I1
+    kind: inclusion
+    verbatim: "Must have symptomatic heart failure for at least 3 months prior to Screening"
+    when:
+      all:
+        - fact: conditions
+          op: in
+          codes:
+            system: snomed
+            values: ["88805009", "84114007", "42343007"]
+        - fact: hf_symptom_duration_months
+          op: gte
+          value: 3
+
+  - id: decompensation-index-event
+    ref: I2
+    kind: inclusion
+    verbatim: >-
+      Participants must have an episode of decompensated heart failure (index
+      event) requiring (a) an overnight stay [that is, staying past midnight]
+      in a hospital, emergency department, or medical facility with the
+      capability of treating with intravenous medications and observing heart
+      failure patients before randomization or (b) an unscheduled outpatient
+      visit to a heart failure management center, where parenteral therapy is
+      required for heart failure stabilization. An episode of decompensated
+      heart failure is defined as symptoms of worsening dyspnea or fatigue,
+      objective signs of congestion such as peripheral edema or ascites,
+      and/or adjustment of pre-hospitalization/outpatient visit heart failure
+      medications. Participants are eligible for randomization at discharge
+      from the facility treating the index event and up to 30 days after
+      discharge if they are in stable condition
+    # Unmodelable: the criterion turns on care-setting semantics (which
+    # facility, what was administered there, scheduled vs. unscheduled) and on
+    # a symptom/sign composite. The corpus carries `hf_index_event_days_ago`,
+    # which would satisfy only the trailing 30-day clause — modelling that one
+    # clause and calling the criterion done would be worse than not modelling
+    # it, because a patient with no qualifying index event would pass.
+    unmodeled: true
+
+  - id: lvef-40-or-below
+    ref: I3
+    kind: inclusion
+    verbatim: "Must have a documented left ventricular ejection fraction (LVEF) of less than or equal to 40 percent (%) within 1 year before randomization"
+    when:
+      all:
+        - fact: lab_lvef
+          op: lte
+          value: 40
+          unit: "%"
+        - fact: lab_lvef_days_ago
+          op: lte
+          value: 365
+
+  - id: significant-coronary-artery-disease
+    ref: I4
+    kind: inclusion
+    verbatim: "Must have evidence of significant coronary artery disease"
+    # Partial transcription: "significant" is an investigator judgement backed
+    # by angiography, prior revascularisation or prior MI. The model stands in
+    # a SNOMED code set for coronary disease and prior infarction, which is
+    # broader than "significant" and narrower than the evidence a site would
+    # accept.
+    when:
+      fact: conditions
+      op: in
+      codes:
+        system: snomed
+        values: ["53741008", "414545008", "22298006", "399211009"]
+
+  - id: medically-stable
+    ref: I5
+    kind: inclusion
+    verbatim: "Must be medically stable in terms of their heart failure clinical status at the time of randomization"
+    # Unmodelable: a clinical judgement at a point in time, with no structured
+    # correlate in any extract.
+    unmodeled: true
+
+  - id: natriuretic-peptide
+    ref: I6
+    kind: inclusion
+    verbatim: "Must have a brain natriuretic peptide (BNP) level greater than or equal to (>=) 200 picogram per milliliter (pg/mL) or N-terminal-proBNP (NT-proBNP) level >=800 pg/mL (preferred assay) during the Screening period and before randomization"
+    when:
+      any:
+        - fact: lab_bnp
+          op: gte
+          value: 200
+          unit: pg/mL
+        - fact: lab_nt_probnp
+          op: gte
+          value: 800
+          unit: pg/mL
+
+  # ---- Exclusion criteria -------------------------------------------------
+  - id: bleeding-risk
+    ref: E1
+    kind: exclusion
+    verbatim: >-
+      Any condition that, in the opinion of the investigator, contraindicates
+      anticoagulant therapy or would have an unacceptable risk of bleeding,
+      such as, but not limited to, active internal bleeding, clinically
+      significant bleeding, bleeding at a noncompressible site, or bleeding
+      diathesis within 28 days of randomization
+    # Unmodelable: "in the opinion of the investigator" and an open-ended "such
+    # as, but not limited to" list. A code set over active-bleeding diagnoses
+    # would fire on a fraction of the patients this criterion is meant to
+    # catch, and the misses would look like clean passes.
+    unmodeled: true
+
+  - id: concomitant-disease
+    ref: E2
+    kind: exclusion
+    verbatim: >-
+      Severe concomitant disease such as (a) atrial fibrillation (AFib) or
+      another condition that requires chronic anticoagulation (participants
+      with isolated transient AFib may be allowed at the discretion of the
+      treating physician investigator) and (b) Documented acute myocardial
+      infarction (MI) during index event
+    # Partial transcription. Limb (a) is modelled two ways: an atrial
+    # fibrillation diagnosis, or an oral anticoagulant dispensed in the last 90
+    # days as the observable proxy for "requires chronic anticoagulation". Not
+    # modelled: the "isolated transient AFib may be allowed" carve-out, which
+    # is investigator discretion, and limb (b), which is scoped to the index
+    # event this fact model does not represent.
+    when:
+      any:
+        - fact: conditions
+          op: in
+          codes:
+            system: snomed
+            values: ["49436004"]
+        - fact: medications
+          op: anyWithin
+          codes:
+            system: rxnorm
+            values: ["855332", "1114195", "1364430", "1599538"]
+          windowDays: 90
+
+  - id: recent-stroke
+    ref: E3
+    kind: exclusion
+    verbatim: "Prior stroke within 90 days of randomization"
+    when:
+      fact: conditions
+      op: anyWithin
+      codes:
+        system: snomed
+        values: ["230690007", "422504002", "230706003"]
+      windowDays: 90
+
+  - id: index-stay-over-21-days
+    ref: E4
+    kind: exclusion
+    verbatim: "Has been hospitalized for longer than 21 days during the index event"
+    when:
+      fact: index_hospital_days
+      op: gt
+      value: 21
+
+  - id: planned-iv-inotropes
+    ref: E5
+    kind: exclusion
+    verbatim: "Planned intermittent outpatient treatment with positive inotropic drugs administered intravenously"
+    # Unmodelable: a *plan*, not an event. No extract records treatment
+    # intended but not yet given.
+    unmodeled: true

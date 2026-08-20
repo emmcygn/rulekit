@@ -1,0 +1,112 @@
+# rulekit corpus patient — flattened from Synthea FHIR R4 sample data (Apache-2.0).
+# reference date 2026-06-30; recency is measured on the shifted timeline (see docs/data-pipeline.md).
+# unmutated.
+patient: SYN-030CA6A5
+facts:
+  age: 89
+  sex: female
+  conditions:
+    - code: "44465007"
+      system: snomed
+      daysAgo: 2003
+    - code: "26929004"
+      system: snomed
+      daysAgo: 2243
+    - code: "10509002"
+      system: snomed
+      daysAgo: 2446
+    - code: "43878008"
+      system: snomed
+      daysAgo: 3199
+    - code: "64859006"
+      system: snomed
+      daysAgo: 3356
+    - code: "53741008"
+      system: snomed
+      daysAgo: 4098
+    - code: "201834006"
+      system: snomed
+      daysAgo: 16689
+    - code: "162864005"
+      system: snomed
+      daysAgo: 20254
+    - code: "19169002"
+      system: snomed
+      daysAgo: 20695
+    - code: "128613002"
+      system: snomed
+      daysAgo: 28369
+    - code: "703151001"
+      system: snomed
+      daysAgo: 28369
+  medications:
+    - code: "998582"
+      system: rxnorm
+      daysAgo: 1793
+    - code: "309362"
+      system: rxnorm
+      daysAgo: 2439
+    - code: "197361"
+      system: rxnorm
+      daysAgo: 3356
+    - code: "312961"
+      system: rxnorm
+      daysAgo: 4098
+    - code: "705129"
+      system: rxnorm
+      daysAgo: 4098
+    - code: "849574"
+      system: rxnorm
+      daysAgo: 16689
+  lab_bmi: 28.18
+  lab_bmi_unit: kg/m2
+  lab_bmi_code: 39156-5
+  lab_bmi_days_ago: 17
+  lab_diastolic_bp: 80.89
+  lab_diastolic_bp_unit: mm[Hg]
+  lab_diastolic_bp_code: 8462-4
+  lab_diastolic_bp_days_ago: 17
+  lab_hdl: 59.91
+  lab_hdl_unit: mg/dL
+  lab_hdl_code: 2085-9
+  lab_hdl_days_ago: 17
+  lab_height: 157.21
+  lab_height_unit: cm
+  lab_height_code: 8302-2
+  lab_height_days_ago: 17
+  lab_hematocrit: 42.2
+  lab_hematocrit_unit: "%"
+  lab_hematocrit_code: 4544-3
+  lab_hematocrit_days_ago: 759
+  lab_hemoglobin: 14.8
+  lab_hemoglobin_unit: g/dL
+  lab_hemoglobin_code: 718-7
+  lab_hemoglobin_days_ago: 759
+  lab_ldl: 94.79
+  lab_ldl_unit: mg/dL
+  lab_ldl_code: 18262-6
+  lab_ldl_days_ago: 17
+  lab_platelets: 251.19
+  lab_platelets_unit: 10*3/uL
+  lab_platelets_code: 777-3
+  lab_platelets_days_ago: 759
+  lab_systolic_bp: 130.63
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 17
+  lab_total_cholesterol: 179.05
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 17
+  lab_triglycerides: 121.77
+  lab_triglycerides_unit: mg/dL
+  lab_triglycerides_code: 2571-8
+  lab_triglycerides_days_ago: 17
+  lab_wbc: 10.36
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 759
+  lab_weight: 69.64
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 17

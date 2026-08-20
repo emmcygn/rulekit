@@ -1,0 +1,85 @@
+# Local lab code -> LOINC.
+#
+# The design spec calls for resolving local codes through the free NLM
+# terminology APIs. This build resolves them from this committed file instead.
+# Deviation, and why: the pipeline has to be reproducible and runnable with no
+# network — CI must not depend on an external service being up, and a corpus
+# whose contents change when a remote vocabulary changes is not a fixture.
+# Swapping this table for an NLM lookup is a drop-in change to
+# scripts/lib/normalize.ts; the table shape is the same.
+#
+# The `local` codes are invented site-local codes of the kind a hospital lab
+# actually uses; the mess injector plants them, this file removes them.
+# `XLAB-77` is deliberately absent from the mapping: it is the unresolvable
+# code that exercises the quarantine path.
+
+codes:
+  - local: CREAT-S
+    loinc: 38483-4
+    slug: creatinine
+  - local: EGFR-EPI
+    loinc: 33914-3
+    slug: egfr
+  - local: BUN-S
+    loinc: 6299-2
+    slug: bun
+  - local: NA-SER
+    loinc: 2947-0
+    slug: sodium
+  - local: K-SER
+    loinc: 6298-4
+    slug: potassium
+  - local: GLU-R
+    loinc: 2339-0
+    slug: glucose
+  - local: CA-S
+    loinc: 49765-1
+    slug: calcium
+  - local: HGB
+    loinc: 718-7
+    slug: hemoglobin
+  - local: HCT
+    loinc: 4544-3
+    slug: hematocrit
+  - local: PLT
+    loinc: 777-3
+    slug: platelets
+  - local: WBC-A
+    loinc: 6690-2
+    slug: wbc
+  - local: ALB-S
+    loinc: 1751-7
+    slug: albumin
+  - local: ALT-S
+    loinc: 1742-6
+    slug: alt
+  - local: AST-S
+    loinc: 1920-8
+    slug: ast
+  - local: TBILI
+    loinc: 1975-2
+    slug: bilirubin_total
+  - local: A1C
+    loinc: 4548-4
+    slug: hba1c
+  - local: CHOL-T
+    loinc: 2093-3
+    slug: total_cholesterol
+  - local: LDL-C
+    loinc: 18262-6
+    slug: ldl
+  - local: HDL-C
+    loinc: 2085-9
+    slug: hdl
+  - local: TRIG
+    loinc: 2571-8
+    slug: triglycerides
+  - local: EF-ECHO
+    loinc: 10230-1
+    slug: lvef
+  - local: BNP-Q
+    loinc: 30934-4
+    slug: bnp
+  - local: NTPBNP
+    loinc: 33762-6
+    slug: nt_probnp
