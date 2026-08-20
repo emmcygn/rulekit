@@ -1,0 +1,335 @@
+# Rule-set tests for COMMANDER HF (NCT01877915).
+#
+# Every modelled criterion is exercised in both directions, and the four
+# unmodelled ones are asserted `unknown` so the contract is visible: a
+# criterion recorded but not modelled must never resolve to pass or fail.
+#
+# Verdict semantics under test:
+#   inclusion  — pass when the condition is true, fail when false
+#   exclusion  — fail when the condition fires (true), pass when it does not
+#   any leaf over a missing fact — unknown, propagated by Kleene logic
+#   overall    — any fail -> ineligible; else any unknown -> undetermined;
+#                else eligible
+#
+# Note what the unmodelled criteria do to the outcome column: no patient can
+# reach `eligible` on structured facts alone, because COMMANDER HF genuinely
+# requires chart review (the index event, medical stability, bleeding risk,
+# planned inotropes). `undetermined` is the correct answer, not a gap in the
+# tooling.
+
+cases:
+  - name: qualifies on every modelled criterion — undetermined, pending chart review
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      age-range: pass
+      symptomatic-heart-failure: pass
+      decompensation-index-event: unknown
+      lvef-40-or-below: pass
+      significant-coronary-artery-disease: pass
+      medically-stable: unknown
+      natriuretic-peptide: pass
+      bleeding-risk: unknown
+      concomitant-disease: pass
+      recent-stroke: pass
+      index-stay-over-21-days: pass
+      overall: undetermined
+
+  - name: 17-year-old is below the registry age floor
+    facts:
+      age: 17
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      age-range: fail
+      overall: ineligible
+
+  - name: 96-year-old is above the registry age ceiling
+    facts:
+      age: 96
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      age-range: fail
+      overall: ineligible
+
+  - name: heart failure diagnosed but symptomatic for only 2 months
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 60 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 2
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      age-range: pass
+      symptomatic-heart-failure: fail
+      overall: ineligible
+
+  - name: no heart-failure code on file — symptom duration alone cannot decide
+    facts:
+      age: 71
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      symptomatic-heart-failure: unknown
+      significant-coronary-artery-disease: unknown
+      recent-stroke: unknown
+      concomitant-disease: unknown
+      overall: undetermined
+
+  - name: ejection fraction 45% is above the 40% ceiling
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 45
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      lvef-40-or-below: fail
+      overall: ineligible
+
+  - name: ejection fraction 38% but measured 400 days ago — outside the 1-year window
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 38
+      lab_lvef_days_ago: 400
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      lvef-40-or-below: fail
+      overall: ineligible
+
+  - name: no ejection fraction on file — unknown, never a silent pass
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      lvef-40-or-below: unknown
+      overall: undetermined
+
+  - name: heart failure with no coronary disease code fails the CAD inclusion
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      significant-coronary-artery-disease: fail
+      overall: ineligible
+
+  - name: BNP 210 pg/mL satisfies the peptide criterion through the BNP limb alone
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_bnp: 210
+      index_hospital_days: 6
+    expect:
+      natriuretic-peptide: pass
+      overall: undetermined
+
+  - name: NT-proBNP 400 pg/mL is below the 800 threshold and no BNP was drawn
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 400
+      index_hospital_days: 6
+    expect:
+      natriuretic-peptide: fail
+      overall: ineligible
+
+  - name: atrial fibrillation fires the concomitant-disease exclusion
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+        - { code: "49436004", system: snomed, daysAgo: 300 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      concomitant-disease: fail
+      overall: ineligible
+
+  - name: warfarin 20 days ago fires the chronic-anticoagulation limb
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "855332", system: rxnorm, daysAgo: 20 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      concomitant-disease: fail
+      overall: ineligible
+
+  - name: warfarin 200 days ago is outside the 90-day window
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "855332", system: rxnorm, daysAgo: 200 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      concomitant-disease: pass
+      overall: undetermined
+
+  - name: stroke 45 days ago fires the recent-stroke exclusion
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+        - { code: "230690007", system: snomed, daysAgo: 45 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      recent-stroke: fail
+      overall: ineligible
+
+  - name: stroke 200 days ago is outside the 90-day window
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+        - { code: "230690007", system: snomed, daysAgo: 200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 6
+    expect:
+      recent-stroke: pass
+      overall: undetermined
+
+  - name: 24-day index hospitalisation exceeds the 21-day limit
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+      index_hospital_days: 24
+    expect:
+      index-stay-over-21-days: fail
+      overall: ineligible
+
+  - name: index stay unrecorded — the exclusion cannot fire or clear
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_nt_probnp: 1200
+    expect:
+      index-stay-over-21-days: unknown
+      overall: undetermined
