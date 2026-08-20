@@ -1,0 +1,56 @@
+# DEMO DATA — rule-set unit tests for DEMO-HF-001 (design spec §7).
+# The workbench does not embed the test runner; `rules test --coverage` (CLI)
+# executes these. Shown here so the author can read the cases while editing.
+cases:
+  - name: 61yo with eGFR 38 is caught by the new renal exclusion
+    facts: { age: 61, lvef: 30, egfr: 38 }
+    expect:
+      age-min: pass
+      lvef-max: pass
+      egfr-min: pass
+      renal-safety: fail
+      overall: ineligible
+  - name: eGFR exactly 45 clears the renal exclusion
+    facts: { age: 61, lvef: 30, egfr: 45 }
+    expect:
+      renal-safety: pass
+      overall: undetermined
+  - name: LVEF exactly 40 passes the inclusion boundary
+    facts: { age: 55, lvef: 40, egfr: 62 }
+    expect:
+      lvef-max: pass
+      overall: undetermined
+  - name: missing medication reconciliation is unknown, never a silent pass
+    facts: { age: 63, lvef: 38, egfr: 62 }
+    expect:
+      anticoag-washout: unknown
+      overall: undetermined
+  - name: warfarin 5 days ago fires the washout exclusion
+    facts:
+      age: 52
+      lvef: 26
+      egfr: 88
+      medications: [{ code: anticoagulants, system: rxnorm-class, daysAgo: 5 }]
+    expect:
+      anticoag-washout: fail
+      overall: ineligible
+  - name: anticoagulant 21 days ago fires only under the widened 30-day window
+    facts:
+      age: 47
+      lvef: 31
+      egfr: 79
+      medications: [{ code: anticoagulants, system: rxnorm-class, daysAgo: 21 }]
+    expect:
+      anticoag-washout: fail
+      overall: ineligible
+  - name: non-numeric eGFR is not evaluable rather than guessed
+    facts: { age: 69, lvef: 39, egfr: ">60" }
+    expect:
+      egfr-min: unknown
+      renal-safety: unknown
+      overall: undetermined
+  - name: minor fails the age inclusion
+    facts: { age: 16, lvef: 55, egfr: 90 }
+    expect:
+      age-min: fail
+      overall: ineligible

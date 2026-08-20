@@ -1,0 +1,29 @@
+# DEMO DATA — the fact model the DEMO-HF-001 rule set is written against.
+# The rule side may only reference facts declared here, in these units, with
+# codes from these systems (design spec §4, "Fact model contract").
+name: patient-facts/v1
+facts:
+  age:
+    type: number
+    unit: years
+  sex:
+    type: enum
+    values: [F, M]
+  lvef:
+    type: number
+    unit: "%"
+  egfr:
+    type: number
+    unit: mL/min/1.73m2
+  medications:
+    type: code
+    systems: [rxnorm, rxnorm-class]
+  conditions:
+    type: code
+    systems: [snomed]
+  flags:
+    type: code
+    systems: [local-flag]
+  nyha_class:
+    type: enum
+    values: [I, II, III, IV]
