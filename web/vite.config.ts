@@ -12,7 +12,7 @@ export default defineConfig({
   },
   build: { chunkSizeWarningLimit: 4096 },
   test: {
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     environment: "node",
   },
 });
