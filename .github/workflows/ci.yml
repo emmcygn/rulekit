@@ -13,3 +13,17 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run dogfood
+
+  workbench:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      # web/ is its own package; it imports types and parsers from ../src/core.
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
