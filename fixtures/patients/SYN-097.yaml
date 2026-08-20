@@ -1,0 +1,7 @@
+patient: SYN-097
+facts:
+  age: 66
+  sex: female
+  lvef: 42
+  egfr: 55
+  medications: []

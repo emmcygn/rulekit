@@ -1,0 +1,7 @@
+patient: SYN-007
+facts:
+  age: 61
+  sex: male
+  lvef: 35
+  egfr: 38
+  medications: []

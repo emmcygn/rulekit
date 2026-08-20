@@ -1,0 +1,8 @@
+name: patient-facts/v1
+facts:
+  age: { type: number, unit: years }
+  sex: { type: enum, values: [male, female] }
+  lvef: { type: number, unit: percent }
+  egfr: { type: number, unit: mL/min/1.73m2 }
+  medications: { type: code, systems: [rxnorm, rxnorm-class] }
+  conditions: { type: code, systems: [snomed] }

@@ -1,0 +1,36 @@
+ruleset: demo-hf-001-eligibility
+protocol: "DEMO-HF-001 v2.0"
+status: irb-approved
+effective: 2026-05-01
+rulesetVersion: 1.0.0
+factModel: patient-facts/v1
+criteria:
+  - id: age-min
+    ref: I1
+    kind: inclusion
+    verbatim: "Age 18 years or older"
+    when: { fact: age, op: gte, value: 18 }
+  - id: lvef-max
+    ref: I2
+    kind: inclusion
+    verbatim: "LVEF 40% or less on echocardiogram"
+    when: { fact: lvef, op: lte, value: 40 }
+  - id: egfr-min
+    ref: I3
+    kind: inclusion
+    verbatim: "eGFR at least 30 mL/min/1.73m2"
+    when: { fact: egfr, op: gte, value: 30, unit: mL/min }
+  - id: anticoag-washout
+    ref: E1
+    kind: exclusion
+    verbatim: "Anticoagulant use within 14 days"
+    when:
+      fact: medications
+      op: anyWithin
+      codes: { system: rxnorm-class, values: [anticoagulants] }
+      windowDays: 14
+  - id: nyha-class-iv
+    ref: E4
+    kind: exclusion
+    verbatim: "NYHA class IV heart failure"
+    unmodeled: true

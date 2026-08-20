@@ -1,0 +1,7 @@
+patient: SYN-019
+facts:
+  age: 64
+  sex: female
+  lvef: 33
+  egfr: 42
+  medications: []

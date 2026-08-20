@@ -1,0 +1,7 @@
+patient: SYN-115
+facts:
+  age: 17
+  sex: female
+  lvef: 34
+  egfr: 90
+  medications: []

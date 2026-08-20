@@ -1,0 +1,7 @@
+patient: SYN-121
+facts:
+  age: 54
+  sex: female
+  lvef: 36
+  egfr: 75
+  medications: []

@@ -1,0 +1,9 @@
+patient: SYN-104
+facts:
+  age: 71
+  sex: male
+  lvef: 28
+  egfr: 48
+  medications:
+    - { code: apixaban, system: rxnorm, daysAgo: 200 }
+    - { code: anticoagulants, system: rxnorm-class, daysAgo: 200 }

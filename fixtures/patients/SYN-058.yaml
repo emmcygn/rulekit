@@ -1,0 +1,7 @@
+patient: SYN-058
+facts:
+  age: 60
+  sex: male
+  lvef: 30
+  egfr: 33
+  medications: []

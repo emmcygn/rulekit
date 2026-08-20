@@ -1,0 +1,7 @@
+patient: SYN-061
+facts:
+  age: 58
+  sex: male
+  lvef: 34
+  egfr: 52
+  medications: []

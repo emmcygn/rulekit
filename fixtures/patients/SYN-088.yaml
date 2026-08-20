@@ -1,0 +1,9 @@
+patient: SYN-088
+facts:
+  age: 47
+  sex: male
+  lvef: 30
+  egfr: 60
+  medications:
+    - { code: warfarin, system: rxnorm, daysAgo: 21 }
+    - { code: anticoagulants, system: rxnorm-class, daysAgo: 21 }

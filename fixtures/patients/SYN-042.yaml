@@ -1,0 +1,7 @@
+patient: SYN-042
+# no medications fact at all: the med list never arrived, so the washout is unknown
+facts:
+  age: 63
+  sex: female
+  lvef: 38
+  egfr: 41

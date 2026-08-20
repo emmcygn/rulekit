@@ -1,0 +1,49 @@
+cases:
+  - name: healthy 40yo HFrEF patient is eligible pending chart review
+    facts: { age: 40, lvef: 34, egfr: 60, medications: [] }
+    expect: { age-min: pass, lvef-max: pass, egfr-min: pass, anticoag-washout: pass, renal-safety: pass, nyha-class-iv: unknown, overall: undetermined }
+  - name: 63yo in the contradictory band passes I3 then fails E3
+    facts: { age: 63, lvef: 38, egfr: 41, medications: [] }
+    expect: { egfr-min: pass, renal-safety: fail, overall: ineligible }
+  - name: warfarin 21 days ago fires the widened washout
+    facts:
+      age: 47
+      lvef: 30
+      egfr: 60
+      medications:
+        - { code: warfarin, system: rxnorm, daysAgo: 21 }
+        - { code: anticoagulants, system: rxnorm-class, daysAgo: 21 }
+    expect: { anticoag-washout: fail, overall: ineligible }
+  - name: warfarin 90 days ago is outside the window
+    facts:
+      age: 47
+      lvef: 30
+      egfr: 60
+      medications:
+        - { code: warfarin, system: rxnorm, daysAgo: 90 }
+        - { code: anticoagulants, system: rxnorm-class, daysAgo: 90 }
+    expect: { anticoag-washout: pass, overall: undetermined }
+  - name: missing eGFR is undetermined, not eligible
+    facts: { age: 40, lvef: 34, medications: [] }
+    expect: { egfr-min: unknown, renal-safety: unknown, overall: undetermined }
+  - name: boundary age 18 passes
+    facts: { age: 18, lvef: 34, egfr: 60, medications: [] }
+    expect: { age-min: pass, overall: undetermined }
+  - name: minor fails age-min
+    facts: { age: 17, lvef: 34, egfr: 60, medications: [] }
+    expect: { age-min: fail, overall: ineligible }
+  - name: LVEF 45 fails the inclusion
+    facts: { age: 40, lvef: 45, egfr: 60, medications: [] }
+    expect: { lvef-max: fail, overall: ineligible }
+  - name: medication list present but undated anticoagulant is unknown
+    facts:
+      age: 40
+      lvef: 34
+      egfr: 60
+      medications:
+        - { code: apixaban, system: rxnorm }
+        - { code: anticoagulants, system: rxnorm-class }
+    expect: { anticoag-washout: unknown, overall: undetermined }
+  - name: eGFR exactly 45 passes renal-safety (strict less-than)
+    facts: { age: 40, lvef: 34, egfr: 45, medications: [] }
+    expect: { renal-safety: pass, egfr-min: pass, overall: undetermined }
