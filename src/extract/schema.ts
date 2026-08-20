@@ -104,6 +104,14 @@ const factEntry = z
     message: "pipeline facts are deterministic and carry no confidence",
     path: ["confidence"],
   })
+  // A deterministic fact has nobody proposing it and nothing to review, so
+  // `proposed` is a nonsense state for the pipeline tier. Forbidding it here is
+  // what lets confirmedFactsToPatient() read "pipeline or confirmed" without
+  // an ambiguous third case.
+  .refine((f) => f.extractedBy !== "pipeline" || f.status !== "proposed", {
+    message: "pipeline facts are deterministic — they are never 'proposed'",
+    path: ["status"],
+  })
   // A human decision is the whole audit trail, so it is required on both
   // outcomes and forbidden before one — except for pipeline facts, which no
   // human ever touched.
