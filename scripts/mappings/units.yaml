@@ -1,0 +1,118 @@
+# Unit normalization table (UCUM-style).
+#
+# The canonical unit for each lab is declared in scripts/lib/loinc.ts. This
+# file says how to get there from the spellings that actually turn up in an
+# extract. Two kinds of entry, kept apart on purpose:
+#
+#   aliases     — spelling only. Same quantity, different characters. Safe to
+#                 apply to any analyte.
+#   conversions — the number changes, so every entry is scoped to one analyte.
+#                 A blanket "umol/L -> mg/dL" factor would be wrong for
+#                 anything but creatinine, which is exactly the class of silent
+#                 error this stage exists to prevent.
+#
+# Anything not listed here is left alone and reported by the normalize stage,
+# rather than guessed at.
+
+aliases:
+  "mg/dl": "mg/dL"
+  "MG/DL": "mg/dL"
+  "Mg/Dl": "mg/dL"
+  "milligrams per deciliter": "mg/dL"
+  "mg / dL": "mg/dL"
+  "mmol/l": "mmol/L"
+  "MMOL/L": "mmol/L"
+  "millimoles per liter": "mmol/L"
+  "g/dl": "g/dL"
+  "G/DL": "g/dL"
+  "grams per deciliter": "g/dL"
+  "pg/ml": "pg/mL"
+  "PG/ML": "pg/mL"
+  "picograms per milliliter": "pg/mL"
+  "u/l": "U/L"
+  "U/l": "U/L"
+  "IU/L": "U/L"
+  "mmHg": "mm[Hg]"
+  "mm Hg": "mm[Hg]"
+  "MMHG": "mm[Hg]"
+  "percent": "%"
+  "pct": "%"
+  "%%": "%"
+  "KG": "kg"
+  "kgs": "kg"
+  "kilograms": "kg"
+  "CM": "cm"
+  "centimeters": "cm"
+  "kg/m^2": "kg/m2"
+  "kg/m²": "kg/m2"
+  "mL/min/1.73m2": "mL/min/{1.73_m2}"
+  "mL/min/1.73 m2": "mL/min/{1.73_m2}"
+  "ml/min/1.73m^2": "mL/min/{1.73_m2}"
+  "mL/min per 1.73 m2": "mL/min/{1.73_m2}"
+  "x10E3/uL": "10*3/uL"
+  "10^3/uL": "10*3/uL"
+  "K/uL": "10*3/uL"
+  "thousand per microliter": "10*3/uL"
+
+conversions:
+  # Creatinine reported in SI. 1 mg/dL = 88.42 umol/L (MW 113.12).
+  - slug: creatinine
+    from: "umol/L"
+    to: "mg/dL"
+    factor: 0.0113123
+  - slug: creatinine
+    from: "µmol/L"
+    to: "mg/dL"
+    factor: 0.0113123
+  # eGFR reported without the body-surface-area qualifier. Same number, and
+  # the LOINC (33914-3) is already the /1.73 sq M form, so this is a relabel —
+  # but it is analyte-scoped because "mL/min" means something else elsewhere.
+  - slug: egfr
+    from: "mL/min"
+    to: "mL/min/{1.73_m2}"
+    factor: 1
+  - slug: egfr
+    from: "ml/min"
+    to: "mL/min/{1.73_m2}"
+    factor: 1
+  # Natriuretic peptides: pg/mL and ng/L are numerically identical.
+  - slug: bnp
+    from: "ng/L"
+    to: "pg/mL"
+    factor: 1
+  - slug: nt_probnp
+    from: "ng/L"
+    to: "pg/mL"
+    factor: 1
+  # Ejection fraction recorded as a fraction rather than a percentage.
+  - slug: lvef
+    from: "1"
+    to: "%"
+    factor: 100
+  - slug: lvef
+    from: "fraction"
+    to: "%"
+    factor: 100
+  # Haemoglobin in SI.
+  - slug: hemoglobin
+    from: "g/L"
+    to: "g/dL"
+    factor: 0.1
+  # Weight in pounds.
+  - slug: weight
+    from: "[lb_av]"
+    to: "kg"
+    factor: 0.45359237
+  - slug: weight
+    from: "lb"
+    to: "kg"
+    factor: 0.45359237
+  # Height in inches.
+  - slug: height
+    from: "[in_i]"
+    to: "cm"
+    factor: 2.54
+  - slug: height
+    from: "in"
+    to: "cm"
+    factor: 2.54
