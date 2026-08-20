@@ -1,0 +1,101 @@
+import { describe, it, expect } from "vitest";
+import { parseRuleSet, parseFactModel, parsePatient, parseTestSuite } from "../../src/core/schema.js";
+
+const VALID_RULESET = `
+ruleset: demo-hf-001-eligibility
+rulesetVersion: 1.1.0
+factModel: patient-facts/v1
+criteria:
+  - id: age-min
+    ref: I1
+    kind: inclusion
+    verbatim: "Age 18 years or older"
+    when: { fact: age, op: gte, value: 18 }
+  - id: renal-safety
+    ref: E3
+    kind: exclusion
+    verbatim: "eGFR below 45 at screening"
+    when: { fact: egfr, op: lt, value: 45 }
+  - id: nyha-class-iv
+    ref: E4
+    kind: exclusion
+    verbatim: "NYHA class IV heart failure"
+    unmodeled: true
+`;
+
+describe("parseRuleSet", () => {
+  it("parses a valid rule set", () => {
+    const rs = parseRuleSet(VALID_RULESET);
+    expect(rs.ruleset).toBe("demo-hf-001-eligibility");
+    expect(rs.criteria).toHaveLength(3);
+    expect(rs.criteria[2]!.unmodeled).toBe(true);
+  });
+
+  it("rejects a criterion with neither when nor unmodeled", () => {
+    const bad = VALID_RULESET.replace("    when: { fact: age, op: gte, value: 18 }\n", "");
+    expect(() => parseRuleSet(bad)).toThrow(/when|unmodeled/);
+  });
+
+  it("rejects an unknown op (closed language)", () => {
+    const bad = VALID_RULESET.replace("op: gte", "op: matchesRegex");
+    expect(() => parseRuleSet(bad)).toThrow(/op/);
+  });
+
+  it("rejects duplicate criterion ids", () => {
+    const bad = VALID_RULESET.replaceAll("renal-safety", "age-min");
+    expect(() => parseRuleSet(bad)).toThrow(/duplicate/i);
+  });
+
+  it("parses nested all/any/not conditions", () => {
+    const rs = parseRuleSet(`
+ruleset: r
+rulesetVersion: 1.0.0
+factModel: patient-facts/v1
+criteria:
+  - id: c1
+    kind: inclusion
+    verbatim: "x"
+    when:
+      all:
+        - { fact: age, op: gte, value: 18 }
+        - not: { fact: conditions, op: in, codes: { system: snomed, values: ["77386006"] } }
+`);
+    const when = rs.criteria[0]!.when as { all: unknown[] };
+    expect(when.all).toHaveLength(2);
+  });
+});
+
+describe("parseFactModel / parsePatient / parseTestSuite", () => {
+  it("parses a fact model", () => {
+    const fm = parseFactModel(`
+name: patient-facts/v1
+facts:
+  age: { type: number, unit: years }
+  egfr: { type: number, unit: mL/min/1.73m2 }
+  medications: { type: code, systems: [rxnorm, rxnorm-class] }
+  sex: { type: enum, values: [male, female] }
+`);
+    expect(fm.facts["age"]).toEqual({ type: "number", unit: "years" });
+  });
+
+  it("parses a patient", () => {
+    const p = parsePatient(`
+patient: SYN-042
+facts:
+  age: 63
+  medications:
+    - { code: warfarin, system: rxnorm, daysAgo: 5 }
+`);
+    expect(p.facts["age"]).toBe(63);
+  });
+
+  it("parses a test suite", () => {
+    const s = parseTestSuite(`
+cases:
+  - name: adult passes age-min
+    facts: { age: 40 }
+    expect: { age-min: pass, overall: eligible }
+`);
+    expect(s.cases[0]!.expect["age-min"]).toBe("pass");
+  });
+});
