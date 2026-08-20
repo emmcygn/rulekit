@@ -94,8 +94,9 @@ describe("computeFunnel — bundled demo cohort", () => {
   const f = computeFunnel(evals);
 
   it("balances the books on the demo data", () => {
-    expect(f.n).toBe(16);
-    expect(f.screenFail + f.notEvaluable + f.remaining).toBe(16);
+    expect(f.n).toBe(10);
+    expect(f.screenFail + f.notEvaluable + f.remaining).toBe(10);
+    expect([f.screenFail, f.notEvaluable, f.remaining]).toEqual([6, 1, 3]);
   });
 
   it("shows the amendment's renal exclusion as the biggest sole-reason bucket", () => {

@@ -20,9 +20,9 @@ describe("workbench shell", () => {
   it("opens on the funnel with the demo cohort counted", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "Screening funnel" })).toBeDefined();
-    expect(screen.getByText(/cohort n = 16/)).toBeDefined();
-    expect(screen.getAllByText(/2 potentially eligible/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/11 screen fail/)).toBeDefined();
+    expect(screen.getByText(/cohort n = 10/)).toBeDefined();
+    expect(screen.getAllByText(/3 potentially eligible/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/6 screen fail/)).toBeDefined();
   });
 
   it("drills from a criterion row into a patient trace", () => {
@@ -46,7 +46,7 @@ describe("workbench shell", () => {
     render(<App />);
     fireEvent.click(tab("Amendment"));
     expect(screen.getByRole("heading", { name: "Amendment impact" })).toBeDefined();
-    expect(screen.getByText(/renal-safety — 5 flips/)).toBeDefined();
+    expect(screen.getByText(/renal-safety — 4 flips/)).toBeDefined();
     expect(screen.getByText(/Already enrolled/)).toBeDefined();
     expect(screen.getByText(/002-0041/)).toBeDefined();
   });

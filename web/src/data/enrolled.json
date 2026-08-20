@@ -1,0 +1,23 @@
+{
+  "_demo": "DEMO DATA — three synthetic participants already randomized under DEMO-HF-001 v1.0.0. Workbench-only: the repo has no canonical enrolled fixtures, because the CLI has nowhere to put them. Not real participants.",
+  "enrolled": [
+    {
+      "participant": "002-0041",
+      "site": "Site 002",
+      "randomized": "2026-06-02",
+      "facts": { "age": 66, "sex": "male", "lvef": 33, "egfr": 39, "medications": [] }
+    },
+    {
+      "participant": "003-0017",
+      "site": "Site 003",
+      "randomized": "2026-05-21",
+      "facts": { "age": 59, "sex": "female", "lvef": 29, "egfr": 44, "medications": [] }
+    },
+    {
+      "participant": "002-0053",
+      "site": "Site 002",
+      "randomized": "2026-06-28",
+      "facts": { "age": 62, "sex": "male", "lvef": 35, "egfr": 68, "medications": [] }
+    }
+  ]
+}

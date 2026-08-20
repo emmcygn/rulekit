@@ -55,14 +55,20 @@ describe("groupFlips", () => {
   const flips = mockEngine.behavioralDiff(DEMO_RULESET_PRIOR, DEMO_RULESET_CURRENT, DEMO_COHORT);
 
   it("finds the flips the amendment causes on the demo cohort", () => {
-    expect(flips.length).toBe(6);
+    expect(flips.map((f) => f.patient).sort()).toEqual([
+      "SYN-007",
+      "SYN-019",
+      "SYN-042",
+      "SYN-058",
+      "SYN-088",
+    ]);
     expect(flips.every((f) => f.to === "ineligible")).toBe(true);
   });
 
   it("puts every flip in exactly one group, biggest group first", () => {
     const groups = groupFlips(flips, order);
     expect(groups.map((g) => g.criterionId)).toEqual(["renal-safety", "anticoag-washout"]);
-    expect(groups.map((g) => g.flips.length)).toEqual([5, 1]);
+    expect(groups.map((g) => g.flips.length)).toEqual([4, 1]);
     expect(groups.reduce((n, g) => n + g.flips.length, 0)).toBe(flips.length);
   });
 

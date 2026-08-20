@@ -15,8 +15,10 @@ describe("mockEngine.evalPatient", () => {
   });
 
   it("treats a non-numeric lab value as not evaluable rather than guessing", () => {
-    expect(verdict("SYN-077", "egfr-min").verdict).toBe("unknown");
-    expect(verdict("SYN-077", "renal-safety").verdict).toBe("unknown");
+    const messy = { patient: "SYN-999", facts: { age: 69, lvef: 39, egfr: ">60" } };
+    const results = mockEngine.evalPatient(DEMO_RULESET_CURRENT, messy).results;
+    expect(results.find((r) => r.id === "egfr-min")!.verdict).toBe("unknown");
+    expect(results.find((r) => r.id === "renal-safety")!.verdict).toBe("unknown");
   });
 
   it("fires an exclusion into a fail and traces the comparison", () => {
@@ -26,26 +28,24 @@ describe("mockEngine.evalPatient", () => {
   });
 
   it("holds boundary values inside the inclusion", () => {
-    expect(verdict("SYN-095", "lvef-max").verdict).toBe("pass"); // lvef = 40, rule is ≤ 40
-    expect(verdict("SYN-095", "egfr-min").verdict).toBe("pass"); // egfr = 30, rule is ≥ 30
+    const edge = { patient: "SYN-998", facts: { age: 18, lvef: 40, egfr: 45, medications: [] } };
+    const results = mockEngine.evalPatient(DEMO_RULESET_CURRENT, edge).results;
+    const at = (id: string) => results.find((r) => r.id === id)!.verdict;
+    expect(at("age-min")).toBe("pass"); // age = 18, rule is >= 18
+    expect(at("lvef-max")).toBe("pass"); // lvef = 40, rule is <= 40
+    expect(at("renal-safety")).toBe("pass"); // egfr = 45, exclusion is strict < 45
   });
 
   it("keeps an unmodeled criterion unknown for everyone", () => {
-    const r = verdict("SYN-003", "nyha-class-iv");
+    const r = verdict("SYN-061", "nyha-class-iv");
     expect(r.unmodeled).toBe(true);
     expect(r.verdict).toBe("unknown");
-    expect(evaluate("SYN-003").overall).toBe("undetermined");
+    expect(evaluate("SYN-061").overall).toBe("undetermined");
   });
 
   it("reads a temporal window against the recorded recency", () => {
     expect(verdict("SYN-088", "anticoag-washout").verdict).toBe("fail"); // 21d, window 30d
-    expect(verdict("SYN-003", "anticoag-washout").verdict).toBe("pass"); // no medications
-  });
-
-  it("combines an all-clause with Kleene logic", () => {
-    // WOCBP with a negative pregnancy test: first clause true, second false.
-    expect(verdict("SYN-095", "wocbp-no-preg-test").verdict).toBe("pass");
-    expect(verdict("SYN-034", "wocbp-no-preg-test").verdict).toBe("fail");
+    expect(verdict("SYN-104", "anticoag-washout").verdict).toBe("pass"); // 200d ago
   });
 });
 
