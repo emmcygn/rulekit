@@ -1,0 +1,91 @@
+# Generated from clinic-2026-02-04 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:14:19Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-007
+asOf: 2026-02-04
+facts:
+  - fact: nyha_class
+    value: II
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: best described as NYHA class II symptoms
+    reviewedBy: null
+  - fact: egfr
+    value: 58
+    unit: mL/min/1.73m2
+    status: proposed
+    confidence: 0.97
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: eGFR 58 mL/min/1.73m2
+    reviewedBy: null
+  - fact: nt_probnp
+    value: 640
+    unit: pg/mL
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: NT-proBNP 640 pg/mL
+    reviewedBy: null
+  - fact: potassium
+    value: 4.3
+    unit: mmol/L
+    status: proposed
+    confidence: 0.95
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: Potassium 4.3 mmol/L
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 118
+    unit: mmHg
+    status: proposed
+    confidence: 0.92
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: BP 118/72 mmHg
+    reviewedBy: null
+  - fact: on_arni
+    value: true
+    status: proposed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: sacubitril/valsartan 49/51 mg twice daily
+    reviewedBy: null
+  - fact: on_beta_blocker
+    value: true
+    status: proposed
+    confidence: 0.91
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: carvedilol 12.5 mg twice daily
+    reviewedBy: null
+  - fact: hospitalized_for_hf_last_12mo
+    value: false
+    status: proposed
+    confidence: 0.87
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: she has not been hospitalized for heart failure in the past twelve months
+    reviewedBy: null
+  - fact: on_sglt2_inhibitor
+    value: false
+    status: proposed
+    confidence: 0.62
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-02-04
+      quote: MEDICATIONS (reviewed and reconciled today)
+    reviewedBy: null

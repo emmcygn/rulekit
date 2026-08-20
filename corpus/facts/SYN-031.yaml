@@ -1,0 +1,35 @@
+# Generated from echo-2026-06-01 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:15:11Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-031
+asOf: 2026-06-01
+facts:
+  - fact: nyha_class
+    value: I
+    status: proposed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-06-01
+      quote: functional assessment today is NYHA class I
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 148
+    unit: mmHg
+    status: proposed
+    confidence: 0.94
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-06-01
+      quote: Blood pressure at the time of study was 148/88 mmHg.
+    reviewedBy: null
+  - fact: nt_probnp
+    value: 310
+    unit: pg/mL
+    status: proposed
+    confidence: 0.95
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-06-01
+      quote: NT-proBNP from 2026-05-27 was 310 pg/mL.
+    reviewedBy: null

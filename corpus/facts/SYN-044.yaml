@@ -1,0 +1,83 @@
+# Generated from clinic-2026-03-28 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:15:26Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-044
+asOf: 2026-03-28
+facts:
+  - fact: nyha_class
+    value: IV
+    status: proposed
+    confidence: 0.95
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: this is NYHA class IV heart failure
+    reviewedBy: null
+  - fact: egfr
+    value: 27
+    unit: mL/min/1.73m2
+    status: proposed
+    confidence: 0.97
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: eGFR 27 mL/min/1.73m2
+    reviewedBy: null
+  - fact: lvef
+    value: 24
+    unit: "%"
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: "Echocardiogram 2026-02-11: LVEF 24%, severe biventricular dysfunction."
+    reviewedBy: null
+  - fact: potassium
+    value: 5.2
+    unit: mmol/L
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: Potassium 5.2 mmol/L
+    reviewedBy: null
+  - fact: nt_probnp
+    value: 6890
+    unit: pg/mL
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: NT-proBNP 6890 pg/mL
+    reviewedBy: null
+  - fact: on_anticoagulant
+    value: true
+    status: proposed
+    confidence: 0.91
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: apixaban 2.5 mg twice daily for atrial fibrillation, renally dosed
+    reviewedBy: null
+  - fact: hospitalized_for_hf_last_12mo
+    value: true
+    status: proposed
+    confidence: 0.92
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: He was admitted twice in the past year for decompensation
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 102
+    unit: mmHg
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-03-28
+      quote: BP 102/62 mmHg
+    reviewedBy: null

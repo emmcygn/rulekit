@@ -1,0 +1,92 @@
+# Generated from clinic-2026-07-09 by scripts/extract-corpus.ts.
+# Model claude-opus-5, prompt extract-facts.v1, recorded 2026-08-20T09:15:40Z.
+# Every entry is 'proposed' — nothing here reaches the engine until a human confirms it.
+patient: SYN-052
+asOf: 2026-07-09
+facts:
+  - fact: nyha_class
+    value: III
+    status: proposed
+    confidence: 0.92
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: this is NYHA class III today
+    reviewedBy: null
+  - fact: on_sglt2_inhibitor
+    value: false
+    status: proposed
+    confidence: 0.86
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: He is not currently taking an SGLT2 inhibitor.
+    reviewedBy: null
+  - fact: lvef
+    value: 29
+    unit: "%"
+    status: proposed
+    confidence: 0.94
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: "Echocardiogram 2026-06-03: LVEF 29%."
+    reviewedBy: null
+  - fact: egfr
+    value: 66
+    unit: mL/min/1.73m2
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: eGFR 66 mL/min/1.73m2
+    reviewedBy: null
+  - fact: nt_probnp
+    value: 1980
+    unit: pg/mL
+    status: proposed
+    confidence: 0.95
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: NT-proBNP 1980 pg/mL
+    reviewedBy: null
+  - fact: on_arni
+    value: true
+    status: proposed
+    confidence: 0.9
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: sacubitril/valsartan 24/26 mg twice daily
+    reviewedBy: null
+  - fact: hospitalized_for_hf_last_12mo
+    value: true
+    status: proposed
+    confidence: 0.93
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: He was hospitalized for heart failure in May 2026.
+    reviewedBy: null
+  - fact: systolic_bp
+    value: 112
+    unit: mmHg
+    status: proposed
+    confidence: 0.92
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: BP 112/70 mmHg
+    reviewedBy: null
+  - fact: potassium
+    value: 4
+    unit: mmol/L
+    status: proposed
+    confidence: 0.94
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: clinic-2026-07-09
+      quote: potassium 4.0 mmol/L
+    reviewedBy: null

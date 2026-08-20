@@ -1,0 +1,77 @@
+# SYN-042 — the demo patient (design spec §11, "the two-sided money shot").
+#
+# All three provenance tiers in one file:
+#   pipeline  deterministic flatten of the structured record — no LLM, no review
+#   llm/...   extracted from echo-2026-03-12, proposed until a human confirms
+#   human     entered or corrected in the review pane
+#
+# nyha_class has been confirmed in review: that is the fact that flips SYN-042
+# from hatched to decided in the funnel. lvef is still proposed and is invisible
+# to the engine until someone clicks confirm.
+#
+# Regenerating this file with scripts/extract-corpus.ts requires --force,
+# because doing so would discard the review decisions below.
+patient: SYN-042
+asOf: 2026-03-12
+facts:
+  - fact: age
+    value: 71
+    unit: years
+    status: confirmed
+    extractedBy: pipeline
+
+  - fact: sex
+    value: male
+    status: confirmed
+    extractedBy: pipeline
+
+  - fact: egfr
+    value: 54
+    unit: mL/min/1.73m2
+    measuredAt: 2026-01-28
+    validWithinDays: 90
+    status: confirmed
+    extractedBy: pipeline
+
+  - fact: nyha_class
+    value: III
+    status: confirmed
+    confidence: 0.94
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: symptoms consistent with NYHA class III heart failure
+    reviewedBy: e.cuyugan
+    reviewedAt: 2026-08-20T14:31:00Z
+
+  - fact: lvef
+    value: 32
+    unit: "%"
+    status: proposed
+    confidence: 0.98
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: LVEF 32% by biplane Simpson's method
+    reviewedBy: null
+
+  - fact: nt_probnp
+    value: 2140
+    unit: pg/mL
+    status: proposed
+    confidence: 0.96
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: Serum NT-proBNP drawn the same morning was 2140 pg/mL.
+    reviewedBy: null
+
+  - fact: hospitalized_for_hf_last_12mo
+    value: true
+    status: proposed
+    confidence: 0.89
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: He was hospitalized for decompensated heart failure in November 2025.
+    reviewedBy: null

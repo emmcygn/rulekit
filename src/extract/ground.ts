@@ -254,17 +254,20 @@ export function groundProposedFacts(
     }
 
     seen.add(pf.fact);
-    const entry: FactEntry = {
+    // The unit is taken from the fact model, not from the model's output: it
+    // was already checked equal, and sourcing it from the declaration keeps
+    // every facts.yaml spelling it the same way.
+    const declaredUnit = decl !== undefined && decl.type === "number" ? decl.unit : undefined;
+    grounded.push({
       fact: pf.fact,
       value,
+      ...(declaredUnit !== undefined ? { unit: declaredUnit } : {}),
       status: "proposed", // never anything else — no confidence auto-confirms (spec §2, non-goal 2)
       confidence: pf.confidence,
       extractedBy,
       source,
       reviewedBy: null,
-    };
-    if (decl !== undefined && decl.type === "number" && decl.unit !== undefined) entry.unit = decl.unit;
-    grounded.push(entry);
+    });
   }
 
   return { grounded, rejected };
