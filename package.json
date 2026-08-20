@@ -9,7 +9,9 @@
   "scripts": {
     "test": "vitest run",
     "lint": "eslint .",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "rules": "tsx src/cli/index.ts",
+    "dogfood": "tsx src/cli/index.ts check rules/trials/demo-hf-001/ruleset@1.0.0.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/demo-hf-001 --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +19,9 @@
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/node": "^26.2.0",
     "eslint": "^10.8.1",
+    "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.11"
@@ -26,5 +30,8 @@
     "commander": "^15.0.0",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"
+  },
+  "bin": {
+    "rules": "dist/cli/index.js"
   }
 }
