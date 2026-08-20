@@ -196,6 +196,24 @@ cases:
       natriuretic-peptide: pass
       overall: undetermined
 
+  - name: both peptide assays drawn and low fails the natriuretic criterion
+    facts:
+      age: 71
+      conditions:
+        - { code: "88805009", system: snomed, daysAgo: 900 }
+        - { code: "53741008", system: snomed, daysAgo: 1200 }
+      medications:
+        - { code: "316672", system: rxnorm, daysAgo: 30 }
+      hf_symptom_duration_months: 18
+      lab_lvef: 32
+      lab_lvef_days_ago: 60
+      lab_bnp: 120
+      lab_nt_probnp: 400
+      index_hospital_days: 6
+    expect:
+      natriuretic-peptide: fail
+      overall: ineligible
+
   - name: NT-proBNP 400 with no BNP drawn is not evaluable - a BNP draw could still qualify
     facts:
       age: 71
