@@ -6,3 +6,11 @@ facts:
   egfr: { type: number, unit: mL/min/1.73m2 }
   medications: { type: code, systems: [rxnorm, rxnorm-class] }
   conditions: { type: code, systems: [snomed] }
+  # phase-3 corpus vocabulary (scripts/flatten-synthea.ts lab_<slug> convention)
+  hf_symptom_duration_months: { type: number, unit: months }
+  lab_lvef: { type: number, unit: "%" }
+  lab_lvef_days_ago: { type: number, unit: days }
+  lab_bnp: { type: number, unit: pg/mL }
+  lab_nt_probnp: { type: number, unit: pg/mL }
+  lab_egfr: { type: number, unit: mL/min/1.73m2 }
+  index_hospital_days: { type: number, unit: days }
