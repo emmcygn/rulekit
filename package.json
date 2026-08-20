@@ -18,11 +18,13 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.1",
+    "promptfoo": "^0.122.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.11"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
     "commander": "^15.0.0",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"
