@@ -1,0 +1,66 @@
+{
+  "doc": "clinic-2026-05-16",
+  "model": "claude-opus-5",
+  "prompt": "extract-facts.v1",
+  "recordedAt": "2026-08-20T09:14:58Z",
+  "parsed_output": {
+    "facts": [
+      {
+        "fact": "nyha_class",
+        "value": "II",
+        "unit": "",
+        "confidence": 0.79,
+        "quote": "her current functional class is NYHA class II"
+      },
+      {
+        "fact": "on_beta_blocker",
+        "value": "true",
+        "unit": "",
+        "confidence": 0.83,
+        "quote": "we will stop metoprolol succinate today and start carvedilol 3.125 mg twice daily"
+      },
+      {
+        "fact": "on_sglt2_inhibitor",
+        "value": "true",
+        "unit": "",
+        "confidence": 0.9,
+        "quote": "empagliflozin 10 mg daily"
+      },
+      {
+        "fact": "egfr",
+        "value": "71",
+        "unit": "mL/min/1.73m2",
+        "confidence": 0.96,
+        "quote": "eGFR 71 mL/min/1.73m2"
+      },
+      {
+        "fact": "lvef",
+        "value": "41",
+        "unit": "%",
+        "confidence": 0.92,
+        "quote": "Most recent echocardiogram 2026-04-30: LVEF 41%."
+      },
+      {
+        "fact": "potassium",
+        "value": "4.6",
+        "unit": "mmol/L",
+        "confidence": 0.95,
+        "quote": "potassium 4.6 mmol/L"
+      },
+      {
+        "fact": "nt_probnp",
+        "value": "810",
+        "unit": "pg/mL",
+        "confidence": 0.95,
+        "quote": "NT-proBNP 810 pg/mL"
+      },
+      {
+        "fact": "systolic_bp",
+        "value": "96",
+        "unit": "mmHg",
+        "confidence": 0.88,
+        "quote": "BP 96/58 mmHg seated"
+      }
+    ]
+  }
+}

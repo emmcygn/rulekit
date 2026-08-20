@@ -1,0 +1,17 @@
+{
+  "doc": "echo-2026-01-22",
+  "model": "claude-opus-5",
+  "prompt": "extract-facts.v1",
+  "recordedAt": "2026-08-20T09:14:31Z",
+  "parsed_output": {
+    "facts": [
+      {
+        "fact": "lvef",
+        "value": "40-45",
+        "unit": "%",
+        "confidence": 0.71,
+        "quote": "EF visually estimated at 40-45%"
+      }
+    ]
+  }
+}

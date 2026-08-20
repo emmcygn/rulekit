@@ -1,0 +1,38 @@
+{
+  "doc": "echo-2026-06-01",
+  "model": "claude-opus-5",
+  "prompt": "extract-facts.v1",
+  "recordedAt": "2026-08-20T09:15:11Z",
+  "parsed_output": {
+    "facts": [
+      {
+        "fact": "lvef",
+        "value": "55",
+        "unit": "percent",
+        "confidence": 0.97,
+        "quote": "LVEF 55% by biplane Simpson's method"
+      },
+      {
+        "fact": "nyha_class",
+        "value": "I",
+        "unit": "",
+        "confidence": 0.9,
+        "quote": "functional assessment today is NYHA class I"
+      },
+      {
+        "fact": "systolic_bp",
+        "value": "148",
+        "unit": "mmHg",
+        "confidence": 0.94,
+        "quote": "Blood pressure at the time of study was 148/88 mmHg."
+      },
+      {
+        "fact": "nt_probnp",
+        "value": "310",
+        "unit": "pg/mL",
+        "confidence": 0.95,
+        "quote": "NT-proBNP from 2026-05-27 was 310 pg/mL."
+      }
+    ]
+  }
+}

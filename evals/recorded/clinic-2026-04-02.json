@@ -1,0 +1,45 @@
+{
+  "doc": "clinic-2026-04-02",
+  "model": "claude-opus-5",
+  "prompt": "extract-facts.v1",
+  "recordedAt": "2026-08-20T09:14:44Z",
+  "parsed_output": {
+    "facts": [
+      {
+        "fact": "on_anticoagulant",
+        "value": "false",
+        "unit": "",
+        "confidence": 0.88,
+        "quote": "There has been no anticoagulant use since the GI bleed in March 2024"
+      },
+      {
+        "fact": "nyha_class",
+        "value": "III",
+        "unit": "",
+        "confidence": 0.91,
+        "quote": "consistent with NYHA class III symptoms"
+      },
+      {
+        "fact": "egfr",
+        "value": "62",
+        "unit": "mL/min/1.73m2",
+        "confidence": 0.96,
+        "quote": "eGFR 62 mL/min/1.73m2"
+      },
+      {
+        "fact": "systolic_bp",
+        "value": "126",
+        "unit": "mmHg",
+        "confidence": 0.93,
+        "quote": "BP 126/78 mmHg"
+      },
+      {
+        "fact": "potassium",
+        "value": "4.1",
+        "unit": "mmol/L",
+        "confidence": 0.94,
+        "quote": "potassium 4.1 mmol/L"
+      }
+    ]
+  }
+}

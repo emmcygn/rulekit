@@ -1,0 +1,73 @@
+{
+  "doc": "clinic-2026-02-04",
+  "model": "claude-opus-5",
+  "prompt": "extract-facts.v1",
+  "recordedAt": "2026-08-20T09:14:19Z",
+  "parsed_output": {
+    "facts": [
+      {
+        "fact": "nyha_class",
+        "value": "II",
+        "unit": "",
+        "confidence": 0.93,
+        "quote": "best described as NYHA class II symptoms"
+      },
+      {
+        "fact": "egfr",
+        "value": "58",
+        "unit": "mL/min/1.73m2",
+        "confidence": 0.97,
+        "quote": "eGFR 58 mL/min/1.73m2"
+      },
+      {
+        "fact": "nt_probnp",
+        "value": "640",
+        "unit": "pg/mL",
+        "confidence": 0.96,
+        "quote": "NT-proBNP 640 pg/mL"
+      },
+      {
+        "fact": "potassium",
+        "value": "4.3",
+        "unit": "mmol/L",
+        "confidence": 0.95,
+        "quote": "Potassium 4.3 mmol/L"
+      },
+      {
+        "fact": "systolic_bp",
+        "value": "118",
+        "unit": "mmHg",
+        "confidence": 0.92,
+        "quote": "BP 118/72 mmHg"
+      },
+      {
+        "fact": "on_arni",
+        "value": "true",
+        "unit": "",
+        "confidence": 0.9,
+        "quote": "sacubitril/valsartan 49/51 mg twice daily"
+      },
+      {
+        "fact": "on_beta_blocker",
+        "value": "true",
+        "unit": "",
+        "confidence": 0.91,
+        "quote": "carvedilol 12.5 mg twice daily"
+      },
+      {
+        "fact": "hospitalized_for_hf_last_12mo",
+        "value": "false",
+        "unit": "",
+        "confidence": 0.87,
+        "quote": "she has not been hospitalized for heart failure in the past twelve months"
+      },
+      {
+        "fact": "on_sglt2_inhibitor",
+        "value": "false",
+        "unit": "",
+        "confidence": 0.62,
+        "quote": "MEDICATIONS (reviewed and reconciled today)"
+      }
+    ]
+  }
+}
