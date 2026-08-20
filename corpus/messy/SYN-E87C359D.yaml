@@ -18,7 +18,6 @@
 #   backdate: lab_xlab_77_days_ago — 842 -> 995
 #   local-code: lab_k_ser — potassium -> K-SER
 #   sloppy-unit: lab_systolic_bp — mm[Hg] -> mm Hg
-#   local-code: lab_xlab_77 — total_cholesterol -> XLAB-77
 #   local-code: lab_wbc_a — wbc -> WBC-A
 #   backdate: lab_weight_days_ago — 100 -> 257
 patient: SYN-E87C359D
@@ -128,6 +127,10 @@ facts:
   lab_systolic_bp_unit: mm Hg
   lab_systolic_bp_code: 8480-6
   lab_systolic_bp_days_ago: 100
+  lab_total_cholesterol: 196.53
+  lab_total_cholesterol_unit: mg/dL
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 842
   lab_triglycerides: 119.36
   lab_triglycerides_unit: mg/dL
   lab_triglycerides_code: 2571-8
@@ -148,10 +151,10 @@ facts:
   lab_hdl_c_unit: mg/dL
   lab_hdl_c_code: HDL-C
   lab_hdl_c_days_ago: 894
-  lab_xlab_77: 196.53
-  lab_xlab_77_unit: mg/dL
+  lab_xlab_77: 96.49
+  lab_xlab_77_unit: milligrams per deciliter
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 842
+  lab_xlab_77_days_ago: 995
   lab_k_ser: 3.78
   lab_k_ser_unit: mmol/L
   lab_k_ser_code: K-SER

@@ -136,6 +136,10 @@ facts:
   lab_sodium_code: 2947-0
   lab_sodium_days_ago: 461
   lab_sodium_unit: mmol/L
+  lab_systolic_bp: 126.95
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 291
+  lab_systolic_bp_unit: mm[Hg]
   lab_total_cholesterol: 170.62
   lab_total_cholesterol_code: 2093-3
   lab_total_cholesterol_days_ago: 61
@@ -153,8 +157,8 @@ facts:
   lab_weight_days_ago: 291
   lab_weight_unit: kg
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 291
-  lab_xlab_77_raw: 126.95 mm[Hg]
+  lab_xlab_77_days_ago: 61
+  lab_xlab_77_raw: 75.31 mg / dL
   medications:
     - code: "310965"
       system: rxnorm

@@ -11,7 +11,6 @@
 #   stringify-value: lab_total_cholesterol — 188.62 -> "hemolyzed"
 #   local-code: lab_trig — triglycerides -> TRIG
 #   backdate: lab_wbc_days_ago — 24 -> 236
-#   local-code: lab_xlab_77 — weight -> XLAB-77
 patient: SYN-604AD5EF
 facts:
   age: 92
@@ -82,10 +81,14 @@ facts:
   lab_wbc_unit: 10*3/uL
   lab_wbc_code: 6690-2
   lab_wbc_days_ago: 236
-  lab_xlab_77: 73.58
-  lab_xlab_77_unit: kg
+  lab_weight: 73.58
+  lab_weight_unit: kg
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 24
+  lab_xlab_77: ">30.2"
+  lab_xlab_77_unit: kg/m2
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 24
+  lab_xlab_77_days_ago: 230
   lab_ldl_c: 102.44
   lab_ldl_c_unit: mg/dL
   lab_ldl_c_code: LDL-C

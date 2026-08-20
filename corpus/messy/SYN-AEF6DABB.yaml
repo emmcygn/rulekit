@@ -17,7 +17,6 @@
 #   backdate: lab_sodium_days_ago — 43 -> 138
 #   drop-unit: lab_systolic_bp — dropped "mm[Hg]"
 #   local-code: lab_chol_t — total_cholesterol -> CHOL-T
-#   local-code: lab_xlab_77 — wbc -> XLAB-77
 #   drop-unit: lab_weight — dropped "kg"
 patient: SYN-AEF6DABB
 facts:
@@ -134,13 +133,17 @@ facts:
   lab_triglycerides_unit: mg/dL
   lab_triglycerides_code: 2571-8
   lab_triglycerides_days_ago: 43
+  lab_wbc: 9.91
+  lab_wbc_unit: 10*3/uL
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 165
   lab_weight: 80.55
   lab_weight_code: 29463-7
   lab_weight_days_ago: 165
-  lab_xlab_77: 9.91
-  lab_xlab_77_unit: 10*3/uL
+  lab_xlab_77: 37.3
+  lab_xlab_77_unit: mg/dL
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 165
+  lab_xlab_77_days_ago: 43
   lab_hgb: 12
   lab_hgb_unit: g/dL
   lab_hgb_code: HGB

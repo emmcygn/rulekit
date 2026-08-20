@@ -76,9 +76,13 @@ facts:
   lab_wbc_code: 6690-2
   lab_wbc_days_ago: 236
   lab_wbc_unit: 10*3/uL
+  lab_weight: 73.58
+  lab_weight_code: 29463-7
+  lab_weight_days_ago: 24
+  lab_weight_unit: kg
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 24
-  lab_xlab_77_raw: 73.58 kg
+  lab_xlab_77_days_ago: 230
+  lab_xlab_77_raw: ">30.2 kg/m2"
   medications:
     - code: "197604"
       system: rxnorm

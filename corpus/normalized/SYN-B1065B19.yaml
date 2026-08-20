@@ -67,6 +67,10 @@ facts:
   lab_albumin_code: 1751-7
   lab_albumin_days_ago: 14
   lab_albumin_unit: g/dL
+  lab_ast: 16.35
+  lab_ast_code: 1920-8
+  lab_ast_days_ago: 14
+  lab_ast_unit: U/L
   lab_bilirubin_total: 0.58
   lab_bilirubin_total_code: 1975-2
   lab_bilirubin_total_days_ago: 14
@@ -163,7 +167,7 @@ facts:
   lab_weight_unit: kg
   lab_xlab_77_code: XLAB-77
   lab_xlab_77_days_ago: 14
-  lab_xlab_77_raw: 16.35 U/L
+  lab_xlab_77_raw: "49.1"
   medications:
     - code: "1719286"
       system: rxnorm

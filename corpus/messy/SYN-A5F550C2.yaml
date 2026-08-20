@@ -27,7 +27,6 @@
 #   drop-unit: lab_potassium — dropped "mmol/L"
 #   sloppy-unit: lab_sodium — mmol/L -> millimoles per liter
 #   backdate: lab_sodium_days_ago — 61 -> 461
-#   local-code: lab_xlab_77 — systolic_bp -> XLAB-77
 patient: SYN-A5F550C2
 facts:
   age: 89
@@ -149,6 +148,10 @@ facts:
   lab_sodium_unit: millimoles per liter
   lab_sodium_code: 2947-0
   lab_sodium_days_ago: 461
+  lab_systolic_bp: 126.95
+  lab_systolic_bp_unit: mm[Hg]
+  lab_systolic_bp_code: 8480-6
+  lab_systolic_bp_days_ago: 291
   lab_total_cholesterol: 170.62
   lab_total_cholesterol_unit: mg/dL
   lab_total_cholesterol_code: 2093-3
@@ -177,10 +180,10 @@ facts:
   lab_ca_s_unit: mg / dL
   lab_ca_s_code: CA-S
   lab_ca_s_days_ago: 61
-  lab_xlab_77: 126.95
-  lab_xlab_77_unit: mm[Hg]
+  lab_xlab_77: 75.31
+  lab_xlab_77_unit: mg / dL
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 291
+  lab_xlab_77_days_ago: 61
   lab_hdl_c: 48.87
   lab_hdl_c_unit: Mg/Dl
   lab_hdl_c_code: HDL-C

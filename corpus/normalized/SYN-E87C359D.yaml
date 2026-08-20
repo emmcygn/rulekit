@@ -113,6 +113,10 @@ facts:
   lab_systolic_bp_code: 8480-6
   lab_systolic_bp_days_ago: 100
   lab_systolic_bp_unit: mm[Hg]
+  lab_total_cholesterol: 196.53
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 842
+  lab_total_cholesterol_unit: mg/dL
   lab_triglycerides: 119.36
   lab_triglycerides_code: 2571-8
   lab_triglycerides_days_ago: 842
@@ -126,8 +130,8 @@ facts:
   lab_weight_days_ago: 257
   lab_weight_unit: kg
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 842
-  lab_xlab_77_raw: 196.53 mg/dL
+  lab_xlab_77_days_ago: 995
+  lab_xlab_77_raw: 96.49 milligrams per deciliter
   medications:
     - code: "996740"
       system: rxnorm

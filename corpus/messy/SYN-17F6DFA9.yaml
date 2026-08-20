@@ -16,8 +16,7 @@
 #   local-code: lab_xlab_77 — systolic_bp -> XLAB-77
 #   drop-unit: lab_xlab_77 — dropped "mm[Hg]"
 #   backdate: lab_xlab_77_days_ago — 156 -> 379
-#   local-code: lab_xlab_77 — total_cholesterol -> XLAB-77
-#   drop-unit: lab_xlab_77 — dropped "mg/dL"
+#   drop-unit: lab_total_cholesterol — dropped "mg/dL"
 #   local-code: lab_trig — triglycerides -> TRIG
 #   sloppy-unit: lab_wbc — 10*3/uL -> thousand per microliter
 patient: SYN-17F6DFA9
@@ -125,6 +124,9 @@ facts:
   lab_sodium_unit: mmol/l
   lab_sodium_code: 2947-0
   lab_sodium_days_ago: 156
+  lab_total_cholesterol: 161.91
+  lab_total_cholesterol_code: 2093-3
+  lab_total_cholesterol_days_ago: 156
   lab_wbc: 6.38
   lab_wbc_unit: thousand per microliter
   lab_wbc_code: 6690-2
@@ -133,9 +135,9 @@ facts:
   lab_weight_unit: kg
   lab_weight_code: 29463-7
   lab_weight_days_ago: 156
-  lab_xlab_77: 161.91
+  lab_xlab_77: 110.18
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 156
+  lab_xlab_77_days_ago: 379
   lab_trig: 116.25
   lab_trig_unit: mg/dL
   lab_trig_code: TRIG

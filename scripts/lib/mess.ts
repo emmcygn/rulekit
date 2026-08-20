@@ -108,8 +108,11 @@ export function messPatient(p: PatientFacts, seed: number, rates: Partial<MessRa
     let currentKey = key;
     if (r.chance(rate["local-code"])) {
       const local = r.chance(0.12) ? UNRESOLVABLE_LOCAL_CODE : localBySlug().get(slug);
-      if (local) {
-        const renamed = `lab_${slugifyCode(local)}`;
+      const renamed = local ? `lab_${slugifyCode(local)}` : undefined;
+      // Two labs can draw the same unresolvable code; renaming both would
+      // silently overwrite the first. Corrupting data is the job, losing it is
+      // not, so the second one is left alone.
+      if (local && renamed && facts[renamed] === undefined && facts[`${renamed}_code`] === undefined) {
         for (const suffix of ["", "_unit", "_code", "_days_ago"]) {
           const from = `${currentKey}${suffix}`;
           if (facts[from] === undefined) continue;

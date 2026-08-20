@@ -13,7 +13,6 @@
 #   backdate: lab_platelets_days_ago — 133 -> 428
 #   local-code: lab_k_ser — potassium -> K-SER
 #   drop-unit: lab_k_ser — dropped "mmol/L"
-#   local-code: lab_xlab_77 — sodium -> XLAB-77
 #   backdate: lab_total_cholesterol_days_ago — 504 -> 775
 #   drop-unit: lab_triglycerides — dropped "mg/dL"
 patient: SYN-A2B017C1
@@ -76,6 +75,10 @@ facts:
   lab_platelets_unit: K/uL
   lab_platelets_code: 777-3
   lab_platelets_days_ago: 428
+  lab_sodium: 141.57
+  lab_sodium_unit: mmol/L
+  lab_sodium_code: 2947-0
+  lab_sodium_days_ago: 133
   lab_systolic_bp: 108.38
   lab_systolic_bp_unit: mm[Hg]
   lab_systolic_bp_code: 8480-6
@@ -103,10 +106,10 @@ facts:
   lab_a1c_unit: percent
   lab_a1c_code: A1C
   lab_a1c_days_ago: 133
-  lab_xlab_77: 141.57
-  lab_xlab_77_unit: mmol/L
+  lab_xlab_77: 66.67
+  lab_xlab_77_unit: mg/dl
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 133
+  lab_xlab_77_days_ago: 504
   lab_k_ser: 4.54
   lab_k_ser_code: K-SER
   lab_k_ser_days_ago: 133

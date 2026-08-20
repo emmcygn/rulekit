@@ -145,6 +145,17 @@ describe("messPatient", () => {
     }
   });
 
+  it("never loses a lab to a fact-name collision", () => {
+    // Every lab that goes in comes out under some name: corrupting data is the
+    // job, losing it is not. Two labs drawing the same unresolvable local code
+    // used to overwrite each other.
+    for (const p of cohort) {
+      const before = labSlugsOf(p.facts).length;
+      const after = labSlugsOf(messPatient(p, 42).patient.facts).length;
+      expect(after, p.patient).toBe(before);
+    }
+  });
+
   it("honours a rate of zero", () => {
     const off = Object.fromEntries(Object.keys(DEFAULT_RATES).map((k) => [k, 0]));
     const messy = messPatient(clean(5), 42, off);

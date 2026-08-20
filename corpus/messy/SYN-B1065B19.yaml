@@ -3,7 +3,6 @@
 # corruptions:
 #   local-code: lab_xlab_77 — alt -> XLAB-77
 #   drop-unit: lab_xlab_77 — dropped "U/L"
-#   local-code: lab_xlab_77 — ast -> XLAB-77
 #   sloppy-unit: lab_bilirubin_total — mg/dL -> mg / dL
 #   drop-unit: lab_bun — dropped "mg/dL"
 #   sloppy-unit: lab_calcium — mg/dL -> milligrams per deciliter
@@ -83,6 +82,10 @@ facts:
   lab_albumin_unit: g/dL
   lab_albumin_code: 1751-7
   lab_albumin_days_ago: 14
+  lab_ast: 16.35
+  lab_ast_unit: U/L
+  lab_ast_code: 1920-8
+  lab_ast_days_ago: 14
   lab_bilirubin_total: 0.58
   lab_bilirubin_total_unit: mg / dL
   lab_bilirubin_total_code: 1975-2
@@ -171,10 +174,9 @@ facts:
   hf_symptom_duration_months: 1
   hf_index_event_days_ago: 5
   index_hospital_days: 11
-  lab_xlab_77: 16.35
+  lab_xlab_77: 49.1
   lab_xlab_77_code: XLAB-77
   lab_xlab_77_days_ago: 14
-  lab_xlab_77_unit: U/L
   lab_ntpbnp: 278.21
   lab_ntpbnp_code: NTPBNP
   lab_ntpbnp_days_ago: 756

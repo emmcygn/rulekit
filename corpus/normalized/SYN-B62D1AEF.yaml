@@ -12,6 +12,7 @@
 #   unit-alias: lab_height — "centimeters" -> cm
 #   mapped-code: lab_hemoglobin — HGB -> LOINC 718-7
 #   unit-alias: lab_ldl — "mg/dl" -> mg/dL
+#   unit-alias: lab_lvef — "pct" -> %
 #   assumed-unit: lab_potassium — unit missing; adopted the LOINC's conventional unit mmol/L
 #   unit-alias: lab_sodium — "mmol/l" -> mmol/L
 #   assumed-unit: lab_total_cholesterol — unit missing; adopted the LOINC's conventional unit mg/dL
@@ -115,6 +116,10 @@ facts:
   lab_ldl_code: 18262-6
   lab_ldl_days_ago: 476
   lab_ldl_unit: mg/dL
+  lab_lvef: 36
+  lab_lvef_code: 10230-1
+  lab_lvef_days_ago: 183
+  lab_lvef_unit: "%"
   lab_nt_probnp: 1394.25
   lab_nt_probnp_code: 33762-6
   lab_nt_probnp_days_ago: 204
@@ -152,8 +157,8 @@ facts:
   lab_weight_days_ago: 440
   lab_weight_unit: kg
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 183
-  lab_xlab_77_raw: 36 pct
+  lab_xlab_77_days_ago: 189
+  lab_xlab_77_raw: 47.04 mg / dL
   medications:
     - code: "1719286"
       system: rxnorm

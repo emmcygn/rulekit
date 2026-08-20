@@ -122,13 +122,17 @@ facts:
   lab_triglycerides_code: 2571-8
   lab_triglycerides_days_ago: 43
   lab_triglycerides_unit: mg/dL
+  lab_wbc: 9.91
+  lab_wbc_code: 6690-2
+  lab_wbc_days_ago: 165
+  lab_wbc_unit: 10*3/uL
   lab_weight: 80.55
   lab_weight_code: 29463-7
   lab_weight_days_ago: 165
   lab_weight_unit: kg
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 165
-  lab_xlab_77_raw: 9.91 10*3/uL
+  lab_xlab_77_days_ago: 43
+  lab_xlab_77_raw: 37.3 mg/dL
   medications:
     - code: "316672"
       system: rxnorm

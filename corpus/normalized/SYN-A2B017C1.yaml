@@ -87,6 +87,10 @@ facts:
   lab_potassium_code: 6298-4
   lab_potassium_days_ago: 133
   lab_potassium_unit: mmol/L
+  lab_sodium: 141.57
+  lab_sodium_code: 2947-0
+  lab_sodium_days_ago: 133
+  lab_sodium_unit: mmol/L
   lab_systolic_bp: 108.38
   lab_systolic_bp_code: 8480-6
   lab_systolic_bp_days_ago: 133
@@ -108,6 +112,6 @@ facts:
   lab_weight_days_ago: 133
   lab_weight_unit: kg
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 133
-  lab_xlab_77_raw: 141.57 mmol/L
+  lab_xlab_77_days_ago: 504
+  lab_xlab_77_raw: 66.67 mg/dl
   sex: female

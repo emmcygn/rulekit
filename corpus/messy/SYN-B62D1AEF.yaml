@@ -15,8 +15,7 @@
 #   local-code: lab_hgb — hemoglobin -> HGB
 #   sloppy-unit: lab_ldl — mg/dL -> mg/dl
 #   backdate: lab_ldl_days_ago — 189 -> 476
-#   local-code: lab_xlab_77 — lvef -> XLAB-77
-#   sloppy-unit: lab_xlab_77 — % -> pct
+#   sloppy-unit: lab_lvef — % -> pct
 #   drop-unit: lab_potassium — dropped "mmol/L"
 #   sloppy-unit: lab_sodium — mmol/L -> mmol/l
 #   drop-unit: lab_total_cholesterol — dropped "mg/dL"
@@ -122,6 +121,10 @@ facts:
   lab_ldl_unit: mg/dl
   lab_ldl_code: 18262-6
   lab_ldl_days_ago: 476
+  lab_lvef: 36
+  lab_lvef_unit: pct
+  lab_lvef_code: 10230-1
+  lab_lvef_days_ago: 183
   lab_nt_probnp: 1394.25
   lab_nt_probnp_unit: pg/mL
   lab_nt_probnp_code: 33762-6
@@ -162,10 +165,10 @@ facts:
   lab_glu_r_unit: mg/dL
   lab_glu_r_code: GLU-R
   lab_glu_r_days_ago: 3
-  lab_xlab_77: 36
-  lab_xlab_77_unit: pct
+  lab_xlab_77: 47.04
+  lab_xlab_77_unit: mg / dL
   lab_xlab_77_code: XLAB-77
-  lab_xlab_77_days_ago: 183
+  lab_xlab_77_days_ago: 189
   lab_hct: 47.79
   lab_hct_unit: "%"
   lab_hct_code: HCT
