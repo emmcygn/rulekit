@@ -4,11 +4,12 @@ import { join } from "node:path";
 import {
   parseRuleSet, parseFactModel, parsePatient, parseTestSuite,
   checkRuleSet, runSuite, deadRules, structuralDiff, behavioralDiff, evalPatient,
-  type Finding,
+  type Evaluation, type Finding, type Overall, type PatientFacts,
 } from "../core/index.js";
 
-const read = (p: string) => readFileSync(p, "utf8");
-const loadCorpus = (dir: string) => readdirSync(dir).filter((f) => f.endsWith(".yaml")).map((f) => parsePatient(read(join(dir, f))));
+const read = (p: string): string => readFileSync(p, "utf8");
+const loadCorpus = (dir: string): PatientFacts[] =>
+  readdirSync(dir).filter((f: string) => f.endsWith(".yaml")).map((f: string) => parsePatient(read(join(dir, f))));
 
 function printFindings(findings: Finding[]): void {
   for (const level of ["error", "warning", "info"] as const) {
@@ -70,8 +71,8 @@ program.command("screen")
   .argument("<ruleset>").requiredOption("--corpus <dir>").requiredOption("--out <file>")
   .action((rulesetPath: string, opts: { corpus: string; out: string }) => {
     const rs = parseRuleSet(read(rulesetPath));
-    const patients = loadCorpus(opts.corpus).map((p) => evalPatient(rs, p));
-    const counts = { eligible: 0, ineligible: 0, undetermined: 0 };
+    const patients: Evaluation[] = loadCorpus(opts.corpus).map((p: PatientFacts) => evalPatient(rs, p));
+    const counts: Record<Overall, number> = { eligible: 0, ineligible: 0, undetermined: 0 };
     for (const p of patients) counts[p.overall] += 1;
     writeFileSync(opts.out, JSON.stringify({ counts, patients }, null, 2));
     console.log(`screened ${patients.length}: ${counts.eligible} eligible · ${counts.ineligible} ineligible · ${counts.undetermined} undetermined → ${opts.out}`);
