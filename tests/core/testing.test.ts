@@ -1,0 +1,70 @@
+import { describe, it, expect } from "vitest";
+import { runSuite, deadRules } from "../../src/core/testing.js";
+import { parseRuleSet, parseTestSuite } from "../../src/core/schema.js";
+
+const RS = parseRuleSet(`
+ruleset: r
+rulesetVersion: 1.0.0
+factModel: patient-facts/v1
+criteria:
+  - { id: age-min, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 18 } }
+  - { id: renal-safety, kind: exclusion, verbatim: v, when: { fact: egfr, op: lt, value: 45 } }
+`);
+
+describe("runSuite", () => {
+  it("reports per-case pass/fail with mismatch details", () => {
+    const suite = parseTestSuite(`
+cases:
+  - { name: adult ok, facts: { age: 40, egfr: 60 }, expect: { age-min: pass, renal-safety: pass, overall: eligible } }
+  - { name: wrong expectation, facts: { age: 40, egfr: 60 }, expect: { age-min: fail, overall: eligible } }
+`);
+    const r = runSuite(RS, suite);
+    expect(r.cases[0]!.ok).toBe(true);
+    expect(r.cases[1]!.ok).toBe(false);
+    expect(r.cases[1]!.mismatches).toEqual([{ key: "age-min", expected: "fail", actual: "pass" }]);
+    expect(r.ok).toBe(false);
+  });
+
+  it("coverage counts verdict directions and flags one-sided criteria", () => {
+    const suite = parseTestSuite(`
+cases:
+  - { name: a, facts: { age: 40, egfr: 60 }, expect: { overall: eligible } }
+  - { name: b, facts: { age: 12, egfr: 60 }, expect: { overall: ineligible } }
+`);
+    const cov = runSuite(RS, suite).coverage;
+    const age = cov.find((c) => c.criterion === "age-min")!;
+    expect(age.pass).toBe(1);
+    expect(age.fail).toBe(1);
+    expect(age.gaps).toEqual([]);
+    const renal = cov.find((c) => c.criterion === "renal-safety")!;
+    expect(renal.pass).toBe(2);
+    expect(renal.fail).toBe(0);
+    expect(renal.gaps).toEqual(["never fails"]);
+  });
+});
+
+describe("deadRules", () => {
+  it("an exclusion that never fires on the corpus is dead", () => {
+    const corpus = [
+      { patient: "P1", facts: { age: 40, egfr: 60 } },
+      { patient: "P2", facts: { age: 12, egfr: 80 } },
+    ];
+    expect(deadRules(RS, corpus)).toEqual([{ criterion: "renal-safety", reason: "never fires on the corpus (0 of 2 patients)" }]);
+  });
+
+  it("an inclusion that never fails on the corpus is dead", () => {
+    const corpus = [
+      { patient: "P1", facts: { age: 40, egfr: 30 } },
+      { patient: "P2", facts: { age: 70, egfr: 80 } },
+    ];
+    expect(deadRules(RS, corpus)).toEqual([{ criterion: "age-min", reason: "never fails on the corpus (0 of 2 patients)" }]);
+  });
+
+  it("nothing dead when both directions occur", () => {
+    const corpus = [
+      { patient: "P1", facts: { age: 12, egfr: 30 } },
+      { patient: "P2", facts: { age: 40, egfr: 60 } },
+    ];
+    expect(deadRules(RS, corpus)).toEqual([]);
+  });
+});
