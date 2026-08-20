@@ -32,7 +32,7 @@ export async function pipeline() {
       import("../dist/extract/eval.js"),
     ]);
   } catch (err) {
-    throw new Error(`evals need the built pipeline in dist/ — run \`npm run build\` first (${err.message})`);
+    throw new Error("evals need the built pipeline in dist/ — run `npm run build` first", { cause: err });
   }
   const [core, notes, ground, pipe, recorded, evalMod] = mods;
   const noteIndex = notes.loadNotesDir(notes.NOTES_DIR);
