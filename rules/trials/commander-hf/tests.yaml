@@ -196,7 +196,7 @@ cases:
       natriuretic-peptide: pass
       overall: undetermined
 
-  - name: NT-proBNP 400 pg/mL is below the 800 threshold and no BNP was drawn
+  - name: NT-proBNP 400 with no BNP drawn is not evaluable - a BNP draw could still qualify
     facts:
       age: 71
       conditions:
@@ -210,8 +210,8 @@ cases:
       lab_nt_probnp: 400
       index_hospital_days: 6
     expect:
-      natriuretic-peptide: fail
-      overall: ineligible
+      natriuretic-peptide: unknown
+      overall: undetermined
 
   - name: atrial fibrillation fires the concomitant-disease exclusion
     facts:
