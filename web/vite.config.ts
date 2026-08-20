@@ -10,7 +10,16 @@ export default defineConfig({
     // web/ imports types + parsers from ../src/core, which lives outside the Vite root.
     fs: { allow: [".."] },
   },
-  build: { chunkSizeWarningLimit: 4096 },
+  build: {
+    // Monaco dwarfs the app; give it its own chunk so the shell loads first and
+    // stays cacheable across workbench deploys.
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => (id.includes("node_modules/monaco-editor") ? "monaco" : undefined),
+      },
+    },
+    chunkSizeWarningLimit: 4096,
+  },
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     environment: "node",
