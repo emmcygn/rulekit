@@ -1,0 +1,40 @@
+---
+doc: clinic-2026-07-09
+patient: SYN-052
+kind: clinic-note
+date: 2026-07-09
+synthetic: true
+trap: discussed-not-prescribed
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+RIVERBEND CARDIOLOGY ASSOCIATES (FICTIONAL)
+HEART FAILURE CLINIC — NEW REFERRAL
+
+Patient: SYN-052            Date of service: 2026-07-09
+Clinician: L. Fenwick, NP (fictional)
+
+SUBJECTIVE
+
+59-year-old man newly referred with HFrEF diagnosed six weeks ago after an admission for pulmonary edema. He reports marked limitation of ordinary activity, comfortable at rest, dyspnea after half a block; this is NYHA class III today. He was hospitalized for heart failure in May 2026.
+
+OBJECTIVE
+
+Vitals: BP 112/70 mmHg, HR 74 bpm.
+Laboratory, drawn 2026-07-07: eGFR 66 mL/min/1.73m2, potassium 4.0 mmol/L, NT-proBNP 1980 pg/mL, HbA1c 6.1%.
+Echocardiogram 2026-06-03: LVEF 29%.
+
+MEDICATIONS (current, reconciled today)
+  sacubitril/valsartan 24/26 mg twice daily
+  carvedilol 6.25 mg twice daily
+  spironolactone 25 mg daily
+  furosemide 40 mg daily
+
+ASSESSMENT AND PLAN
+
+HFrEF on three of the four pillars of guideline-directed therapy. The missing pillar is an SGLT2 inhibitor.
+
+We discussed adding dapagliflozin 10 mg daily but did not start it today — he has an unresolved pharmacy benefit question and a scheduled dental extraction next week, and he prefers to wait until both are settled. He is not currently taking an SGLT2 inhibitor. I have written the prescription to be released at his next visit on 2026-08-06 pending his confirmation; nothing was sent to the pharmacy today.
+
+Continue current regimen unchanged. Counselled on daily weights and sodium.
+
+Electronically signed by L. Fenwick, NP (fictional).

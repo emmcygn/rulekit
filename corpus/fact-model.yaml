@@ -1,0 +1,52 @@
+# Fact model for the heart-failure trial pack.
+#
+# The declared type/unit of every fact the extraction pipeline is allowed to
+# propose. The grounding gate (src/extract/ground.ts) rejects any proposed fact
+# whose name is absent here, or whose value does not parse to the declared type
+# and unit. Parsed with parseFactModel() from src/core/schema.ts.
+#
+# NOTE (phase boundary): this file stands in for the generated fact model that
+# src/packs/trials/facts.ts will emit. It lives in corpus/ so this branch does
+# not touch src/packs/.
+name: patient-facts/v1
+facts:
+  age:
+    type: number
+    unit: years
+  sex:
+    type: enum
+    values: [male, female, other]
+  nyha_class:
+    type: enum
+    values: [I, II, III, IV]
+  lvef:
+    type: number
+    unit: "%"
+  egfr:
+    type: number
+    unit: mL/min/1.73m2
+  nt_probnp:
+    type: number
+    unit: pg/mL
+  systolic_bp:
+    type: number
+    unit: mmHg
+  potassium:
+    type: number
+    unit: mmol/L
+  on_anticoagulant:
+    type: boolean
+  on_beta_blocker:
+    type: boolean
+  on_sglt2_inhibitor:
+    type: boolean
+  on_arni:
+    type: boolean
+  hospitalized_for_hf_last_12mo:
+    type: boolean
+  medications:
+    type: code
+    systems: [rxnorm, rxnorm-class]
+  conditions:
+    type: code
+    systems: [snomed]

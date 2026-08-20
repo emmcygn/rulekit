@@ -1,0 +1,34 @@
+---
+doc: echo-2026-06-01
+patient: SYN-031
+kind: echo-report
+date: 2026-06-01
+synthetic: true
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+LAKESHORE GENERAL (FICTIONAL) — DEPARTMENT OF CARDIOVASCULAR IMAGING
+TRANSTHORACIC ECHOCARDIOGRAM
+
+Patient: SYN-031            Study date: 2026-06-01
+Indication: exertional dyspnea, evaluate for heart failure with preserved ejection fraction.
+
+FINDINGS
+
+Left ventricle: normal cavity size with concentric hypertrophy, septal wall thickness 1.3 cm. LVEF 55% by biplane Simpson's method. No regional wall motion abnormality.
+
+Diastolic function: grade II diastolic dysfunction. E/e' ratio 16. Left atrial volume index 42 mL/m2.
+
+Right ventricle: normal size and function. Estimated pulmonary artery systolic pressure 38 mmHg.
+
+Valves: mild mitral regurgitation, mild aortic sclerosis without stenosis.
+
+CLINICAL CORRELATION
+
+The patient reports no limitation of ordinary physical activity and remains asymptomatic with routine exertion; functional assessment today is NYHA class I. Blood pressure at the time of study was 148/88 mmHg. NT-proBNP from 2026-05-27 was 310 pg/mL.
+
+IMPRESSION
+1. Preserved ejection fraction, LVEF 55%, with concentric hypertrophy.
+2. Grade II diastolic dysfunction with elevated filling pressures — findings compatible with heart failure with preserved ejection fraction in the appropriate clinical context.
+3. Suboptimally controlled hypertension; recommend outpatient management.
+
+Reported by: R. Okonjo, MD (fictional), Cardiovascular Imaging.

@@ -1,0 +1,42 @@
+---
+doc: clinic-2026-02-04
+patient: SYN-007
+kind: clinic-note
+date: 2026-02-04
+synthetic: true
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+RIVERBEND CARDIOLOGY ASSOCIATES (FICTIONAL)
+HEART FAILURE CLINIC — FOLLOW-UP VISIT
+
+Patient: SYN-007            Date of service: 2026-02-04
+Clinician: L. Fenwick, NP (fictional)
+
+SUBJECTIVE
+
+62-year-old woman with HFrEF of ischemic etiology, here for routine three-month follow-up. She reports slight limitation of ordinary physical activity — comfortable at rest, but ordinary walking on an incline produces dyspnea. This is stable since her last visit and is best described as NYHA class II symptoms.
+
+She denies orthopnea, paroxysmal nocturnal dyspnea, chest pain, palpitations, or syncope. Weight is stable at home, up 0.4 kg over six weeks. No hospital admissions since the index admission in 2023; specifically, she has not been hospitalized for heart failure in the past twelve months.
+
+OBJECTIVE
+
+Vitals: BP 118/72 mmHg, HR 64 bpm regular, weight 71.2 kg, SpO2 97% on room air.
+Exam: JVP 6 cm, lungs clear, no S3, trace bilateral ankle edema.
+
+Laboratory, drawn 2026-01-28:
+  Creatinine 1.12 mg/dL
+  eGFR 58 mL/min/1.73m2
+  Potassium 4.3 mmol/L
+  NT-proBNP 640 pg/mL
+
+MEDICATIONS (reviewed and reconciled today)
+  sacubitril/valsartan 49/51 mg twice daily — continue
+  carvedilol 12.5 mg twice daily — continue
+  spironolactone 25 mg daily — continue
+  furosemide 20 mg daily as needed for weight gain
+
+ASSESSMENT AND PLAN
+
+Compensated HFrEF, NYHA class II, on maximally tolerated guideline-directed therapy. Renal function stable. Continue current regimen. Return in three months, sooner for weight gain over 2 kg.
+
+Electronically signed by L. Fenwick, NP (fictional).

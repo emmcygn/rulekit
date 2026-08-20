@@ -1,0 +1,34 @@
+---
+doc: echo-2026-07-21
+patient: SYN-063
+kind: echo-report
+date: 2026-07-21
+synthetic: true
+trap: ambiguous-class
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+LAKESHORE GENERAL (FICTIONAL) — DEPARTMENT OF CARDIOVASCULAR IMAGING
+TRANSTHORACIC ECHOCARDIOGRAM
+
+Patient: SYN-063            Study date: 2026-07-21
+Indication: HFrEF, pre-enrollment assessment.
+
+FINDINGS
+
+Left ventricle: mildly dilated. LVEF 38% by biplane Simpson's method, averaged over three cardiac cycles. Endocardial definition was adequate in both apical windows; contrast was not required.
+
+Right ventricle: normal size, normal systolic function. TAPSE 2.1 cm.
+
+Valves: mild mitral regurgitation. No stenotic lesion.
+
+Pericardium: no effusion.
+
+CLINICAL CORRELATION
+
+The referring team's functional assessment accompanying the request describes class II to III symptoms, varying with the season and with adherence to fluid restriction; a single class was not recorded. Blood pressure at the time of study was 122/76 mmHg.
+
+IMPRESSION
+1. Moderately reduced systolic function, LVEF 38%.
+2. Functional class not determinable from the referral documentation; recommend the treating clinician record a single NYHA class before any enrollment decision.
+
+Reported by: R. Okonjo, MD (fictional), Cardiovascular Imaging.

@@ -1,0 +1,37 @@
+---
+doc: echo-2026-03-12
+patient: SYN-042
+kind: echo-report
+date: 2026-03-12
+synthetic: true
+disclaimer: "SYNTHETIC — fictional patient, fabricated for the rulekit demo. Not a real record. Not for clinical use."
+---
+LAKESHORE GENERAL (FICTIONAL) — DEPARTMENT OF CARDIOVASCULAR IMAGING
+TRANSTHORACIC ECHOCARDIOGRAM
+
+Patient: SYN-042            Study date: 2026-03-12
+Ordering clinician: A. Mbeki, MD (fictional)
+Indication: known heart failure with reduced ejection fraction, interval reassessment.
+
+FINDINGS
+
+Left ventricle: moderately to severely dilated. LVEF 32% by biplane Simpson's method. Global hypokinesis with regional akinesis of the inferolateral wall. LV end-diastolic dimension 6.4 cm.
+
+Right ventricle: mildly dilated with mildly reduced systolic function. TAPSE 1.5 cm.
+
+Valves: moderate functional mitral regurgitation. Trivial tricuspid regurgitation. Aortic valve trileaflet, no stenosis.
+
+Pericardium: no effusion.
+
+CLINICAL CORRELATION
+
+The patient was seen in the reading room by the ordering team. He reports marked limitation of physical activity, comfortable at rest, with dyspnea on climbing a single flight of stairs; symptoms consistent with NYHA class III heart failure. He was hospitalized for decompensated heart failure in November 2025.
+
+Serum NT-proBNP drawn the same morning was 2140 pg/mL.
+
+IMPRESSION
+1. Severely reduced systolic function, LVEF 32%, unchanged from the 2025-09 study.
+2. Moderate functional mitral regurgitation.
+3. Recommend continued guideline-directed medical therapy and consideration for device evaluation.
+
+Reported by: R. Okonjo, MD (fictional), Cardiovascular Imaging.
