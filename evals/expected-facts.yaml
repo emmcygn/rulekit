@@ -1,0 +1,122 @@
+# Ground truth for the extraction eval.
+#
+# Ground truth exists by construction: we wrote every note in corpus/notes/, so
+# every fact each one states is known exactly. This file is the single source of
+# truth — src/extract/eval.ts scores against it, and evals/tests.js generates the
+# promptfoo cases from it.
+#
+# `expected` is what the note STATES. Anything else the model emits is a false
+# positive, including facts that are clinically plausible.
+cases:
+  - doc: echo-2026-03-12
+    patient: SYN-042
+    note: straight extraction — the demo note (NYHA III + LVEF 32%)
+    expected:
+      - { fact: nyha_class, value: III }
+      - { fact: lvef, value: 32, unit: "%" }
+      - { fact: nt_probnp, value: 2140, unit: pg/mL }
+      - { fact: hospitalized_for_hf_last_12mo, value: true }
+
+  - doc: clinic-2026-02-04
+    patient: SYN-007
+    note: straight extraction — dense clinic note with a labs block
+    expected:
+      - { fact: nyha_class, value: II }
+      - { fact: egfr, value: 58, unit: mL/min/1.73m2 }
+      - { fact: nt_probnp, value: 640, unit: pg/mL }
+      - { fact: potassium, value: 4.3, unit: mmol/L }
+      - { fact: systolic_bp, value: 118, unit: mmHg }
+      - { fact: on_arni, value: true }
+      - { fact: on_beta_blocker, value: true }
+      - { fact: hospitalized_for_hf_last_12mo, value: false }
+
+  - doc: echo-2026-01-22
+    patient: SYN-011
+    note: >-
+      ADVERSARIAL (range) — "EF visually estimated at 40-45%". The note states no
+      single ejection fraction, so it states no lvef fact. A midpoint would be
+      fabricated precision.
+    expected: []
+
+  - doc: clinic-2026-04-02
+    patient: SYN-019
+    note: ADVERSARIAL (negation) — "no anticoagulant use since the GI bleed" is false, not silence
+    expected:
+      - { fact: on_anticoagulant, value: false }
+      - { fact: nyha_class, value: III }
+      - { fact: egfr, value: 62, unit: mL/min/1.73m2 }
+      - { fact: systolic_bp, value: 126, unit: mmHg }
+      - { fact: potassium, value: 4.1, unit: mmol/L }
+
+  - doc: clinic-2026-05-16
+    patient: SYN-023
+    note: ADVERSARIAL (within-class med switch) — stopping metoprolol for carvedilol leaves on_beta_blocker true
+    expected:
+      - { fact: nyha_class, value: II }
+      - { fact: on_beta_blocker, value: true }
+      - { fact: on_sglt2_inhibitor, value: true }
+      - { fact: egfr, value: 71, unit: mL/min/1.73m2 }
+      - { fact: lvef, value: 41, unit: "%" }
+      - { fact: potassium, value: 4.6, unit: mmol/L }
+      - { fact: nt_probnp, value: 810, unit: pg/mL }
+      - { fact: systolic_bp, value: 96, unit: mmHg }
+
+  - doc: echo-2026-06-01
+    patient: SYN-031
+    note: straight extraction — HFpEF, preserved EF
+    expected:
+      - { fact: lvef, value: 55, unit: "%" }
+      - { fact: nyha_class, value: I }
+      - { fact: systolic_bp, value: 148, unit: mmHg }
+      - { fact: nt_probnp, value: 310, unit: pg/mL }
+
+  - doc: clinic-2026-03-28
+    patient: SYN-044
+    note: straight extraction — advanced HF, class IV, CKD 4
+    expected:
+      - { fact: nyha_class, value: IV }
+      - { fact: egfr, value: 27, unit: mL/min/1.73m2 }
+      - { fact: lvef, value: 24, unit: "%" }
+      - { fact: potassium, value: 5.2, unit: mmol/L }
+      - { fact: nt_probnp, value: 6890, unit: pg/mL }
+      - { fact: on_anticoagulant, value: true }
+      - { fact: hospitalized_for_hf_last_12mo, value: true }
+      - { fact: systolic_bp, value: 102, unit: mmHg }
+
+  - doc: clinic-2026-07-09
+    patient: SYN-052
+    note: ADVERSARIAL (discussed but not prescribed) — dapagliflozin was offered, not started
+    expected:
+      - { fact: nyha_class, value: III }
+      - { fact: on_sglt2_inhibitor, value: false }
+      - { fact: lvef, value: 29, unit: "%" }
+      - { fact: egfr, value: 66, unit: mL/min/1.73m2 }
+      - { fact: nt_probnp, value: 1980, unit: pg/mL }
+      - { fact: on_arni, value: true }
+      - { fact: hospitalized_for_hf_last_12mo, value: true }
+      - { fact: systolic_bp, value: 112, unit: mmHg }
+      - { fact: potassium, value: 4.0, unit: mmol/L }
+
+  - doc: echo-2026-07-21
+    patient: SYN-063
+    note: >-
+      ADVERSARIAL (ambiguous class) — "class II to III symptoms" with no single
+      class recorded. The LVEF is extractable; the NYHA class is not.
+    expected:
+      - { fact: lvef, value: 38, unit: "%" }
+      - { fact: systolic_bp, value: 122, unit: mmHg }
+
+  - doc: clinic-2026-08-05
+    patient: SYN-070
+    note: ADVERSARIAL (history vs current) — class IV in 2024, class II now
+    expected:
+      - { fact: nyha_class, value: II }
+      - { fact: lvef, value: 44, unit: "%" }
+      - { fact: egfr, value: 74, unit: mL/min/1.73m2 }
+      - { fact: nt_probnp, value: 520, unit: pg/mL }
+      - { fact: hospitalized_for_hf_last_12mo, value: false }
+      - { fact: on_arni, value: true }
+      - { fact: on_beta_blocker, value: true }
+      - { fact: on_sglt2_inhibitor, value: true }
+      - { fact: systolic_bp, value: 124, unit: mmHg }
+      - { fact: potassium, value: 4.4, unit: mmol/L }
