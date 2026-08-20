@@ -141,6 +141,8 @@ function evalLeaf(leaf: Leaf, facts: Record<string, FactValue>): TraceNode {
     };
   }
 
+  if (!("value" in leaf)) return missing("unsupported comparison");
+
   const n = numeric(observed);
   if (n === undefined) {
     return missing(

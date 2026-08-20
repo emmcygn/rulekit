@@ -32,6 +32,8 @@ export type Target = {
   knob: Knob;
   value: number;
   unit?: string;
+  /** Present for `anyWithin` knobs: the code set whose recency the window measures. */
+  codes?: { system: string; values: string[] };
   /** Path into the YAML document, for `setKnob`. */
   path: (string | number)[];
   /** "eGFR < 45" / "medications within 30d". */
@@ -78,6 +80,7 @@ function targetsIn(
       ...common,
       knob: "windowDays",
       value: c.windowDays,
+      codes: c.codes,
       path: [...base, "windowDays"],
       label: `${label(c.fact)} within ${c.windowDays}d`,
     });
@@ -139,7 +142,7 @@ export type Yield = {
 export function topYield(rulesetYaml: string, cohort: PatientFacts[], engine: Engine): Yield[] {
   const base = cohortCounts(cohort.map((p) => engine.evalPatient(rulesetYaml, p)));
   return numericTargets(rulesetYaml)
-    .map((t) => {
+    .map((t): Yield | undefined => {
       const to = relaxedValue(t.criterionKind, t.op, t.value);
       if (to === t.value) return undefined;
       const yamlText = setKnob(rulesetYaml, t.path, to);
@@ -160,11 +163,15 @@ export function topYield(rulesetYaml: string, cohort: PatientFacts[], engine: En
 
 export type Bin = { lo: number; hi: number; count: number };
 
-/** Bucket values onto a round grid of `width`, covering every value. */
-export function histogram(values: number[], width: number): Bin[] {
+/**
+ * Bucket values onto a round grid of `width`, covering every value. `cover`
+ * widens the axis (to keep a threshold line on screen) without adding counts.
+ */
+export function histogram(values: number[], width: number, cover: number[] = []): Bin[] {
   if (values.length === 0) return [];
-  const lo = Math.floor(Math.min(...values) / width) * width;
-  const hiValue = Math.max(...values);
+  const span = [...values, ...cover];
+  const lo = Math.floor(Math.min(...span) / width) * width;
+  const hiValue = Math.max(...span);
   const hi = Math.max(Math.floor(hiValue / width) * width + width, lo + width);
   const bins: Bin[] = [];
   for (let edge = lo; edge < hi; edge += width) {
@@ -177,10 +184,74 @@ export function histogram(values: number[], width: number): Bin[] {
   return bins;
 }
 
+/** A bin width that gives roughly a dozen buckets, on a 1/2/5/10 grid. */
+export function niceWidth(values: number[]): number {
+  if (values.length === 0) return 5;
+  const span = Math.max(...values) - Math.min(...values);
+  if (span <= 0) return 1;
+  const raw = span / 12;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const step of [1, 2, 5, 10]) {
+    if (raw <= step * magnitude) return step * magnitude;
+  }
+  return 10 * magnitude;
+}
+
+/**
+ * Does this value sit outside the pool at that threshold? An inclusion removes
+ * the patient when its condition is false, an exclusion when it is true.
+ */
+export function excludes(target: Target, threshold: number, value: number): boolean {
+  if (target.knob === "windowDays") return value <= threshold;
+  const fires = (op: string): boolean => {
+    switch (op) {
+      case "gte":
+        return value >= threshold;
+      case "gt":
+        return value > threshold;
+      case "lte":
+        return value <= threshold;
+      case "lt":
+        return value < threshold;
+      case "eq":
+        return value === threshold;
+      case "neq":
+        return value !== threshold;
+      default:
+        return false;
+    }
+  };
+  return target.criterionKind === "inclusion" ? !fires(target.op) : fires(target.op);
+}
+
 export type FactValues = {
   numeric: { patient: string; value: number }[];
   unusable: { patient: string; value: string }[];
 };
+
+/**
+ * The cohort values this knob acts on: the fact itself for a comparison, or the
+ * recency of the matching codes for a temporal window.
+ */
+export function knobValues(cohort: PatientFacts[], target: Target): FactValues {
+  if (target.knob === "value") return factValues(cohort, target.fact);
+  const numeric: FactValues["numeric"] = [];
+  const unusable: FactValues["unusable"] = [];
+  for (const p of cohort) {
+    const entries = p.facts[target.fact];
+    if (!Array.isArray(entries)) {
+      unusable.push({ patient: p.patient, value: "not recorded" });
+      continue;
+    }
+    const wanted = new Set(target.codes?.values ?? []);
+    for (const e of entries) {
+      if (target.codes && (e.system !== target.codes.system || !wanted.has(e.code))) continue;
+      if (e.daysAgo === undefined) unusable.push({ patient: p.patient, value: "no date" });
+      else numeric.push({ patient: p.patient, value: e.daysAgo });
+    }
+  }
+  return { numeric, unusable };
+}
 
 /**
  * Cohort values for one fact, splitting off the ones a numeric comparison
