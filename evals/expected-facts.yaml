@@ -20,6 +20,18 @@ cases:
   - doc: clinic-2026-02-04
     patient: SYN-007
     note: straight extraction — dense clinic note with a labs block
+    knownGap:
+      fp: 1
+      why: >-
+        The recorded run proposes on_sglt2_inhibitor: false at 0.62, quoting the
+        "MEDICATIONS (reviewed and reconciled today)" header. The quote is real
+        and the inference is clinically reasonable — a reconciled list with no
+        SGLT2 inhibitor on it — but the note never states it, and the prompt
+        forbids inferring a value from an absence. It survives grounding
+        (nothing about it is malformed) and reaches the reviewer as a low
+        confidence card, which is the design working: this is precisely the
+        class of error the review pane exists to catch, and no gate can catch
+        it, because it is a judgement call rather than a defect.
     expected:
       - { fact: nyha_class, value: II }
       - { fact: egfr, value: 58, unit: mL/min/1.73m2 }
@@ -64,6 +76,15 @@ cases:
   - doc: echo-2026-06-01
     patient: SYN-031
     note: straight extraction — HFpEF, preserved EF
+    knownGap:
+      fn: 1
+      why: >-
+        The recorded run reads the LVEF correctly as 55 but spells the unit
+        "percent" instead of the declared "%". The gate rejects it on
+        unit-mismatch, so a right answer never reaches the file. This is the
+        cost of exact unit matching, kept in the baseline on purpose: it is the
+        number to look at before anyone argues for loosening the gate, and the
+        right fix is UCUM normalization at ingest, not tolerance here.
     expected:
       - { fact: lvef, value: 55, unit: "%" }
       - { fact: nyha_class, value: I }

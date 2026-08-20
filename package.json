@@ -13,7 +13,8 @@
     "facts": "tsx src/cli-facts/index.ts",
     "facts:check": "tsx src/cli-facts/index.ts check corpus/facts",
     "facts:eval": "tsx src/cli-facts/index.ts eval --min-precision 0.95 --min-recall 0.95",
-    "extract:corpus": "tsx scripts/extract-corpus.ts"
+    "extract:corpus": "tsx scripts/extract-corpus.ts",
+    "eval": "npm run build && promptfoo eval -c evals/promptfooconfig.yaml"
   },
   "keywords": [],
   "author": "",

@@ -22,7 +22,25 @@ import type { FactEntry, FactFileValue } from "./schema.js";
 import type { GroundingResult, Rejection, RejectionReason } from "./ground.js";
 
 export type ExpectedFact = { fact: string; value: FactFileValue; unit?: string };
-export type ExpectedCase = { doc: string; patient?: string; note?: string; expected: ExpectedFact[] };
+
+/**
+ * A named, reviewed shortfall in the committed baseline.
+ *
+ * A permanently-red eval teaches a team to ignore the eval, and a baseline
+ * forced to 100% teaches it nothing at all. So the two misses in the recorded
+ * run are declared here, in the ground truth, where a reviewer reads them —
+ * with the reason spelled out. The harness allows exactly this many and no
+ * more, so a new error still fails.
+ */
+export type KnownGap = { fp?: number; fn?: number; why: string };
+
+export type ExpectedCase = {
+  doc: string;
+  patient?: string;
+  note?: string;
+  knownGap?: KnownGap;
+  expected: ExpectedFact[];
+};
 export type ExpectedFile = { cases: ExpectedCase[] };
 
 /** One case's extraction output, as produced by extractFacts(). */
@@ -83,6 +101,13 @@ const expectedFileSchema = z.strictObject({
       doc: z.string(),
       patient: z.string().optional(),
       note: z.string().optional(),
+      knownGap: z
+        .strictObject({
+          fp: z.number().int().nonnegative().optional(),
+          fn: z.number().int().nonnegative().optional(),
+          why: z.string().min(1),
+        })
+        .optional(),
       expected: z.array(expectedFactSchema),
     }),
   ),

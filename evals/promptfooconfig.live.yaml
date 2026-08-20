@@ -1,0 +1,37 @@
+# rulekit extraction eval — LIVE. Makes real API calls and costs real money.
+#
+#   export ANTHROPIC_API_KEY=...            # or: ant auth login
+#   npm run build
+#   npx promptfoo eval -c evals/promptfooconfig.live.yaml
+#
+# CI never runs this config. The default promptfooconfig.yaml is offline, and
+# the repo ships no key.
+#
+# The provider calls src/extract/pipeline.ts's buildRequest(), so a live run
+# uses the same pinned model, the same prompts/extract-facts.v1.md, and the
+# same structured-output schema as production — the only difference from the
+# offline run is where the response comes from.
+description: rulekit facts compiler — extraction eval (LIVE)
+
+prompts:
+  - id: file://prompt.js
+    label: extract-facts.v1
+
+providers:
+  # Add more entries to sweep a model matrix. Each takes the same prompt and
+  # the same assertions, which is the point of running this through promptfoo.
+  - id: file://providers/live.js
+    label: anthropic/claude-opus-5
+    config:
+      model: claude-opus-5
+
+  # - id: file://providers/live.js
+  #   label: anthropic/claude-sonnet-5
+  #   config:
+  #     model: claude-sonnet-5
+
+tests: file://tests.js
+
+defaultTest:
+  options:
+    provider: null
