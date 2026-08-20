@@ -4,4 +4,6 @@ export * from "./tri.js";
 export * from "./interval.js";
 export * from "./lint.js";
 export * from "./evaluator.js";
+export * from "./conflicts.js";
+export * from "./testing.js";
 export * from "./diff.js";
