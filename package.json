@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "build": "tsc -p tsconfig.json",
     "rules": "tsx src/cli/index.ts",
-    "dogfood": "tsx src/cli/index.ts check rules/trials/demo-hf-001/ruleset@1.0.0.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/demo-hf-001 --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients",
+    "dogfood": "tsx src/cli/index.ts check rules/trials/demo-hf-001/ruleset@1.0.0.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/demo-hf-001 --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients && tsx src/cli/index.ts check rules/trials/commander-hf/ruleset.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/commander-hf --fact-model packs/trials/fact-model.yaml",
     "corpus:fetch": "tsx scripts/fetch-synthea.ts",
     "corpus:flatten": "tsx scripts/flatten-synthea.ts",
     "corpus:mess": "tsx scripts/mess-injector.ts",

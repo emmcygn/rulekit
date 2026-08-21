@@ -92,3 +92,17 @@ describe("tests.yaml", () => {
     }
   });
 });
+
+describe("CI coverage", () => {
+  const pkg = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")) as {
+    scripts: Record<string, string>;
+  };
+
+  it("the dogfood script runs check and test on this pack, not just the demo", () => {
+    const dogfood = pkg.scripts["dogfood"] ?? "";
+    expect(dogfood).toContain("check rules/trials/commander-hf/ruleset.yaml");
+    expect(dogfood).toContain("test rules/trials/commander-hf");
+    expect(dogfood).toContain("check rules/trials/demo-hf-001/ruleset@1.0.0.yaml");
+    expect(dogfood).toContain("test rules/trials/demo-hf-001");
+  });
+});
