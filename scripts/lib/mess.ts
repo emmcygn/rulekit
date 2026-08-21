@@ -172,7 +172,12 @@ export function messPatient(p: PatientFacts, seed: number, rates: Partial<MessRa
     const copies: CodeEntry[] = [];
     for (let i = 0; i < r.int(1, 2); i++) {
       const src = r.pick(meds as CodeEntry[]);
-      copies.push({ ...src, daysAgo: Math.max(0, (src.daysAgo ?? 0) + r.int(0, 6)) });
+      const jitter = r.int(0, 6);
+      // An undated row's copy stays undated. Corrupting data is the job; adding
+      // information is not — stamping `daysAgo` on a row that never had one
+      // turns the engine's honest `unknown` into a definite "dispensed this
+      // week", and the normalize dedup then keeps the fabricated row.
+      copies.push(src.daysAgo === undefined ? { ...src } : { ...src, daysAgo: src.daysAgo + jitter });
     }
     facts["medications"] = [...(meds as CodeEntry[]), ...copies];
     note("duplicate-med", "medications", `+${copies.length} duplicate row(s)`);

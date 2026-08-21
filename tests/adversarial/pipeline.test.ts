@@ -19,16 +19,17 @@ const washout: Condition = {
   windowDays: 90,
 };
 
-describe("H1 — duplicate-med invents a recency for an undated medication", () => {
-  // mess.ts:175 — copies.push({ ...src, daysAgo: Math.max(0, (src.daysAgo ?? 0) + r.int(0, 6)) })
-  // An undated row is treated as "0 days ago" and the copy is stamped with a
-  // date between today and six days ago.
+describe("H1 — an undated medication stays undated (REGRESSION: duplicate-med invented a recency)", () => {
+  // mess.ts used to write `daysAgo: Math.max(0, (src.daysAgo ?? 0) + r.int(0, 6))`,
+  // so an undated row was treated as "0 days ago" and its copy stamped with a
+  // date inside the last week. The mess injector is allowed to corrupt data; it
+  // is not allowed to add information.
   const undated: PatientFacts = {
     patient: "UNDATED-MED",
     facts: { age: 70, medications: [{ code: "855332", system: "rxnorm" }] },
   };
 
-  it("the engine's honest 'unknown' becomes a definite 'yes, this week'", () => {
+  it("the engine's honest 'unknown' survives mess + normalize", () => {
     expect(evalCondition(washout, undated).result).toBe("unknown");
 
     // Find a seed that draws the duplicate (rate 0.35), then normalize.
@@ -39,22 +40,36 @@ describe("H1 — duplicate-med invents a recency for an undated medication", () 
     }
     expect(messed).toBeDefined();
     const meds = messed!.facts["medications"] as { code: string; daysAgo?: number }[];
-    expect(meds.some((m) => m.daysAgo !== undefined && m.daysAgo <= 6)).toBe(true);
+    expect(meds.length).toBeGreaterThan(1);
+    expect(meds.every((m) => m.daysAgo === undefined)).toBe(true);
 
-    // normalize's dedup then keeps the row with the SMALLEST daysAgo, i.e. the
-    // fabricated one, and drops the undated original.
     const { patient: clean } = normalizePatient(messed!);
     const finalMeds = clean.facts["medications"] as { code: string; daysAgo?: number }[];
     expect(finalMeds).toHaveLength(1);
-    expect(finalMeds[0]!.daysAgo).toBeLessThanOrEqual(6);
-    // BUG: a washout exclusion now fires on evidence that never existed.
-    expect(evalCondition(washout, clean).result).toBe("true");
+    expect(finalMeds[0]!.daysAgo).toBeUndefined();
+    // The washout exclusion cannot fire on evidence that never existed.
+    expect(evalCondition(washout, clean).result).toBe("unknown");
+  });
+
+  it("a DATED row still gets its jitter — the corruption itself is intact", () => {
+    const dated: PatientFacts = {
+      patient: "DATED-MED",
+      facts: { age: 70, medications: [{ code: "855332", system: "rxnorm", daysAgo: 40 }] },
+    };
+    let messed: PatientFacts | undefined;
+    for (let seed = 1; seed < 200 && messed === undefined; seed++) {
+      const { patient, log } = messPatient(dated, seed);
+      if (log.some((r) => r.op === "duplicate-med")) messed = patient;
+    }
+    const meds = messed!.facts["medications"] as { daysAgo?: number }[];
+    expect(meds.length).toBeGreaterThan(1);
+    expect(meds.every((m) => m.daysAgo !== undefined && m.daysAgo >= 40 && m.daysAgo <= 46)).toBe(true);
   });
 });
 
-describe("H2 — normalize dedups code lists by `code` alone, ignoring `system`", () => {
-  // normalize.ts:156 — byCode.set(e.code, e) — while the evaluator's codeMatch
-  // requires system AND code to match.
+describe("H2 — normalize dedups on (system, code) (REGRESSION: `code` alone deleted a diagnosis)", () => {
+  // The evaluator's codeMatch requires system AND code to match, so a dedup
+  // keyed on `code` alone could delete the very row a criterion looks for.
   const twoSystems: PatientFacts = {
     patient: "COLLIDING-CODES",
     facts: {
@@ -67,13 +82,30 @@ describe("H2 — normalize dedups code lists by `code` alone, ignoring `system`"
 
   const afib: Condition = { fact: "conditions", op: "in", codes: { system: "snomed", values: ["49436004"] } };
 
-  it("the SNOMED row is deleted in favour of the more recent foreign-system row", () => {
+  it("both systems survive, and the diagnosis the exclusion looks for is still there", () => {
     expect(evalCondition(afib, twoSystems).result).toBe("true");
     const { patient: clean, log } = normalizePatient(twoSystems);
+    expect(log.some((r) => r.kind === "deduplicated")).toBe(false);
+    expect(clean.facts["conditions"]).toEqual([
+      { code: "49436004", system: "site-local", daysAgo: 3 },
+      { code: "49436004", system: "snomed", daysAgo: 200 },
+    ]);
+    expect(evalCondition(afib, clean).result).toBe("true");
+  });
+
+  it("a true duplicate — same system, same code — still collapses", () => {
+    const dupes: PatientFacts = {
+      patient: "REAL-DUPES",
+      facts: {
+        conditions: [
+          { code: "49436004", system: "snomed", daysAgo: 200 },
+          { code: "49436004", system: "snomed", daysAgo: 12 },
+        ],
+      },
+    };
+    const { patient: clean, log } = normalizePatient(dupes);
     expect(log.some((r) => r.kind === "deduplicated")).toBe(true);
-    expect((clean.facts["conditions"] as { system: string }[])).toEqual([{ code: "49436004", system: "site-local", daysAgo: 3 }]);
-    // BUG: the diagnosis the exclusion is looking for has been normalized away.
-    expect(evalCondition(afib, clean).result).toBe("false");
+    expect(clean.facts["conditions"]).toEqual([{ code: "49436004", system: "snomed", daysAgo: 12 }]);
   });
 });
 

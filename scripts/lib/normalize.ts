@@ -150,14 +150,21 @@ export function normalizePatient(p: PatientFacts): NormalizeResult {
   for (const listName of ["medications", "conditions"]) {
     const list = facts[listName];
     if (!Array.isArray(list)) continue;
+    // Keyed on (system, code), not `code` alone: the evaluator's codeMatch
+    // requires both, so two systems that happen to share a digit string are two
+    // different facts. The fact model declares `medications` over rxnorm *and*
+    // rxnorm-class, so a collision is expected, not hypothetical — and a dedup
+    // that dropped the SNOMED row for a same-numbered site-local one would
+    // silently delete the diagnosis a criterion is looking for.
     const byCode = new Map<string, CodeEntry>();
     for (const e of list as CodeEntry[]) {
-      const prev = byCode.get(e.code);
-      if (!prev || (e.daysAgo ?? Infinity) < (prev.daysAgo ?? Infinity)) byCode.set(e.code, e);
+      const key = `${e.system} ${e.code}`;
+      const prev = byCode.get(key);
+      if (!prev || (e.daysAgo ?? Infinity) < (prev.daysAgo ?? Infinity)) byCode.set(key, e);
     }
     if (byCode.size !== list.length) note("deduplicated", listName, `${list.length} rows -> ${byCode.size}`);
     facts[listName] = [...byCode.values()].sort(
-      (a, b) => (a.daysAgo ?? 0) - (b.daysAgo ?? 0) || a.code.localeCompare(b.code),
+      (a, b) => (a.daysAgo ?? 0) - (b.daysAgo ?? 0) || a.code.localeCompare(b.code) || a.system.localeCompare(b.system),
     );
   }
 
