@@ -19,7 +19,7 @@ const rs = (version: string, ...criteria: Criterion[]): RuleSet => ({
   criteria,
 });
 
-const adult: Criterion = { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18 } };
+const adult: Criterion = { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18, unit: "years" } };
 
 describe("F1 — undetermined → eligible flips carry NO responsible criterion", () => {
   // v1 requires an eGFR nobody in the cohort has → everyone undetermined.
@@ -78,8 +78,8 @@ describe("F2 — a renamed criterion looks like an unrelated add + remove", () =
 });
 
 describe("F3 — rule content can change with the version string standing still", () => {
-  const v1 = rs("1.0.0", adult, { id: "renal", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 30 } });
-  const v2 = rs("1.0.0", adult, { id: "renal", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 45 } });
+  const v1 = rs("1.0.0", adult, { id: "renal", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 30, unit: "mL/min/1.73m2" } });
+  const v2 = rs("1.0.0", adult, { id: "renal", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 45, unit: "mL/min/1.73m2" } });
 
   it("nothing in the toolchain notices the un-bumped rulesetVersion", () => {
     expect(v1.rulesetVersion).toBe(v2.rulesetVersion);
@@ -98,7 +98,7 @@ describe("F3 — rule content can change with the version string standing still"
       id: "renal",
       kind: "exclusion",
       verbatim: "eGFR < 45 (amended per protocol v3)",
-      when: { fact: "egfr", op: "lt", value: 30 },
+      when: { fact: "egfr", op: "lt", value: 30, unit: "mL/min/1.73m2" },
     });
     // normalize() in src/core/diff.ts hashes kind/when/unmodeled only.
     expect(structuralDiff(v1, relabelled)).toEqual({ added: [], removed: [], changed: [] });

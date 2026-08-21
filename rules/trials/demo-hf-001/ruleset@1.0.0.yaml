@@ -9,12 +9,12 @@ criteria:
     ref: I1
     kind: inclusion
     verbatim: "Age 18 years or older"
-    when: { fact: age, op: gte, value: 18 }
+    when: { fact: age, op: gte, value: 18, unit: years }
   - id: lvef-max
     ref: I2
     kind: inclusion
     verbatim: "LVEF 40% or less on echocardiogram"
-    when: { fact: lvef, op: lte, value: 40 }
+    when: { fact: lvef, op: lte, value: 40, unit: "%" }
   - id: egfr-min
     ref: I3
     kind: inclusion

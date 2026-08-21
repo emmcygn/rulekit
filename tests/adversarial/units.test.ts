@@ -1,9 +1,9 @@
 /**
  * Adversarial probes — units (attack surface 4).
  *
- * lint.ts:38 only warns when the leaf HAS a `unit:` and it differs from the
- * declared one. Omitting `unit:` is therefore the quiet path: the evaluator
- * still compares raw numbers, and nothing warns at any level.
+ * The lint used to warn only when the leaf HAD a `unit:` that differed from the
+ * declared one, which made omitting `unit:` the quiet path and pointed the
+ * incentive backwards. C1 is the regression for `unit-undeclared`.
  */
 import { describe, it, expect } from "vitest";
 import { checkRuleSet } from "../../src/core/conflicts.js";
@@ -24,7 +24,7 @@ const withUnit = (unit?: string): RuleSet => ({
   rulesetVersion: "1.0.0",
   factModel: "probe/v1",
   criteria: [
-    { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18 } },
+    { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18, unit: "years" } },
     {
       id: "uncontrolled-diabetes",
       kind: "exclusion",
@@ -38,35 +38,51 @@ const withUnit = (unit?: string): RuleSet => ({
 // 7.5 mmol/L == 135 mg/dL: frankly diabetic, must be excluded.
 const diabetic = { patient: "SYN-GLU", facts: { age: 62, glucose: 7.5 } };
 
-describe("C1 — omitting `unit:` silences the only unit check there is", () => {
-  it("no warning, and the diabetic patient is enrolled", () => {
+describe("C1 — omitting `unit:` is warned about (REGRESSION: used to be the quiet path)", () => {
+  it("`unit-undeclared` fires on the bare threshold, and names both units in play", () => {
     const rs = withUnit(undefined);
-    expect(checkRuleSet(rs, FM).filter((f) => f.code === "unit-mismatch")).toEqual([]);
-    expect(checkRuleSet(rs, FM).filter((f) => f.level !== "info")).toEqual([]);
-
-    const ev = evalPatient(rs, diabetic);
-    // BUG (clinically): 7.5 >= 126 is false, so the exclusion does not fire.
-    expect(ev.results.find((r) => r.id === "uncontrolled-diabetes")!.verdict).toBe("pass");
-    expect(ev.overall).toBe("eligible");
-    // The trace prints the number with no unit anywhere, so the reviewer
-    // reading it has nothing to notice.
-    expect(ev.results.find((r) => r.id === "uncontrolled-diabetes")!.trace!.detail).toBe(
-      "glucose = 7.5, required >= 126",
-    );
-  });
-
-  it("declaring the unit honestly is the ONLY way to get the warning — the incentive is backwards", () => {
-    const rs = withUnit("mg/dL");
-    const warn = checkRuleSet(rs, FM).filter((f) => f.code === "unit-mismatch");
+    const warn = checkRuleSet(rs, FM).filter((f) => f.code === "unit-undeclared");
     expect(warn).toHaveLength(1);
     expect(warn[0]!.level).toBe("warning");
+    expect(warn[0]!.criteria).toEqual(["uncontrolled-diabetes"]);
+    expect(warn[0]!.message).toContain("mmol/L");
+    expect(warn[0]!.message).toContain("compared as-is");
+
+    const ev = evalPatient(rs, diabetic);
+    // The verdict is still wrong — the lint is a diagnostic, not a converter —
+    // but it is no longer silent, which is the whole point.
+    expect(ev.results.find((r) => r.id === "uncontrolled-diabetes")!.verdict).toBe("pass");
+    expect(ev.overall).toBe("eligible");
+  });
+
+  it("the honest form still gets `unit-mismatch`, and only that", () => {
+    const rs = withUnit("mg/dL");
+    const warn = checkRuleSet(rs, FM).filter((f) => f.level === "warning");
+    expect(warn).toHaveLength(1);
+    expect(warn[0]!.code).toBe("unit-mismatch");
     // Same wrong verdict either way; only the diagnostic differs.
     expect(evalPatient(rs, diabetic).overall).toBe("eligible");
   });
 
-  it("even the honest form is a warning, so `rules check` still exits 0", () => {
-    const findings = checkRuleSet(withUnit("mg/dL"), FM);
-    expect(findings.filter((f) => f.level === "error")).toEqual([]);
+  it("declaring the right unit is the only clean form", () => {
+    const rs = withUnit("mmol/L");
+    expect(checkRuleSet(rs, FM).filter((f) => f.level !== "info")).toEqual([]);
+  });
+
+  it("a unit-less fact declaration does not demand a unit on the leaf", () => {
+    const noUnitModel: FactModel = { name: "probe/v1", facts: { hba1c_ratio: { type: "number" } } };
+    const rs: RuleSet = {
+      ruleset: "u",
+      rulesetVersion: "1.0.0",
+      factModel: "probe/v1",
+      criteria: [{ id: "ratio", kind: "inclusion", verbatim: "v", when: { fact: "hba1c_ratio", op: "gte", value: 2 } }],
+    };
+    expect(checkRuleSet(rs, noUnitModel).filter((f) => f.level !== "info")).toEqual([]);
+  });
+
+  it("both unit findings stay warnings, so `rules check` still exits 0", () => {
+    expect(checkRuleSet(withUnit("mg/dL"), FM).filter((f) => f.level === "error")).toEqual([]);
+    expect(checkRuleSet(withUnit(undefined), FM).filter((f) => f.level === "error")).toEqual([]);
   });
 });
 

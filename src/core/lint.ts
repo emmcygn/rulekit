@@ -1,9 +1,11 @@
-import type { Condition, FactModel, Leaf, RuleSet } from "./schema.js";
+import type { Condition, FactModel, Leaf, NumericLeaf, RuleSet } from "./schema.js";
 
 export type Finding = { level: "error" | "warning" | "info"; code: string; message: string; criteria: string[]; evidence?: string };
 
 const NUMERIC_OPS = new Set(["eq", "neq", "gt", "gte", "lt", "lte"]);
 const CODE_OPS = new Set(["in", "notIn", "anyWithin"]);
+
+const isNumericLeaf = (l: Leaf): l is NumericLeaf => NUMERIC_OPS.has(l.op);
 
 export function collectLeaves(cond: Condition): Leaf[] {
   if ("all" in cond) return cond.all.flatMap(collectLeaves);
@@ -35,8 +37,17 @@ export function lintRuleSet(rs: RuleSet, fm: FactModel): Finding[] {
           out.push({ level: "error", code: "unknown-code-system", criteria: [c.id], message: `code system "${leaf.codes.system}" not declared for fact "${leaf.fact}" (declared: ${decl.systems.join(", ")})` });
         }
       }
-      if ("unit" in leaf && leaf.unit !== undefined && decl.type === "number" && decl.unit !== undefined && leaf.unit !== decl.unit) {
-        out.push({ level: "warning", code: "unit-mismatch", criteria: [c.id], message: `"${c.id}" compares in ${leaf.unit}; the fact model declares "${leaf.fact}" in ${decl.unit}. Values are compared as-is — declare the same unit or add a conversion.` });
+      // Units. The evaluator compares raw numbers and converts nothing, so the
+      // declared unit is the only place a threshold's scale is written down.
+      // Both halves are warnings so that neither blocks CI, but neither is
+      // silent — the previous rule warned only on a *declared* mismatch, which
+      // rewarded omitting the unit entirely.
+      if (isNumericLeaf(leaf) && decl.type === "number" && decl.unit !== undefined) {
+        if (leaf.unit === undefined) {
+          out.push({ level: "warning", code: "unit-undeclared", criteria: [c.id], message: `"${c.id}" compares "${leaf.fact}" against a bare ${leaf.value}; the fact model declares it in ${decl.unit}. Values are compared as-is, so a threshold transcribed from a protocol written in another unit (mg/dL for mmol/L, mL/min for L/min, ng/mL for pg/mL) is wrong by a factor and nothing else here will catch it. Add "unit: ${decl.unit}".` });
+        } else if (leaf.unit !== decl.unit) {
+          out.push({ level: "warning", code: "unit-mismatch", criteria: [c.id], message: `"${c.id}" compares in ${leaf.unit}; the fact model declares "${leaf.fact}" in ${decl.unit}. Values are compared as-is — declare the same unit or add a conversion.` });
+        }
       }
     }
   }

@@ -39,9 +39,11 @@ criteria:
         - fact: age
           op: gte
           value: 18
+          unit: years
         - fact: age
           op: lte
           value: 95
+          unit: years
 
   # ---- Inclusion criteria -------------------------------------------------
   - id: symptomatic-heart-failure
@@ -58,6 +60,7 @@ criteria:
         - fact: hf_symptom_duration_months
           op: gte
           value: 3
+          unit: months
 
   - id: decompensation-index-event
     ref: I2
@@ -97,6 +100,7 @@ criteria:
         - fact: lab_lvef_days_ago
           op: lte
           value: 365
+          unit: days
 
   - id: significant-coronary-artery-disease
     ref: I4
@@ -202,6 +206,7 @@ criteria:
       fact: index_hospital_days
       op: gt
       value: 21
+      unit: days
 
   - id: planned-iv-inotropes
     ref: E5

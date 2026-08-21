@@ -151,7 +151,7 @@ describe("B3 — any/not anywhere in a criterion disables ALL analysis of that c
       id: "impossible-any",
       kind: "inclusion",
       verbatim: "Aged over 130 or under -5",
-      when: { any: [{ fact: "age", op: "gte", value: 130 }, { fact: "age", op: "lte", value: -5 }] },
+      when: { any: [{ fact: "age", op: "gte", value: 130, unit: "years" }, { fact: "age", op: "lte", value: -5, unit: "years" }] },
     });
     const findings = checkRuleSet(set, FM);
     // MISLEADS: `rules check` prints exactly "0 conflict(s), 0 warning(s)" and

@@ -9,12 +9,12 @@ criteria:
     ref: I1
     kind: inclusion
     verbatim: "Age 18 years or older"
-    when: { fact: age, op: gte, value: 18 }
+    when: { fact: age, op: gte, value: 18, unit: years }
   - id: lvef-max
     ref: I2
     kind: inclusion
     verbatim: "LVEF 40% or less on echocardiogram"
-    when: { fact: lvef, op: lte, value: 40 }
+    when: { fact: lvef, op: lte, value: 40, unit: "%" }
   - id: egfr-min
     ref: I3
     kind: inclusion
@@ -33,7 +33,7 @@ criteria:
     ref: E3
     kind: exclusion
     verbatim: "eGFR below 45 at screening"
-    when: { fact: egfr, op: lt, value: 45 }
+    when: { fact: egfr, op: lt, value: 45, unit: mL/min/1.73m2 }
   - id: nyha-class-iv
     ref: E4
     kind: exclusion
