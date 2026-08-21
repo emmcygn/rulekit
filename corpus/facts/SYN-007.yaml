@@ -78,7 +78,7 @@ facts:
     extractedBy: llm/claude-opus-5
     source:
       doc: clinic-2026-02-04
-      quote: she has not been hospitalized for heart failure in the past twelve months
+      quote: he has not been hospitalized for heart failure in the past twelve months
     reviewedBy: null
   - fact: on_sglt2_inhibitor
     value: false

@@ -14,9 +14,9 @@ Clinician: L. Fenwick, NP (fictional)
 
 SUBJECTIVE
 
-62-year-old woman with HFrEF of ischemic etiology, here for routine three-month follow-up. She reports slight limitation of ordinary physical activity — comfortable at rest, but ordinary walking on an incline produces dyspnea. This is stable since her last visit and is best described as NYHA class II symptoms.
+61-year-old man with HFrEF of ischemic etiology, here for routine three-month follow-up. He reports slight limitation of ordinary physical activity — comfortable at rest, but ordinary walking on an incline produces dyspnea. This is stable since his last visit and is best described as NYHA class II symptoms.
 
-She denies orthopnea, paroxysmal nocturnal dyspnea, chest pain, palpitations, or syncope. Weight is stable at home, up 0.4 kg over six weeks. No hospital admissions since the index admission in 2023; specifically, she has not been hospitalized for heart failure in the past twelve months.
+He denies orthopnea, paroxysmal nocturnal dyspnea, chest pain, palpitations, or syncope. Weight is stable at home, up 0.4 kg over six weeks. No hospital admissions since the index admission in 2023; specifically, he has not been hospitalized for heart failure in the past twelve months.
 
 OBJECTIVE
 

@@ -15,13 +15,13 @@ patient: SYN-042
 asOf: 2026-03-12
 facts:
   - fact: age
-    value: 71
+    value: 63
     unit: years
     status: confirmed
     extractedBy: pipeline
 
   - fact: sex
-    value: male
+    value: female
     status: confirmed
     extractedBy: pipeline
 
@@ -73,5 +73,5 @@ facts:
     extractedBy: llm/claude-opus-5
     source:
       doc: echo-2026-03-12
-      quote: He was hospitalized for decompensated heart failure in November 2025.
+      quote: She was hospitalized for decompensated heart failure in November 2025.
     reviewedBy: null
