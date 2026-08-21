@@ -22,16 +22,18 @@ describe("workbench shell", () => {
     expect(screen.getByRole("heading", { name: "Screening funnel" })).toBeDefined();
     expect(screen.getByText(/cohort n = 10/)).toBeDefined();
     expect(screen.getAllByText(/3 potentially eligible/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/6 screen fail/)).toBeDefined();
+    expect(screen.getByText(/4 screen fail/)).toBeDefined();
+    // Three patients have a fact pending review, so the engine cannot see it.
+    expect(screen.getByText(/3 not evaluable/)).toBeDefined();
   });
 
   it("drills from a criterion row into a patient trace", () => {
     render(<App />);
-    // SYN-042 leaves the funnel at E1 (no medication reconciliation), so drill in
-    // from a criterion whose pool still contains them.
-    fireEvent.click(screen.getByText("egfr-min"));
-    fireEvent.click(screen.getByRole("button", { name: /SYN-042/ }));
-    expect(screen.getByText(/egfr = 41, required < 45, exclusion fired/)).toBeDefined();
+    // SYN-058 has no facts file, so nothing of theirs is pending review and they
+    // reach the renal exclusion that the amendment added.
+    fireEvent.click(screen.getByText("renal-safety"));
+    fireEvent.click(screen.getByRole("button", { name: /SYN-058/ }));
+    expect(screen.getByText(/egfr = 33, required < 45, exclusion fired/)).toBeDefined();
   });
 
   it("renders the thresholds tab with a live re-count", () => {
@@ -46,7 +48,9 @@ describe("workbench shell", () => {
     render(<App />);
     fireEvent.click(tab("Amendment"));
     expect(screen.getByRole("heading", { name: "Amendment impact" })).toBeDefined();
-    expect(screen.getByText(/renal-safety — 4 flips/)).toBeDefined();
+    // Two of the four flips are held back: SYN-007 and SYN-019 have an eGFR
+    // sitting in the review queue, so the engine cannot decide them either way.
+    expect(screen.getByText(/renal-safety — 2 flips/)).toBeDefined();
     expect(screen.getByText(/Already enrolled/)).toBeDefined();
     expect(screen.getByText(/002-0041/)).toBeDefined();
   });
@@ -75,10 +79,35 @@ describe("workbench shell", () => {
     expect(screen.getByText(/! 1 warning$/)).toBeDefined();
   });
 
-  it("renders the review tab as a phase-4 placeholder", () => {
+  it("mounts the real review queue on proposed facts from corpus/facts", () => {
     render(<App />);
     fireEvent.click(tab("Review"));
-    expect(screen.getByText(/Coming in phase 4/)).toBeDefined();
+    expect(screen.getByRole("region", { name: "Proposed facts pending review" })).toBeDefined();
+    const cards = screen.getAllByTestId("review-card");
+    expect(cards.length).toBeGreaterThan(0);
+    // Impact sorts first: the eGFR that would move a patient out of the hatched
+    // band leads the queue, ahead of higher-confidence facts nothing reads.
+    expect(cards[0]!.getAttribute("data-fact")).toBe("egfr");
+    expect(screen.getByTestId("queue-count").textContent).toContain("change a verdict");
+  });
+
+  it("shrinks the not-evaluable band when a fact is confirmed (G10)", () => {
+    render(<App />);
+    fireEvent.click(tab("Review"));
+    fireEvent.click(screen.getByRole("button", { name: "confirm egfr for SYN-007" }));
+
+    fireEvent.click(tab("Screening funnel"));
+    expect(screen.getByText(/2 not evaluable/)).toBeDefined();
+    expect(screen.getAllByText(/4 potentially eligible/).length).toBeGreaterThan(0);
+  });
+
+  it("keeps a rejected fact out of the engine", () => {
+    render(<App />);
+    fireEvent.click(tab("Review"));
+    fireEvent.click(screen.getByRole("button", { name: "reject egfr for SYN-007" }));
+
+    fireEvent.click(tab("Screening funnel"));
+    expect(screen.getByText(/3 not evaluable/)).toBeDefined();
   });
 
   it("copies a previewed threshold back into the editor's YAML", () => {

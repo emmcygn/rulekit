@@ -14,6 +14,7 @@
  * them), so they live here, marked as demo data.
  */
 import { parsePatient, type PatientFacts } from "../../../src/core/schema.js";
+import { parseFactsFile, type FactsFile } from "../../../src/extract/schema.js";
 import rulesetV110 from "../../../rules/trials/demo-hf-001/ruleset.yaml?raw";
 import rulesetV100 from "../../../rules/trials/demo-hf-001/ruleset@1.0.0.yaml?raw";
 import factModelYaml from "../../../packs/trials/fact-model.yaml?raw";
@@ -43,6 +44,51 @@ const fixtureFiles = import.meta.glob("../../../fixtures/patients/*.yaml", {
 export const DEMO_COHORT: PatientFacts[] = Object.keys(fixtureFiles)
   .sort()
   .map((path) => parsePatient(fixtureFiles[path]!));
+
+/**
+ * `corpus/facts/*.yaml` — the extraction pipeline's real output, provenance and
+ * all, restricted to the patients the demo cohort actually contains. This is
+ * what the Review tab queues; the rest of the corpus belongs to patients the
+ * funnel never sees, and queuing them would be a review nobody could act on.
+ */
+const factsFiles = import.meta.glob("../../../corpus/facts/*.yaml", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+const cohortIds = new Set(DEMO_COHORT.map((p) => p.patient));
+
+export const DEMO_FACTS: FactsFile[] = Object.keys(factsFiles)
+  .sort()
+  .map((path) => parseFactsFile(factsFiles[path]!))
+  .filter((f) => cohortIds.has(f.patient));
+
+/**
+ * `corpus/notes/*.txt` — doc id -> groundable body, front matter stripped, the
+ * same split `src/extract/notes.ts` applies. Reimplemented in four lines rather
+ * than imported because that module reaches for `node:fs` at load time and this
+ * one runs in a browser.
+ */
+const noteFiles = import.meta.glob("../../../corpus/notes/*.txt", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+function noteBody(text: string): string {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  if (lines[0] !== "---") return lines.join("\n");
+  const end = lines.indexOf("---", 1);
+  return end === -1 ? lines.join("\n") : lines.slice(end + 1).join("\n");
+}
+
+export const DEMO_NOTES: Record<string, string> = Object.fromEntries(
+  Object.entries(noteFiles).map(([path, text]) => [
+    path.split("/").pop()!.replace(/\.txt$/, ""),
+    noteBody(text),
+  ]),
+);
 
 export const DEMO_ENROLLED: EnrolledParticipant[] = enrolledJson.enrolled.map((e) => ({
   participant: e.participant,

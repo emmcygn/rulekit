@@ -12,9 +12,19 @@ import { ChecksView } from "./checks/ChecksView.js";
 import { cohortFindings } from "./checks/cohort.js";
 import { ReviewView } from "./review/ReviewView.js";
 import {
+  applyReview,
+  buildCards,
+  decide,
+  initialReviewState,
+  pendingCount,
+  type Decision,
+} from "./review/store.js";
+import {
   DEMO_COHORT,
   DEMO_ENROLLED,
   DEMO_FACT_MODEL,
+  DEMO_FACTS,
+  DEMO_NOTES,
   DEMO_RULESET_CURRENT,
   DEMO_RULESET_PRIOR,
   DEMO_TESTS,
@@ -64,20 +74,41 @@ export function App() {
     if (parsed) setGood(parsed);
   }, [parsed]);
 
+  // Review decisions are session state, and the cohort the engine sees is a
+  // function of them: a proposed fact is withheld until a human confirms it, so
+  // every view downstream of `cohort` re-evaluates when a card is decided.
+  const [review, setReview] = useState(() => initialReviewState(DEMO_FACTS));
+  const cohort = useMemo(() => applyReview(DEMO_COHORT, DEMO_FACTS, review), [review]);
+
   const evaluations = useMemo(
-    () => DEMO_COHORT.map((p) => realEngine.evalPatient(good.yaml, p)),
-    [good.yaml],
+    () => cohort.map((p) => realEngine.evalPatient(good.yaml, p)),
+    [good.yaml, cohort],
   );
   const funnel = useMemo(() => computeFunnel(evaluations), [evaluations]);
   const spans = useMemo(() => criterionSpans(good.yaml), [good.yaml]);
   const allFindings = useMemo(
-    () => [...findings, ...cohortFindings(good.rs, DEMO_COHORT)],
-    [findings, good.rs],
+    () => [...findings, ...cohortFindings(good.rs, cohort)],
+    [findings, good.rs, cohort],
   );
   const problems = allFindings.filter((f) => f.level !== "info").length;
   const errors = allFindings.filter((f) => f.level === "error").length;
   const warnings = allFindings.filter((f) => f.level === "warning").length;
-  const unmodeled = good.rs.criteria.filter((c) => c.unmodeled).length;
+  const reviewCards = useMemo(
+    () =>
+      buildCards({
+        cohort: DEMO_COHORT,
+        files: DEMO_FACTS,
+        notes: DEMO_NOTES,
+        rulesetYaml: good.yaml,
+        engine: realEngine,
+        state: review,
+      }),
+    [good.yaml, review],
+  );
+  const pending = pendingCount(DEMO_FACTS, review);
+  const decided = pendingCount(DEMO_FACTS, {}) - pending;
+  const onDecide = (id: string, decision: Decision, editedValue?: string) =>
+    setReview((s) => decide(s, id, decision, editedValue));
 
   const jumpToLine = (line: number) => {
     setDoc("ruleset");
@@ -162,7 +193,7 @@ export function App() {
               >
                 {t.label}
                 {t.id === "checks" && problems > 0 && <span className="ct">{problems}</span>}
-                {t.id === "review" && unmodeled > 0 && <span className="ct">{unmodeled}</span>}
+                {t.id === "review" && pending > 0 && <span className="ct">{pending}</span>}
               </button>
             ))}
           </div>
@@ -180,7 +211,7 @@ export function App() {
             <FunnelView
               funnel={funnel}
               evaluations={evaluations}
-              cohort={DEMO_COHORT}
+              cohort={cohort}
               ruleSet={good.rs}
               selected={selected}
               onSelect={setSelected}
@@ -189,7 +220,7 @@ export function App() {
           {tab === "thresholds" && (
             <ThresholdsView
               rulesetYaml={good.yaml}
-              cohort={DEMO_COHORT}
+              cohort={cohort}
               engine={realEngine}
               onCopyBack={setRulesetYaml}
             />
@@ -198,7 +229,7 @@ export function App() {
             <AmendmentView
               rulesetYaml={good.yaml}
               priorYaml={DEMO_RULESET_PRIOR}
-              cohort={DEMO_COHORT}
+              cohort={cohort}
               enrolled={DEMO_ENROLLED}
               engine={realEngine}
               onInspectPatient={(p) => {
@@ -215,7 +246,14 @@ export function App() {
               onJump={jumpToLine}
             />
           )}
-          {tab === "review" && <ReviewView proposedCount={unmodeled} />}
+          {tab === "review" && (
+            <ReviewView
+              cards={reviewCards}
+              notEvaluable={funnel.notEvaluable}
+              decided={decided}
+              onDecide={onDecide}
+            />
+          )}
         </div>
       </div>
 
