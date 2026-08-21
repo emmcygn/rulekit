@@ -187,12 +187,12 @@ describe("ReviewQueue — queue state", () => {
         items={[card({ id: "a", flipsVerdict: true }), card({ id: "b", fact: "lvef" }), card({ id: "c", fact: "egfr" })]}
       />,
     );
-    expect(screen.getByTestId("queue-count")).toHaveTextContent("3 proposed · 1 change a verdict");
+    expect(screen.getByTestId("queue-count")).toHaveTextContent("3 pending · 1 change a verdict");
   });
 
   it("omits the impact clause when nothing changes a verdict", () => {
     render(<ReviewQueue {...handlers()} items={[card({ id: "a" })]} />);
-    expect(screen.getByTestId("queue-count")).toHaveTextContent("1 proposed");
+    expect(screen.getByTestId("queue-count")).toHaveTextContent("1 pending");
     expect(screen.getByTestId("queue-count")).not.toHaveTextContent("change a verdict");
   });
 
@@ -205,5 +205,100 @@ describe("ReviewQueue — queue state", () => {
   it("labels the region for screen readers", () => {
     render(<ReviewQueue {...handlers()} items={[card({ id: "a" })]} />);
     expect(screen.getByRole("region", { name: /pending review/i })).toBeInTheDocument();
+  });
+});
+
+describe("ReviewQueue — the host's refusals are honoured", () => {
+  it("blocks Save on a value the host rejects, and never reports the edit", async () => {
+    const user = userEvent.setup();
+    const h = handlers();
+    render(
+      <ReviewQueue
+        {...h}
+        items={[card({ id: "1", fact: "egfr", value: "62", unit: "mL/min/1.73m2" })]}
+        validate={(_item, draft) =>
+          /^-?\d+(\.\d+)?$/.test(draft.trim())
+            ? { ok: true }
+            : { ok: false, message: `"${draft}" is not a number.` }
+        }
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /edit egfr/ }));
+    const input = screen.getByLabelText("corrected value for egfr");
+    await user.clear(input);
+    await user.type(input, "banana");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(screen.getByTestId("edit-error")).toHaveTextContent("not a number");
+    expect(h.onEdit).not.toHaveBeenCalled();
+    expect(input).toHaveAttribute("aria-invalid", "true");
+
+    // …and the same box accepts a usable correction.
+    await user.clear(input);
+    await user.type(input, "47");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(h.onEdit).toHaveBeenCalledTimes(1);
+    expect(h.onEdit.mock.calls[0]![1]).toBe("47");
+  });
+
+  it("shows the value on record beside the proposal and calls confirming it an override", () => {
+    render(
+      <ReviewQueue
+        {...handlers()}
+        items={[card({ id: "1", fact: "egfr", value: "62", structured: "42", unit: "mL/min/1.73m2" })]}
+      />,
+    );
+    const notice = screen.getByTestId("override-notice");
+    expect(notice).toHaveTextContent("42");
+    expect(notice).toHaveTextContent("62");
+    expect(notice).toHaveTextContent("replaces the value already on record");
+    expect(screen.getByRole("button", { name: /confirm egfr/ })).toHaveTextContent("Confirm override");
+  });
+
+  it("badges a fact no criterion reads", () => {
+    render(<ReviewQueue {...handlers()} items={[card({ id: "1", usedByRules: false })]} />);
+    expect(screen.getByTestId("unused-badge")).toHaveTextContent("not read by any criterion");
+  });
+
+  it("offers a closed value set when the host supplies one", async () => {
+    const user = userEvent.setup();
+    const h = handlers();
+    render(
+      <ReviewQueue
+        {...h}
+        items={[card({ id: "1" })]}
+        optionsFor={() => ["I", "II", "III", "IV"]}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /edit nyha_class/ }));
+    const select = screen.getByLabelText("corrected value for nyha_class");
+    await user.selectOptions(select, "IV");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(h.onEdit.mock.calls[0]![1]).toBe("IV");
+  });
+
+  it("renders an excerpt with an expand control rather than the whole note", async () => {
+    const user = userEvent.setup();
+    const long = [
+      "Opening paragraph nobody needs.",
+      "Second sentence of preamble.",
+      "The lead-in.",
+      "Labs today show eGFR 62 mL/min/1.73m2 on a stable creatinine.",
+      "The trailing sentence.",
+      "Electronically signed by a fictional clinician.",
+    ].join(" ");
+    render(
+      <ReviewQueue
+        {...handlers()}
+        items={[
+          card({ id: "1", fact: "egfr", quote: "eGFR 62 mL/min/1.73m2", noteContext: long }),
+        ]}
+      />,
+    );
+    expect(screen.getByText(/eGFR 62 mL\/min\/1\.73m2/)).toBeDefined();
+    expect(screen.queryByText(/Opening paragraph nobody needs/)).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "show full note" }));
+    expect(screen.getByText(/Opening paragraph nobody needs/, { exact: false })).toBeDefined();
   });
 });

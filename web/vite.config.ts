@@ -25,5 +25,8 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     environment: "node",
+    // A real origin, so jsdom hands the app a working localStorage — the review
+    // pane persists decisions there and the smoke test exercises it.
+    environmentOptions: { jsdom: { url: "http://localhost:5173/" } },
   },
 });

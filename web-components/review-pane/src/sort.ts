@@ -24,8 +24,71 @@ export function sortReviewQueue(items: readonly ProposedFactCard[]): ProposedFac
   });
 }
 
+export type Span = { before: string; match: string; after: string };
+
+/**
+ * The same span, trimmed to `context` sentences either side of the quote.
+ *
+ * The shipped build rendered the whole note in every card — 16,068px of content
+ * in an 800px viewport, with the Confirm button 276px below the fold on the
+ * *first* card (uiux B2). A reviewer checking a quote needs the sentence it sits
+ * in and its neighbours, not the e-signature block; the full note stays one
+ * click away.
+ *
+ * Returns `null` when the quote does not resolve, exactly like `highlightSpan`,
+ * and `truncated` says whether anything was cut so the card can offer the
+ * expand control only when there is something to expand.
+ */
+export function excerptSpan(
+  text: string,
+  quote: string,
+  context = 1,
+): (Span & { truncated: boolean }) | null {
+  const span = highlightSpan(text, quote);
+  if (span === null) return null;
+  const before = tailSentences(span.before, context);
+  const after = headSentences(span.after, context);
+  return {
+    before: before.text,
+    match: span.match,
+    after: after.text,
+    truncated: before.cut || after.cut,
+  };
+}
+
+/** Sentence-ish boundaries: terminator + whitespace, or a blank line. */
+const BOUNDARY = /(?<=[.!?])\s+|\n{2,}/g;
+
+function tailSentences(text: string, n: number): { text: string; cut: boolean } {
+  const parts = splitKeeping(text);
+  // The last part is the sentence the quote starts inside, so keep it plus the
+  // `n` complete sentences before it.
+  if (parts.length <= n + 1) return { text, cut: false };
+  const kept = parts.slice(parts.length - (n + 1)).join("");
+  return { text: kept.replace(/^\s+/, ""), cut: true };
+}
+
+function headSentences(text: string, n: number): { text: string; cut: boolean } {
+  const parts = splitKeeping(text);
+  // The quote usually ends mid-sentence, so the first part finishes it and the
+  // next `n` are the context sentences asked for.
+  if (parts.length <= n + 1) return { text, cut: false };
+  return { text: parts.slice(0, n + 1).join("").replace(/\s+$/, ""), cut: true };
+}
+
+function splitKeeping(text: string): string[] {
+  const out: string[] = [];
+  let last = 0;
+  for (const m of text.matchAll(BOUNDARY)) {
+    out.push(text.slice(last, m.index + m[0].length));
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
 /** Split `text` around the first occurrence of `quote`, for highlighting. */
-export function highlightSpan(text: string, quote: string): { before: string; match: string; after: string } | null {
+export function highlightSpan(text: string, quote: string): Span | null {
   if (quote.length === 0) return null;
   // Newline normalization only — the same rule the grounding gate applies, so
   // the pane highlights exactly what the gate accepted and nothing else. If

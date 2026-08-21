@@ -48,6 +48,41 @@ a:hover {
   color: var(--accent-dark);
 }
 
+/*
+ * One focus ring, in the accent, everywhere. The shipped build had no
+ * :focus-visible rule at all, so every focused control wore Chrome's
+ * #005FCC — a sixth hue, and an undesigned one.
+ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.monaco-editor :focus-visible {
+  outline: none;
+}
+
+/* First focusable element in the document: without it the Monaco editor sits
+   between the keyboard and every control in the right-hand pane. */
+.skiplink {
+  position: absolute;
+  left: 8px;
+  top: -40px;
+  z-index: 20;
+  padding: 6px 12px;
+  background: var(--paper);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 80ms linear;
+}
+.skiplink:focus {
+  top: 8px;
+}
+
 button {
   font: inherit;
   color: inherit;
@@ -197,6 +232,21 @@ button {
   flex: 1;
   min-height: 0;
 }
+/* Monaco's own chrome (hovers, suggest widget, find box) ships with
+   -apple-system / "Segoe WPC"; the rest of the app is Public Sans. */
+.monaco-editor,
+.monaco-editor .monaco-hover,
+.monaco-editor .suggest-widget,
+.monaco-editor .monaco-menu,
+.monaco-editor-hover,
+.monaco-menu,
+.context-view {
+  font-family: var(--sans);
+}
+.monaco-editor .view-lines,
+.monaco-editor .margin-view-overlays {
+  font-family: var(--mono);
+}
 .estatus {
   height: 28px;
   flex: none;
@@ -270,6 +320,39 @@ button {
   font-size: 10.5px;
   color: var(--ink-3);
 }
+.pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* Every quantitative panel while the editor's document is broken: the numbers
+   are the last valid version's, and they must not look as live as real ones. */
+.pane.stale {
+  opacity: 0.62;
+  filter: grayscale(1);
+}
+.pane.stale .view {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(107, 101, 92, 0.05) 0 8px,
+    transparent 8px 16px
+  );
+}
+.stale-banner {
+  flex: none;
+  margin: 10px 22px 0;
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--paper-alt);
+  border-left: 2px solid var(--ink);
+}
+.linkbtn {
+  color: var(--accent);
+  text-decoration: underline;
+  font: inherit;
+}
 .view {
   flex: 1;
   padding: 18px 22px;
@@ -296,37 +379,69 @@ button {
 
 /* ------------------------------------------------------- status vocabulary */
 
+/*
+ * ONE status vocabulary, and it matches the bar.
+ *
+ * The shipped build had solid ink meaning "screen fail" in the bar legend,
+ * "potentially eligible" in the summary and "criterion passed" in the trace —
+ * three meanings, 400px apart (uiux B4). The bar is the biggest surface, so the
+ * bar wins and the marks follow it:
+ *
+ *   solid ink      removed / screen fail        (.bar-fail)
+ *   light fill     passes / potentially eligible (.bar-pass)
+ *   hatch          not evaluable — missing data
+ *   dashed ring    pending chart review — a human has to read the chart
+ */
 .mk {
   width: 9px;
   height: 9px;
   display: inline-block;
   flex: none;
 }
-.mk-elig {
+.mk-fail {
   background: var(--ink);
 }
-.mk-fail {
-  background: none;
-  border: 1.5px solid var(--ink-2);
+.mk-elig {
+  background: var(--fill);
+  border: 1px solid var(--ink-2);
 }
 .mk-ne {
   background: repeating-linear-gradient(45deg, var(--hatch) 0 1.5px, transparent 1.5px 4px);
   border: 1px solid var(--hatch);
 }
+.mk-cr {
+  background: var(--paper);
+  border: 1.5px dashed var(--ink-2);
+  border-radius: 50%;
+}
 .hatchfill {
   background: repeating-linear-gradient(45deg, #b3ab9b 0 2px, #e9e4da 2px 5px);
 }
-.f-error {
+.finding.f-error {
   border-left: 2px solid var(--ink);
   padding-left: 14px;
 }
-.f-warn {
+.finding.f-warn {
   border-left: 2px dashed var(--ink-2);
   padding-left: 14px;
 }
-.f-info {
+.finding.f-info {
   border-left: 2px solid transparent;
   padding-left: 14px;
+}
+.f-error,
+.f-warn,
+.f-info {
+  padding-left: 14px;
+}
+.f-error {
+  border-left: 2px solid var(--ink);
+}
+.f-warn {
+  border-left: 2px dashed var(--ink-2);
+}
+.f-info {
+  border-left: 2px solid transparent;
 }
 .refbadge {
   font-family: var(--mono);
@@ -409,6 +524,16 @@ button {
 }
 .bar-fail {
   background: var(--ink);
+}
+/* Parked in chart review — in the pool, but not decided by the engine. */
+.bar-cr {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--hatch) 0 1px,
+    transparent 1px 4px
+  );
+  border-top: 1px dashed var(--ink-2);
+  border-bottom: 1px dashed var(--ink-2);
 }
 .num {
   font-family: var(--mono);
@@ -552,6 +677,22 @@ button {
   flex: 1;
   background: var(--fill);
   min-height: 1px;
+  position: relative;
+}
+/* An empty bucket is nothing, not a 1px sliver indistinguishable from an axis. */
+.hist-bar.empty {
+  background: none;
+  min-height: 0;
+}
+.hist-count {
+  position: absolute;
+  top: -13px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-2);
 }
 .hist-bar.excluded {
   background: var(--ink);
@@ -600,9 +741,30 @@ button {
   margin-top: 14px;
   font-family: var(--mono);
 }
+/* Type the threshold instead of hunting for it with a drag (operator M5). */
+.numbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+}
+.numbox__input {
+  width: 74px;
+  height: 26px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 0 6px;
+  color: var(--ink);
+}
 .recount {
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
 }
 .recount .up {
   color: var(--accent);
@@ -666,6 +828,8 @@ button {
 
 /* ------------------------------------------------------------------ checks */
 
+/* `padding` shorthand here used to reset the 14px the severity rules set, so
+   every finding's text sat on top of its own 2px border (uiux M4). */
 .finding {
   padding: 12px 0 14px;
   border-top: 1px solid var(--hairline);
@@ -696,6 +860,23 @@ button {
 }
 
 /* ------------------------------------------------------------------ review */
+
+/* Every count in the tab is "as of" a review state; the stamp says which one. */
+.asof {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--hairline);
+  flex: none;
+}
+.asof-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
 
 .placeholder {
   flex: 1;

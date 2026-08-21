@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { parseRuleSet, type RuleSet } from "../../src/core/schema.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { parseRuleSet, type PatientFacts, type RuleSet } from "../../src/core/schema.js";
 import { RuleEditor, type RevealRequest } from "./editor/RuleEditor.js";
 import { realEngine } from "./engine/real.js";
+import { resolveChartReview } from "./engine/chart-review.js";
+import type { Engine, Evaluation, Finding } from "./engine/api.js";
 import { useCheck } from "./engine/useCheck.js";
 import { criterionSpans } from "./engine/lines.js";
 import { computeFunnel } from "./funnel/compute.js";
@@ -11,12 +13,17 @@ import { AmendmentView } from "./amendment/AmendmentView.js";
 import { ChecksView } from "./checks/ChecksView.js";
 import { cohortFindings } from "./checks/cohort.js";
 import { ReviewView } from "./review/ReviewView.js";
+import { downloadText } from "./util/io.js";
 import {
   applyReview,
+  asOfLabel,
   buildCards,
   decide,
-  initialReviewState,
-  pendingCount,
+  decisionsYaml,
+  factsRead,
+  loadReviewState,
+  reviewProgress,
+  saveReviewState,
   type Decision,
 } from "./review/store.js";
 import {
@@ -42,6 +49,31 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "review", label: "Review" },
 ];
 
+/**
+ * The engine every view is handed.
+ *
+ * `realEngine` is core, untouched. This wrapper adds exactly one pass on top:
+ * chart-review resolution, which turns an unmodeled criterion into a verdict
+ * when a human has confirmed the fact that settles it (see
+ * `./engine/chart-review.ts` for why that lives here and not in the rule set).
+ * Every view uses this one object, so a patient cannot be resolved on one tab
+ * and unresolved on the next.
+ */
+const workbenchEngine: Engine = {
+  ...realEngine,
+  evalPatient(rulesetYaml: string, patient: PatientFacts): Evaluation {
+    return resolveChartReview(realEngine.evalPatient(rulesetYaml, patient), patient);
+  },
+};
+
+const storage = (): Storage | undefined => {
+  try {
+    return typeof window === "undefined" ? undefined : window.localStorage;
+  } catch {
+    return undefined;
+  }
+};
+
 export function App() {
   const [rulesetYaml, setRulesetYaml] = useState(DEMO_RULESET_CURRENT);
   const [factModelYaml, setFactModelYaml] = useState(DEMO_FACT_MODEL);
@@ -54,11 +86,12 @@ export function App() {
   });
   const [selected, setSelected] = useState<string | null>(null);
   const [reveal, setReveal] = useState<RevealRequest | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   const findings = useCheck(rulesetYaml, factModelYaml);
 
   // While the author is mid-keystroke the document may not parse. The views keep
-  // showing the last rule set that did, flagged, rather than blanking out.
+  // showing the last rule set that did — flagged on every tab, not just this one.
   const parsed = useMemo(() => {
     try {
       return { rs: parseRuleSet(rulesetYaml), yaml: rulesetYaml };
@@ -73,26 +106,50 @@ export function App() {
   useEffect(() => {
     if (parsed) setGood(parsed);
   }, [parsed]);
+  const stale = parsed === null;
 
-  // Review decisions are session state, and the cohort the engine sees is a
-  // function of them: a proposed fact is withheld until a human confirms it, so
-  // every view downstream of `cohort` re-evaluates when a card is decided.
-  const [review, setReview] = useState(() => initialReviewState(DEMO_FACTS));
+  // Review decisions are session state that survives a reload, and the cohort
+  // the engine sees is a function of them: a proposed fact is withheld until a
+  // human confirms it, so every view downstream re-evaluates when a card moves.
+  const [review, setReview] = useState(() => loadReviewState(storage()));
+  useEffect(() => {
+    saveReviewState(storage(), review);
+  }, [review]);
   const cohort = useMemo(() => applyReview(DEMO_COHORT, DEMO_FACTS, review), [review]);
 
   const evaluations = useMemo(
-    () => cohort.map((p) => realEngine.evalPatient(good.yaml, p)),
+    () => cohort.map((p) => workbenchEngine.evalPatient(good.yaml, p)),
     [good.yaml, cohort],
   );
   const funnel = useMemo(() => computeFunnel(evaluations), [evaluations]);
   const spans = useMemo(() => criterionSpans(good.yaml), [good.yaml]);
-  const allFindings = useMemo(
-    () => [...findings, ...cohortFindings(good.rs, cohort)],
-    [findings, good.rs, cohort],
-  );
+
+  const read = useMemo(() => factsRead(good.yaml), [good.yaml]);
+  const progress = useMemo(() => reviewProgress(DEMO_FACTS, review, read), [review, read]);
+  const asOf = asOfLabel(progress);
+
+  // Findings for the last document that parsed, kept so the Checks badge cannot
+  // count *down* when the author breaks the file (operator M6, uiux M8): a parse
+  // error is one more problem, never two fewer.
+  const cohortOnly = useMemo(() => cohortFindings(good.rs, cohort), [good.rs, cohort]);
+  const [lastGood, setLastGood] = useState<Finding[]>(() => []);
+  useEffect(() => {
+    if (!stale && !findings.some((f) => f.code === "schema")) setLastGood(findings);
+  }, [findings, stale]);
+  const allFindings: Finding[] = useMemo(() => {
+    if (!stale) return [...findings, ...cohortOnly];
+    const parseError = findings.filter((f) => f.code === "schema");
+    return [
+      ...parseError,
+      ...lastGood.map((f) => ({ ...f, message: `${f.message} (last valid version)` })),
+      ...cohortOnly.map((f) => ({ ...f, message: `${f.message} (last valid version)` })),
+    ];
+  }, [findings, cohortOnly, lastGood, stale]);
+
   const problems = allFindings.filter((f) => f.level !== "info").length;
   const errors = allFindings.filter((f) => f.level === "error").length;
   const warnings = allFindings.filter((f) => f.level === "warning").length;
+
   const reviewCards = useMemo(
     () =>
       buildCards({
@@ -100,13 +157,11 @@ export function App() {
         files: DEMO_FACTS,
         notes: DEMO_NOTES,
         rulesetYaml: good.yaml,
-        engine: realEngine,
+        engine: workbenchEngine,
         state: review,
       }),
     [good.yaml, review],
   );
-  const pending = pendingCount(DEMO_FACTS, review);
-  const decided = pendingCount(DEMO_FACTS, {}) - pending;
   const onDecide = (id: string, decision: Decision, editedValue?: string) =>
     setReview((s) => decide(s, id, decision, editedValue));
 
@@ -121,11 +176,22 @@ export function App() {
 
   return (
     <div className="app">
-      <div className="topbar">
-        <div className="logo">
+      <a
+        className="skiplink"
+        href="#results"
+        onClick={(e) => {
+          e.preventDefault();
+          resultsRef.current?.focus();
+        }}
+      >
+        Skip to results
+      </a>
+
+      <header className="topbar" role="banner">
+        <h1 className="logo">
           <i />
           rulekit
-        </div>
+        </h1>
         <div className="psel">
           <span className="pid">{DEMO_TRIAL.id}</span>
           <span className="ink2">{DEMO_TRIAL.title}</span>
@@ -133,14 +199,15 @@ export function App() {
         <div className="pill">{DEMO_TRIAL.protocolPill}</div>
         <div className="pill">ruleset v{good.rs.rulesetVersion}</div>
         <div className="tspacer" />
-        <button className="tbtn" disabled title="Not in this phase">
-          Export feasibility summary (PDF)
-        </button>
-      </div>
+        <span className="ink3" style={{ fontSize: 11.5 }}>
+          Edit the rules on the left; every panel on the right re-evaluates the {funnel.n}-patient
+          synthetic cohort as you type.
+        </span>
+      </header>
 
       <div className="body">
-        <div className="editor">
-          <div className="etabs">
+        <div className="editor" role="region" aria-label="Rule editor">
+          <div className="etabs" role="tablist" aria-label="Documents">
             {(
               [
                 ["ruleset", "ruleset.yaml"],
@@ -148,7 +215,13 @@ export function App() {
                 ["factModel", "patient-facts/v1"],
               ] as const
             ).map(([id, label]) => (
-              <button key={id} className={`etab${doc === id ? " on" : ""}`} onClick={() => setDoc(id)}>
+              <button
+                key={id}
+                role="tab"
+                aria-selected={doc === id}
+                className={`etab${doc === id ? " on" : ""}`}
+                onClick={() => setDoc(id)}
+              >
                 {label}
               </button>
             ))}
@@ -180,11 +253,20 @@ export function App() {
           </div>
         </div>
 
-        <div className="right">
-          <div className="tabs">
+        <main
+          className="right"
+          id="results"
+          ref={resultsRef}
+          tabIndex={-1}
+          role="main"
+          aria-label="Results"
+        >
+          <div className="tabs" role="tablist" aria-label="Results views">
             {TABS.map((t) => (
               <button
                 key={t.id}
+                role="tab"
+                aria-selected={tab === t.id}
                 className={`tab${tab === t.id ? " on" : ""}`}
                 onClick={() => {
                   setTab(t.id);
@@ -193,68 +275,86 @@ export function App() {
               >
                 {t.label}
                 {t.id === "checks" && problems > 0 && <span className="ct">{problems}</span>}
-                {t.id === "review" && pending > 0 && <span className="ct">{pending}</span>}
+                {t.id === "review" && progress.pending > 0 && (
+                  <span className="ct">{progress.pending}</span>
+                )}
               </button>
             ))}
           </div>
 
-          {!parsed && (
-            <div
-              className="note"
-              style={{ margin: "10px 22px 0", borderLeft: "2px solid var(--ink)", borderRadius: 0 }}
-            >
-              The editor's rule set does not parse — showing results for the last valid version.
+          {stale && (
+            <div className="stale-banner" role="status" data-testid="stale-banner">
+              <b>The editor's rule set does not parse.</b> Every panel on this tab — counts,
+              distributions and diffs alike — is showing the <i>last valid version</i>, not what is
+              in the editor.{" "}
+              <button className="linkbtn" onClick={() => setTab("checks")}>
+                See the parse error in Checks
+              </button>
             </div>
           )}
 
-          {tab === "funnel" && (
-            <FunnelView
-              funnel={funnel}
-              evaluations={evaluations}
-              cohort={cohort}
-              ruleSet={good.rs}
-              selected={selected}
-              onSelect={setSelected}
-            />
-          )}
-          {tab === "thresholds" && (
-            <ThresholdsView
-              rulesetYaml={good.yaml}
-              cohort={cohort}
-              engine={realEngine}
-              onCopyBack={setRulesetYaml}
-            />
-          )}
-          {tab === "amendment" && (
-            <AmendmentView
-              rulesetYaml={good.yaml}
-              priorYaml={DEMO_RULESET_PRIOR}
-              cohort={cohort}
-              enrolled={DEMO_ENROLLED}
-              engine={realEngine}
-              onInspectPatient={(p) => {
-                setSelected(p);
-                setTab("funnel");
-              }}
-            />
-          )}
-          {tab === "checks" && (
-            <ChecksView
-              findings={allFindings}
-              spans={spans}
-              rulesetVersion={good.rs.rulesetVersion}
-              onJump={jumpToLine}
-            />
-          )}
-          {tab === "review" && (
-            <ReviewView
-              cards={reviewCards}
-              notEvaluable={funnel.notEvaluable}
-              decided={decided}
-              onDecide={onDecide}
-            />
-          )}
-        </div>
+          <div className={`pane${stale ? " stale" : ""}`}>
+            {tab === "funnel" && (
+              <FunnelView
+                funnel={funnel}
+                evaluations={evaluations}
+                cohort={cohort}
+                ruleSet={good.rs}
+                selected={selected}
+                onSelect={setSelected}
+                asOf={asOf}
+              />
+            )}
+            {tab === "thresholds" && (
+              <ThresholdsView
+                rulesetYaml={good.yaml}
+                cohort={cohort}
+                engine={workbenchEngine}
+                onCopyBack={setRulesetYaml}
+                asOf={asOf}
+              />
+            )}
+            {tab === "amendment" && (
+              <AmendmentView
+                rulesetYaml={good.yaml}
+                priorYaml={DEMO_RULESET_PRIOR}
+                cohort={cohort}
+                enrolled={DEMO_ENROLLED}
+                engine={workbenchEngine}
+                asOf={asOf}
+                onInspectPatient={(p) => {
+                  setSelected(p);
+                  setTab("funnel");
+                }}
+              />
+            )}
+            {tab === "checks" && (
+              <ChecksView
+                findings={allFindings}
+                spans={spans}
+                rulesetVersion={good.rs.rulesetVersion}
+                stale={stale}
+                onJump={jumpToLine}
+              />
+            )}
+            {tab === "review" && (
+              <ReviewView
+                cards={reviewCards}
+                bands={funnel.bands}
+                progress={progress}
+                factModelYaml={factModelYaml}
+                onDecide={onDecide}
+                onDownload={() =>
+                  downloadText(
+                    `rulekit-decisions-${new Date().toISOString().slice(0, 10)}.yaml`,
+                    decisionsYaml(DEMO_FACTS, review),
+                  )
+                }
+                onReset={() => setReview({})}
+              />
+            )}
+          </div>
+        </main>
       </div>
 
       <div className="disclaimer">

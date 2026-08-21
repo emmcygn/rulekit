@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { ProposedFactCard, ReviewQueueProps } from "./types.js";
-import { sortReviewQueue, highlightSpan } from "./sort.js";
+import { useId, useState } from "react";
+import type { EditCheck, ProposedFactCard, ReviewQueueProps } from "./types.js";
+import { sortReviewQueue, excerptSpan, highlightSpan } from "./sort.js";
 import "./tokens.css";
 
 const DEFAULT_UNSURE_BELOW = 0.8;
@@ -8,9 +8,22 @@ const DEFAULT_UNSURE_BELOW = 0.8;
 const formatValue = (value: string | number | boolean, unit?: string): string =>
   `${typeof value === "boolean" ? String(value) : value}${unit ? ` ${unit}` : ""}`;
 
-function QuoteInContext({ quote, noteContext }: { quote: string; noteContext: string }) {
-  const span = highlightSpan(noteContext, quote);
-  if (span === null) {
+const ACCEPT_NON_EMPTY = (_item: ProposedFactCard, draft: string): EditCheck =>
+  draft.trim().length > 0 ? { ok: true } : { ok: false, message: "Enter a value." };
+
+function QuoteInContext({
+  quote,
+  noteContext,
+  expanded,
+  onExpand,
+}: {
+  quote: string;
+  noteContext: string;
+  expanded: boolean;
+  onExpand: () => void;
+}) {
+  const full = highlightSpan(noteContext, quote);
+  if (full === null) {
     // The gate accepted this quote when the fact was proposed. If it no longer
     // resolves, the note changed underneath it — say so rather than render a
     // plausible-looking block of unhighlighted text.
@@ -23,11 +36,20 @@ function QuoteInContext({ quote, noteContext }: { quote: string; noteContext: st
       </>
     );
   }
+  const short = excerptSpan(noteContext, quote, 1) ?? { ...full, truncated: false };
+  const span = expanded ? full : short;
   return (
     <>
+      {!expanded && short.truncated && <span className="rk-card__elide">…</span>}
       {span.before}
       <mark>{span.match}</mark>
       {span.after}
+      {!expanded && short.truncated && <span className="rk-card__elide">…</span>}
+      {short.truncated && (
+        <button type="button" className="rk-card__expand" onClick={onExpand}>
+          {expanded ? "show excerpt" : "show full note"}
+        </button>
+      )}
     </>
   );
 }
@@ -37,19 +59,40 @@ function Card({
   onConfirm,
   onEdit,
   onReject,
+  validate,
+  optionsFor,
   unsureBelow,
 }: {
   item: ProposedFactCard;
   onConfirm: ReviewQueueProps["onConfirm"];
   onEdit: ReviewQueueProps["onEdit"];
   onReject: ReviewQueueProps["onReject"];
+  validate: NonNullable<ReviewQueueProps["validate"]>;
+  optionsFor: ReviewQueueProps["optionsFor"];
   unsureBelow: number;
 }) {
   const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState(String(item.value));
+  const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
 
   const pct = Math.round(item.confidence * 100);
   const unsure = item.confidence < unsureBelow;
+  const options = optionsFor?.(item);
+  const overrides = item.structured !== undefined && String(item.structured) !== String(item.value);
+  const chartReviewOnly = item.usedByRules === false;
+
+  const save = (): void => {
+    const check = validate(item, draft);
+    if (!check.ok) {
+      setError(check.message);
+      return;
+    }
+    setError(null);
+    onEdit(item, draft);
+    setEditing(false);
+  };
 
   return (
     <li className="rk-card" data-testid="review-card" data-fact={item.fact} data-patient={item.patient}>
@@ -62,7 +105,26 @@ function Card({
             {item.impact ?? "changes verdict"}
           </span>
         )}
+        {chartReviewOnly && (
+          <span className="rk-card__unused" data-testid="unused-badge">
+            chart review only — not read by any criterion
+          </span>
+        )}
       </div>
+
+      {item.structured !== undefined && (
+        <p className={`rk-card__override${overrides ? " rk-card__override--conflict" : ""}`} data-testid="override-notice">
+          <span className="rk-card__doc">on record</span>
+          <span className="rk-card__structured">{formatValue(item.structured, item.unit)}</span>
+          <span aria-hidden>→</span>
+          <span className="rk-card__proposed">{formatValue(item.value, item.unit)}</span>
+          <span className="rk-card__override-note">
+            {overrides
+              ? "confirming replaces the value already on record"
+              : "matches the value already on record"}
+          </span>
+        </p>
+      )}
 
       <div className="rk-card__conf">
         <span
@@ -81,33 +143,71 @@ function Card({
 
       <blockquote className="rk-card__quote">
         <cite className="rk-card__doc">{item.doc}</cite>
-        <QuoteInContext quote={item.quote} noteContext={item.noteContext} />
+        <QuoteInContext
+          quote={item.quote}
+          noteContext={item.noteContext}
+          expanded={expanded}
+          onExpand={() => setExpanded(!expanded)}
+        />
       </blockquote>
 
       {editing ? (
         <div className="rk-edit">
           <label>
-            <span className="rk-card__doc">corrected value</span>
-            <input
-              className="rk-edit__input"
-              aria-label={`corrected value for ${item.fact}`}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-            />
+            <span className="rk-card__doc">
+              corrected value{item.unit ? ` (${item.unit})` : ""}
+            </span>
+            {options ? (
+              <select
+                className="rk-edit__input"
+                aria-label={`corrected value for ${item.fact}`}
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  setError(null);
+                }}
+              >
+                {options.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                className={`rk-edit__input${error ? " rk-edit__input--bad" : ""}`}
+                aria-label={`corrected value for ${item.fact}`}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? errorId : undefined}
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  setError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") save();
+                }}
+              />
+            )}
           </label>
-          <button
-            type="button"
-            className="rk-btn rk-btn--primary"
-            onClick={() => {
-              onEdit(item, draft);
-              setEditing(false);
-            }}
-          >
+          <button type="button" className="rk-btn rk-btn--primary" onClick={save}>
             Save
           </button>
-          <button type="button" className="rk-btn" onClick={() => setEditing(false)}>
+          <button
+            type="button"
+            className="rk-btn rk-btn--quiet"
+            onClick={() => {
+              setEditing(false);
+              setError(null);
+            }}
+          >
             Cancel
           </button>
+          {error && (
+            <p className="rk-edit__error" id={errorId} role="alert" data-testid="edit-error">
+              {error}
+            </p>
+          )}
         </div>
       ) : (
         <div className="rk-card__actions">
@@ -117,11 +217,11 @@ function Card({
             aria-label={`confirm ${item.fact} for ${item.patient}`}
             onClick={() => onConfirm(item)}
           >
-            Confirm
+            {overrides ? "Confirm override" : "Confirm"}
           </button>
           <button
             type="button"
-            className="rk-btn"
+            className="rk-btn rk-btn--quiet"
             aria-label={`edit ${item.fact} for ${item.patient}`}
             onClick={() => setEditing(true)}
           >
@@ -129,7 +229,7 @@ function Card({
           </button>
           <button
             type="button"
-            className="rk-btn"
+            className="rk-btn rk-btn--quiet"
             aria-label={`reject ${item.fact} for ${item.patient}`}
             onClick={() => onReject(item)}
           >
@@ -147,18 +247,28 @@ function Card({
  * One queue, three actions, no bulk operations — the spec names "review pane
  * becomes a second product" as a risk, and the mitigation is this shape.
  * Nothing here auto-confirms at any confidence: every card requires a click,
- * which is the rulekit invariant expressed as an interface.
+ * which is the rulekit invariant expressed as an interface. Nothing here
+ * accepts a correction the host refuses, either: `validate` gates Save and the
+ * reason is shown on the card.
  */
-export function ReviewQueue({ items, onConfirm, onEdit, onReject, unsureBelow = DEFAULT_UNSURE_BELOW }: ReviewQueueProps) {
+export function ReviewQueue({
+  items,
+  onConfirm,
+  onEdit,
+  onReject,
+  validate = ACCEPT_NON_EMPTY,
+  optionsFor,
+  unsureBelow = DEFAULT_UNSURE_BELOW,
+}: ReviewQueueProps) {
   const sorted = sortReviewQueue(items);
   const impactful = sorted.filter((i) => i.flipsVerdict).length;
 
   return (
     <section className="rk-review" aria-label="Proposed facts pending review">
       <header className="rk-review__head">
-        <h2 className="rk-review__title">Pending review</h2>
+        <h3 className="rk-review__title">Pending review</h3>
         <span className="rk-review__count" data-testid="queue-count">
-          {sorted.length} proposed{impactful > 0 ? ` · ${impactful} change a verdict` : ""}
+          {sorted.length} pending{impactful > 0 ? ` · ${impactful} change a verdict` : ""}
         </span>
       </header>
 
@@ -173,6 +283,8 @@ export function ReviewQueue({ items, onConfirm, onEdit, onReject, unsureBelow = 
               onConfirm={onConfirm}
               onEdit={onEdit}
               onReject={onReject}
+              validate={validate}
+              optionsFor={optionsFor}
               unsureBelow={unsureBelow}
             />
           ))}

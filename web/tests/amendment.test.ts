@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 import { parseRuleSet } from "../../src/core/schema.js";
 import { realEngine } from "../src/engine/real.js";
 import type { Evaluation, Flip } from "../src/engine/api.js";
-import { criterionOrder, enrolledImpact, groupFlips, structuralDiff } from "../src/amendment/compute.js";
+import {
+  amendmentImpact,
+  criterionOrder,
+  deltaLine,
+  enrolledImpact,
+  groupFlips,
+  structuralDiff,
+} from "../src/amendment/compute.js";
+import { resolveChartReview } from "../src/engine/chart-review.js";
 import {
   DEMO_COHORT,
   DEMO_ENROLLED,
@@ -87,6 +95,59 @@ describe("groupFlips", () => {
     const groups = groupFlips([flip], order);
     expect(groups).toHaveLength(1);
     expect(groups[0]!.criterionId).toBe("");
+  });
+});
+
+describe("amendmentImpact — the headline is the list", () => {
+  const resolved = (yaml: string) =>
+    DEMO_COHORT.map((p) => resolveChartReview(realEngine.evalPatient(yaml, p), p));
+  const impact = amendmentImpact(resolved(DEMO_RULESET_PRIOR), resolved(DEMO_RULESET_CURRENT));
+
+  it("counts exactly the patients it then names", () => {
+    // The shipped headline said "3 of 10 change outcome" over deltas of −2/+2
+    // (uiux B5). The count and the list are now the same array.
+    const groups = groupFlips(impact.flips, criterionOrder(current));
+    const named = groups.reduce((n, g) => n + g.flips.length, 0);
+    expect(named).toBe(impact.flips.length);
+    expect(impact.flips).toHaveLength(5);
+    expect(impact.flips.map((f) => f.patient).sort()).toEqual([
+      "SYN-007",
+      "SYN-019",
+      "SYN-042",
+      "SYN-058",
+      "SYN-088",
+    ]);
+  });
+
+  it("states deltas that add up to the same move", () => {
+    // Every band that changed size is listed, and the sizes that grew balance
+    // the ones that shrank.
+    expect(deltaLine(impact)).toBe(
+      "screen fail 2 → 7, not evaluable 1 → 0, pending chart review 7 → 3",
+    );
+    const grew = impact.moved.reduce((n, b) => n + Math.max(0, impact.after[b] - impact.before[b]), 0);
+    const shrank = impact.moved.reduce((n, b) => n + Math.max(0, impact.before[b] - impact.after[b]), 0);
+    expect(grew).toBe(shrank);
+    expect(grew).toBe(impact.flips.length);
+  });
+
+  it("includes every flip the core engine finds", () => {
+    const core = realEngine.behavioralDiff(DEMO_RULESET_PRIOR, DEMO_RULESET_CURRENT, DEMO_COHORT);
+    const named = new Set(impact.flips.map((f) => f.patient));
+    for (const f of core) expect(named).toContain(f.patient);
+  });
+
+  it("attributes each flip to the criteria whose verdict actually changed", () => {
+    const syn088 = impact.flips.find((f) => f.patient === "SYN-088")!;
+    expect(syn088.responsible).toContain("anticoag-washout");
+    const syn007 = impact.flips.find((f) => f.patient === "SYN-007")!;
+    expect(syn007.responsible).toEqual(["renal-safety"]);
+  });
+
+  it("says nothing changed when nothing changed", () => {
+    const same = amendmentImpact(resolved(DEMO_RULESET_CURRENT), resolved(DEMO_RULESET_CURRENT));
+    expect(same.flips).toEqual([]);
+    expect(deltaLine(same)).toBe("no band changes size");
   });
 });
 

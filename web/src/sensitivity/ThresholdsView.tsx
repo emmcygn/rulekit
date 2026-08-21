@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import type { PatientFacts } from "../../../src/core/schema.js";
 import type { Engine } from "../engine/api.js";
-import { cohortCounts } from "../funnel/compute.js";
+import { BAND_LABEL, DISPLAY_BANDS, displayBandCounts, summaryLine } from "../funnel/bands.js";
+import { copyText } from "../util/io.js";
 import {
   excludes,
   histogram,
@@ -10,6 +11,7 @@ import {
   numericTargets,
   setKnob,
   topYield,
+  yieldsAreRanked,
   type Target,
 } from "./compute.js";
 
@@ -18,17 +20,22 @@ type Props = {
   cohort: PatientFacts[];
   engine: Engine;
   onCopyBack: (nextYaml: string) => void;
+  /** "as of N of M facts reviewed" — the review state these numbers stand on. */
+  asOf: string;
 };
 
-export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Props) {
+export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }: Props) {
   const targets = useMemo(() => numericTargets(rulesetYaml), [rulesetYaml]);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
   const histRef = useRef<HTMLDivElement | null>(null);
 
   const ranked = useMemo(() => topYield(rulesetYaml, cohort, engine), [rulesetYaml, cohort, engine]);
-  // Open on the knob worth the most patients rather than the first one written.
-  const best = ranked[0]?.target;
+  const ordered = yieldsAreRanked(ranked);
+  // Open on the knob worth the most patients — but only when one knob actually
+  // is worth more than the next. On a tie, document order is the honest default.
+  const best = ordered ? ranked[0]?.target : undefined;
   const target: Target | undefined =
     targets.find((t) => `${t.criterionId}.${t.knob}` === pickedId) ??
     targets.find((t) => best && t.criterionId === best.criterionId && t.knob === best.knob) ??
@@ -51,7 +58,7 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
   const maxCount = Math.max(1, ...bins.map((b) => b.count));
 
   const before = useMemo(
-    () => cohortCounts(cohort.map((p) => engine.evalPatient(rulesetYaml, p))),
+    () => displayBandCounts(cohort.map((p) => engine.evalPatient(rulesetYaml, p))),
     [cohort, engine, rulesetYaml],
   );
   const previewYaml = useMemo(
@@ -59,7 +66,7 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
     [rulesetYaml, target, preview],
   );
   const after = useMemo(
-    () => cohortCounts(cohort.map((p) => engine.evalPatient(previewYaml, p))),
+    () => displayBandCounts(cohort.map((p) => engine.evalPatient(previewYaml, p))),
     [cohort, engine, previewYaml],
   );
 
@@ -75,6 +82,7 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
   }
 
   const xOf = (value: number) => ((value - lo) / (hi - lo)) * 100;
+  const clamp = (v: number) => Math.min(hi, Math.max(lo, Math.round(v)));
   const valueAt = (clientX: number): number => {
     const rect = histRef.current?.getBoundingClientRect();
     if (!rect) return current;
@@ -87,15 +95,50 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
     setPreview(valueAt(e.clientX));
   };
 
-  const delta = (a: number, b: number) => (b === a ? null : b > a ? "up" : "down");
+  const unit = target.knob === "windowDays" ? "days" : (target.unit ?? "");
+  const fmt = (v: number) => (target.knob === "windowDays" ? `${v}d` : String(v));
   const dirty = preview !== null && preview !== saved;
   const countedIn = values.numeric.filter((v) => !excludes(target, current, v.value)).length;
+  const withoutValue = cohort.length - values.numeric.length;
+
+  const summary = (): string =>
+    [
+      `Threshold impact — ${target.ref ?? ""} ${target.criterionId} (${target.label})`,
+      `cohort n = ${cohort.length} · ${asOf}`,
+      "",
+      `saved ${fmt(saved)}${dirty ? ` · preview ${fmt(current)}` : ""}`,
+      `${countedIn} of ${values.numeric.length} recorded values stay in the pool` +
+        (withoutValue > 0 ? ` · ${withoutValue} of ${cohort.length} have no ${target.fact} value` : ""),
+      "",
+      `before: ${summaryLine(before)}`,
+      `after:  ${summaryLine(after)}`,
+      "",
+      "Yield if relaxed by one step (patients returned from screen fail):",
+      ...ranked.map(
+        (y) =>
+          `  ${y.ref ?? ""} ${y.criterionId}  ${y.from} → ${y.to}  ${y.delta >= 0 ? "+" : ""}${y.delta}`,
+      ),
+      "",
+      "Exploratory preview — ruleset.yaml is unchanged. Synthetic protocol and synthetic patients.",
+    ].join("\n");
 
   return (
     <div className="view">
       <div className="vhead">
         <h2>Threshold impact</h2>
-        <span className="sub">drag the threshold on the chart · cohort re-evaluates live</span>
+        <span className="sub">drag the threshold or type it · cohort re-evaluates live</span>
+        <button
+          className="tbtn"
+          style={{ marginLeft: "auto" }}
+          onClick={() => {
+            void copyText(summary()).then((ok) => {
+              setCopied(ok);
+              setTimeout(() => setCopied(false), 2000);
+            });
+          }}
+        >
+          {copied ? "Copied" : "Copy summary"}
+        </button>
       </div>
 
       <div className="knobbar">
@@ -104,6 +147,7 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
         </span>
         <select
           className="select"
+          aria-label="criterion to tune"
           value={`${target.criterionId}.${target.knob}`}
           onChange={(e) => {
             setPickedId(e.target.value);
@@ -123,19 +167,36 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
             <>
               {" "}
               <span className="arrow">→</span>{" "}
-              <span className="preview">
-                {target.knob === "windowDays" ? `${preview}d` : preview}
-              </span>
+              <span className="preview">{fmt(current)}</span>
             </>
           )}
         </span>
+        <label className="numbox">
+          <span className="ink2">set to</span>
+          <input
+            type="number"
+            className="numbox__input"
+            aria-label={`${target.criterionId} threshold value`}
+            value={current}
+            min={lo}
+            max={hi}
+            step={1}
+            onChange={(e) => {
+              const n = Number(e.target.value);
+              if (Number.isFinite(n)) setPreview(clamp(n));
+            }}
+          />
+          {unit && <span className="ink3">{unit}</span>}
+        </label>
       </div>
 
       <div className="chart">
         <div className="chart-note">
           cohort {target.knob === "windowDays" ? "recency" : target.fact} distribution · n ={" "}
-          {values.numeric.length} · {width}-unit buckets, {lo}–{hi}
-          {values.unusable.length > 0 && ` · ${values.unusable.length} not evaluable, excluded`}
+          {values.numeric.length} of {cohort.length}
+          {withoutValue > 0 && ` · ${withoutValue} without a recorded ${target.fact} value`}
+          {values.unusable.length > 0 && ` · ${values.unusable.length} not evaluable, excluded`} ·{" "}
+          {width}-unit buckets, {lo}–{hi}
         </div>
         <div
           className="hist"
@@ -147,10 +208,16 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
           aria-valuenow={current}
           aria-valuemin={lo}
           aria-valuemax={hi}
+          aria-valuetext={`${current}${unit ? ` ${unit}` : ""}`}
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === "ArrowLeft") setPreview(current - 1);
-            if (e.key === "ArrowRight") setPreview(current + 1);
+            const step = e.key === "PageUp" || e.key === "PageDown" ? 5 : 1;
+            if (e.key === "ArrowLeft" || e.key === "PageDown") setPreview(clamp(current - step));
+            else if (e.key === "ArrowRight" || e.key === "PageUp") setPreview(clamp(current + step));
+            else if (e.key === "Home") setPreview(lo);
+            else if (e.key === "End") setPreview(hi);
+            else return;
+            e.preventDefault();
           }}
         >
           <div className="hist-bars">
@@ -162,22 +229,24 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
               return (
                 <div
                   key={b.lo}
-                  className={`hist-bar ${cls}`}
+                  className={`hist-bar ${cls}${b.count === 0 ? " empty" : ""}`}
                   style={{ height: `${(b.count / maxCount) * 100}%` }}
                   title={`${b.lo}–${b.hi}: ${b.count}`}
-                />
+                >
+                  {b.count > 0 && <span className="hist-count">{b.count}</span>}
+                </div>
               );
             })}
           </div>
           <div className="thline" style={{ left: `${xOf(saved)}%` }} />
           <div className="thlabel" style={{ left: `calc(${xOf(saved)}% + 5px)` }}>
-            saved {target.knob === "windowDays" ? `${saved}d` : saved}
+            saved {fmt(saved)}
           </div>
           {dirty && (
             <>
               <div className="thline preview" style={{ left: `${xOf(current)}%` }} />
               <div className="thlabel preview" style={{ left: `calc(${xOf(current)}% + 5px)`, top: 12 }}>
-                preview {target.knob === "windowDays" ? `${current}d` : current}
+                preview {fmt(current)}
               </div>
             </>
           )}
@@ -189,26 +258,42 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
         </div>
         <div style={{ fontSize: 11, color: "var(--ink-2)", marginTop: 6 }}>
           dark bars = removed at the saved threshold · shaded bars change side under the preview ·{" "}
-          {countedIn} of {values.numeric.length} values stay in the pool
+          {countedIn} of {values.numeric.length} recorded values stay in the pool
         </div>
       </div>
 
-      <div className="recount">
-        potentially eligible {before.potentiallyEligible} <span className="ink3">→</span>{" "}
-        <b className={delta(before.potentiallyEligible, after.potentiallyEligible) === "up" ? "up" : ""}>
-          {after.potentiallyEligible}
-        </b>
-        &nbsp;&nbsp;·&nbsp;&nbsp;screen fail {before.screenFail} <span className="ink3">→</span>{" "}
-        {after.screenFail}&nbsp;&nbsp;·&nbsp;&nbsp;not evaluable {before.notEvaluable}{" "}
-        <span className="ink3">→</span> {after.notEvaluable}
+      <div className="recount" data-testid="recount">
+        {DISPLAY_BANDS.map((band, i) => (
+          <span key={band}>
+            {i > 0 && <>&nbsp;&nbsp;·&nbsp;&nbsp;</>}
+            {BAND_LABEL[band]} {before[band]} <span className="ink3">→</span>{" "}
+            <b
+              className={
+                (band === "potentially-eligible" || band === "pending-chart-review") &&
+                after[band] > before[band]
+                  ? "up"
+                  : ""
+              }
+            >
+              {after[band]}
+            </b>
+          </span>
+        ))}
+      </div>
+      <div className="ink3" style={{ fontSize: 11.5, marginTop: -8 }}>
+        band counts are the engine's verdict per patient · {asOf}
+        {countedIn !== values.numeric.length &&
+          after["potentially-eligible"] === before["potentially-eligible"] &&
+          " · a value re-entering the pool does not move a band when another criterion still blocks that patient"}
       </div>
 
       <div>
         <div style={{ fontSize: 11, color: "var(--ink-2)", marginBottom: 6 }}>
-          top criteria by yield if relaxed
+          yield if relaxed by one step · patients returned from screen fail · every numeric knob,{" "}
+          {ordered ? "ranked" : "unranked (the top yields tie)"}
         </div>
-        <div className="yield-list">
-          {ranked.length === 0 && <span className="ink2">no single relaxation returns a patient</span>}
+        <div className="yield-list" data-testid="yield-list">
+          {ranked.length === 0 && <span className="ink2">this rule set has no numeric knob</span>}
           {ranked.map((y, i) => (
             <div key={`${y.criterionId}-${y.from}`}>
               <button
@@ -217,8 +302,13 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack }: Prop
                   setPreview(y.to);
                 }}
               >
-                {i + 1}&nbsp;&nbsp;{y.ref ?? ""} {y.criterionId}&nbsp;&nbsp;{y.from} → {y.to}
-                &nbsp;&nbsp;<b>+{y.delta}</b>
+                {ordered ? `${i + 1}  ` : "·  "}
+                {y.ref ?? ""} {y.criterionId}&nbsp;&nbsp;{y.from} → {y.to}
+                &nbsp;&nbsp;
+                <b>
+                  {y.delta >= 0 ? "+" : ""}
+                  {y.delta}
+                </b>
               </button>
             </div>
           ))}

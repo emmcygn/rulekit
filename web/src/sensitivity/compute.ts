@@ -134,12 +134,32 @@ export type Yield = {
   label: string;
   from: number;
   to: number;
+  /**
+   * Patients this relaxation returns from the screen-fail band.
+   *
+   * Not "patients it makes potentially eligible": a rule set with an unmodeled
+   * criterion pins everyone short of that band, so that measure reads +0 for
+   * every knob and the list says nothing. What a feasibility reader is asking is
+   * "how many does this criterion cost me", and that is the screen-fail band.
+   */
   delta: number;
   target: Target;
 };
 
-/** Price each knob: how many patients does relaxing it by one step return? */
-export function topYield(rulesetYaml: string, cohort: PatientFacts[], engine: Engine): Yield[] {
+/**
+ * Price every knob: how many patients does relaxing it by one step return?
+ *
+ * *Every* knob, including the ones that buy nothing. Dropping the +0 rows hid
+ * the criterion the coordinator had actually come to ask about (operator M4:
+ * she picked E3 and E3 was not in the list), and left three tied +1 rows
+ * numbered 1/2/3 as if the order meant something (uiux M7). Nothing is filtered
+ * and nothing is ranked unless the deltas actually differ.
+ */
+export function topYield(
+  rulesetYaml: string,
+  cohort: readonly PatientFacts[],
+  engine: Engine,
+): Yield[] {
   const base = cohortCounts(cohort.map((p) => engine.evalPatient(rulesetYaml, p)));
   return numericTargets(rulesetYaml)
     .map((t): Yield | undefined => {
@@ -153,13 +173,17 @@ export function topYield(rulesetYaml: string, cohort: PatientFacts[], engine: En
         label: t.label,
         from: t.value,
         to,
-        delta: counts.potentiallyEligible - base.potentiallyEligible,
+        delta: base.screenFail - counts.screenFail,
         target: t,
       };
     })
-    .filter((y): y is Yield => y !== undefined && y.delta > 0)
+    .filter((y): y is Yield => y !== undefined)
     .sort((a, b) => b.delta - a.delta);
 }
+
+/** Is there a real ordering here, or do the top rows just tie? */
+export const yieldsAreRanked = (ranked: readonly Yield[]): boolean =>
+  ranked.length > 1 && ranked[0]!.delta !== ranked[1]!.delta;
 
 export type Bin = { lo: number; hi: number; count: number };
 

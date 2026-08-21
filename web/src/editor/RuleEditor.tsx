@@ -26,6 +26,14 @@ export function RuleEditor({ value, onChange, findings, readOnly = false, reveal
 
   const onMount: OnMount = (editor) => {
     editorRef.current = editor;
+    // Escape hands focus back to the document, so the editor is never the last
+    // stop on the keyboard's tour of the app. `tabFocusMode` below means Tab
+    // already leaves; this is the belt to that pair of braces.
+    editor.onKeyDown((e) => {
+      if (e.keyCode !== monaco.KeyCode.Escape) return;
+      e.stopPropagation();
+      (document.querySelector<HTMLElement>('[role="main"]') ?? document.body).focus();
+    });
   };
 
   // Diagnostics: one marker per finding, on the line of its first criterion.
@@ -84,6 +92,16 @@ export function RuleEditor({ value, onChange, findings, readOnly = false, reveal
         tabSize: 2,
         wordWrap: "off",
         automaticLayout: true,
+        // Tab moves focus instead of inserting a tab: without it the editor is a
+        // keyboard trap and the five result tabs, every funnel row, the
+        // threshold slider and all the Confirm buttons are unreachable
+        // (uiux B3 — 30 Tab presses, all landing back in Monaco).
+        tabFocusMode: true,
+        // Monaco's stock bracket colorization paints every `{`/`[` in saturated
+        // blue and green — 84 elements of two foreign hues in a four-hue system.
+        bracketPairColorization: { enabled: false },
+        guides: { bracketPairs: false, bracketPairsHorizontal: false, highlightActiveBracketPair: false },
+        matchBrackets: "never",
       }}
     />
   );

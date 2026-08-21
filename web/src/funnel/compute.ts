@@ -1,116 +1,75 @@
 /**
  * Screening-funnel math (design spec §9.1, G7).
  *
+ * The waterfall is still sequential — that is what a feasibility reader expects
+ * to see, and it is the honest picture of *criteria*. What it is no longer
+ * allowed to do is band *patients*: `bands` here is `attritionFrom`'s, which is
+ * `evalPatient().overall`, so the bars and the summary line can never tell two
+ * stories about the same person (triage cluster A, uiux B5).
+ *
+ * `tests/funnel.test.ts` pins the reconciliation: the per-row `removedSequential`
+ * column sums to the screen-fail band, and every row's counts come from the same
+ * drain rule `attritionFrom` uses.
+ *
  * Pure: takes engine evaluations, returns counts. No React, no engine calls.
  */
-import type { CriterionResult, Evaluation } from "../engine/api.js";
+import { attritionFrom, isParked, type Attrition, type AttritionRow } from "../engine/attrition.js";
+import { countsOf, type DisplayBandCounts } from "./bands.js";
+import type { Evaluation } from "../engine/api.js";
 
-export type FunnelRow = {
-  id: string;
-  ref?: string;
-  kind: CriterionResult["kind"];
-  unmodeled: boolean;
+export type FunnelRow = AttritionRow & {
   /** Patients still in the pool when this criterion is applied. */
   entering: number;
   pass: number;
   fail: number;
   unknown: number;
-  /** Screen failures this criterion causes at its position in the order. */
-  removedSequential: number;
-  /** Patients in the whole cohort this criterion fails, ignoring order. */
-  failsAlone: number;
-  /**
-   * Patients this criterion alone keeps out: it fails and every other modeled
-   * criterion passes, so relaxing it would move them into `remaining`. A
-   * patient with an unknown elsewhere is NOT counted — relaxing this criterion
-   * would leave them undetermined, not eligible. Unmodeled criteria are ignored
-   * because the funnel parks them in chart review instead of draining the pool.
-   */
-  soleReason: number;
-  /** Unmodeled criteria park the remaining pool in chart review instead of draining it. */
+  /** Patients this criterion parks in chart review instead of draining. */
   chartReview: number;
+  /** Patients whose chart review a reviewer has already settled. */
+  chartReviewResolved: number;
   patients: { pass: string[]; fail: string[]; unknown: string[] };
 };
 
 export type Funnel = {
   n: number;
   rows: FunnelRow[];
-  /** Removed by some criterion. */
-  screenFail: number;
-  /** Left the funnel because a criterion could not be evaluated on their data. */
-  notEvaluable: number;
-  /** Survived every modeled criterion — "potentially eligible". */
-  remaining: number;
+  /** The four display bands, derived from `overall`. The only totals on screen. */
+  bands: DisplayBandCounts;
+  /** The three shared bands, exactly as the CLI reports them. */
+  attrition: Attrition;
 };
 
-export function computeFunnel(evaluations: Evaluation[]): Funnel {
-  const n = evaluations.length;
-  if (n === 0) return { n: 0, rows: [], screenFail: 0, notEvaluable: 0, remaining: 0 };
+export function computeFunnel(evaluations: readonly Evaluation[]): Funnel {
+  const attrition = attritionFrom(evaluations);
+  const bands = countsOf(attrition);
+  if (attrition.n === 0) return { n: 0, rows: [], bands, attrition };
 
   const order = evaluations[0]!.results;
-  const verdictOf = (e: Evaluation, id: string) => e.results.find((r) => r.id === id)?.verdict;
+  const resultOf = (e: Evaluation, id: string) => e.results.find((r) => r.id === id);
 
-  // Order-independent columns: what each criterion does to the full cohort.
-  // A criterion is a patient's sole reason only when relaxing it would actually
-  // make them eligible — one fail and everything else a pass. An unknown
-  // anywhere else means the patient would come out undetermined instead, so
-  // they belong to no criterion's sole-reason bucket.
-  const soleReasonIdPerPatient = evaluations.map((e) => {
-    const modeled = e.results.filter((r) => !r.unmodeled);
-    const fails = modeled.filter((r) => r.verdict === "fail");
-    if (fails.length !== 1) return undefined;
-    return modeled.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
-  });
-
-  let pool = evaluations;
-  let screenFail = 0;
-  let notEvaluable = 0;
+  let pool: readonly Evaluation[] = evaluations;
   const rows: FunnelRow[] = [];
 
-  for (const c of order) {
+  for (const [i, c] of order.entries()) {
     const buckets = { pass: [] as Evaluation[], fail: [] as Evaluation[], unknown: [] as Evaluation[] };
+    let chartReview = 0;
+    let chartReviewResolved = 0;
     for (const e of pool) {
-      const v = verdictOf(e, c.id) ?? "unknown";
+      const r = resultOf(e, c.id);
+      const v = r?.verdict ?? "unknown";
       buckets[v === "pass" ? "pass" : v === "fail" ? "fail" : "unknown"].push(e);
-    }
-
-    const failsAlone = evaluations.filter((e) => verdictOf(e, c.id) === "fail").length;
-    const soleReason = soleReasonIdPerPatient.filter((id) => id === c.id).length;
-
-    if (c.unmodeled) {
-      // Not computable from structured data: everyone still standing needs a
-      // chart review, but nobody is removed and nobody is called eligible.
-      rows.push({
-        id: c.id,
-        ref: c.ref,
-        kind: c.kind,
-        unmodeled: true,
-        entering: pool.length,
-        pass: 0,
-        fail: 0,
-        unknown: pool.length,
-        removedSequential: 0,
-        failsAlone,
-        soleReason,
-        chartReview: pool.length,
-        patients: { pass: [], fail: [], unknown: pool.map((e) => e.patient) },
-      });
-      continue;
+      if (r && isParked(r)) chartReview += 1;
+      if (r?.chartReview !== undefined) chartReviewResolved += 1;
     }
 
     rows.push({
-      id: c.id,
-      ref: c.ref,
-      kind: c.kind,
-      unmodeled: false,
+      ...attrition.rows[i]!,
       entering: pool.length,
       pass: buckets.pass.length,
       fail: buckets.fail.length,
       unknown: buckets.unknown.length,
-      removedSequential: buckets.fail.length,
-      failsAlone,
-      soleReason,
-      chartReview: 0,
+      chartReview,
+      chartReviewResolved,
       patients: {
         pass: buckets.pass.map((e) => e.patient),
         fail: buckets.fail.map((e) => e.patient),
@@ -118,18 +77,26 @@ export function computeFunnel(evaluations: Evaluation[]): Funnel {
       },
     });
 
-    screenFail += buckets.fail.length;
-    notEvaluable += buckets.unknown.length;
-    pool = buckets.pass;
+    // Same drain rule as `attritionFrom`: only a fail removes anyone. An
+    // undecided criterion leaves the patient in the pool for the next one.
+    pool = pool.filter((e) => resultOf(e, c.id)?.verdict !== "fail");
   }
 
-  return { n, rows, screenFail, notEvaluable, remaining: pool.length };
+  return { n: attrition.n, rows, bands, attrition };
 }
 
 export type CohortCounts = { potentiallyEligible: number; screenFail: number; notEvaluable: number };
 
-/** The three headline numbers, defined by the funnel so the bars always add up. */
-export function cohortCounts(evaluations: Evaluation[]): CohortCounts {
-  const f = computeFunnel(evaluations);
-  return { potentiallyEligible: f.remaining, screenFail: f.screenFail, notEvaluable: f.notEvaluable };
+/**
+ * The three headline numbers in the shared vocabulary, for callers that want
+ * scalars. `pendingChartReview` is folded back into `notEvaluable` here so this
+ * matches the CLI exactly; screens use `displayBandCounts` instead.
+ */
+export function cohortCounts(evaluations: readonly Evaluation[]): CohortCounts {
+  const { bands } = attritionFrom(evaluations);
+  return {
+    potentiallyEligible: bands["potentially-eligible"],
+    screenFail: bands["screen-fail"],
+    notEvaluable: bands["not-evaluable"],
+  };
 }
