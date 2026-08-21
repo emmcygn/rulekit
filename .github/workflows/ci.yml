@@ -14,6 +14,24 @@ jobs:
       - run: npm run build
       - run: npm run dogfood
 
+      # Dogfood the facts CLI over the shipped corpus: schema, quote grounding
+      # re-verified against corpus/notes/ (including that each quote comes from
+      # the cited patient's own chart), and recency windows.
+      #
+      # These three gates live here, in the root job, because the scripts they
+      # invoke are declared in the ROOT package.json — web/ is a separate package
+      # with its own scripts, and running them from web/ fails with "missing
+      # script" no matter how healthy the code is.
+      - run: npm run facts:check
+
+      # The extraction eval, twice over. Both are offline — the recorded
+      # responses in evals/recorded/ are committed, no API key exists here, and
+      # neither step makes a network call.
+      #   promptfoo:  per-case pass/fail, exits 100 on a regression
+      #   facts eval: corpus-level precision/recall floors
+      - run: npm run eval
+      - run: npm run facts:eval
+
   workbench:
     runs-on: ubuntu-latest
     defaults:
@@ -30,18 +48,6 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-
-      # Dogfood the facts CLI over the shipped corpus: schema, quote grounding
-      # re-verified against corpus/notes/, and recency windows.
-      - run: npm run facts:check
-
-      # The extraction eval, twice over. Both are offline — the recorded
-      # responses in evals/recorded/ are committed, no API key exists here, and
-      # neither step makes a network call.
-      #   promptfoo:  per-case pass/fail, exits 100 on a regression
-      #   facts eval: corpus-level precision/recall floors
-      - run: npm run eval
-      - run: npm run facts:eval
 
   review-pane:
     runs-on: ubuntu-latest
