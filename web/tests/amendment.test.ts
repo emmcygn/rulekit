@@ -48,7 +48,7 @@ describe("structuralDiff", () => {
   it("says so when a condition is rewritten rather than retuned", () => {
     const rewritten = parseRuleSet(
       DEMO_RULESET_PRIOR.replace(
-        "when: { fact: lvef, op: lte, value: 40 }",
+        "when: { fact: lvef, op: lte, value: 40, unit: \"%\" }",
         "when:\n      any:\n        - { fact: lvef, op: lte, value: 40 }\n        - { fact: lvef, op: eq, value: 41 }",
       ),
     );

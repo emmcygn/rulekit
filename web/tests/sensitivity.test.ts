@@ -47,7 +47,7 @@ describe("setKnob", () => {
     const next = setKnob(DEMO_RULESET_CURRENT, renal.path, 40);
     const parsed = parseRuleSet(next);
     const criterion = parsed.criteria.find((c) => c.id === "renal-safety")!;
-    expect(criterion.when).toEqual({ fact: "egfr", op: "lt", value: 40 });
+    expect(criterion.when).toEqual({ fact: "egfr", op: "lt", value: 40, unit: "mL/min/1.73m2" });
   });
 
   it("leaves the rest of the document — comments included — alone", () => {

@@ -158,7 +158,7 @@ describe("realEngine.check", () => {
 
   it("flags a criterion that can never fire", () => {
     const bad = DEMO_RULESET_CURRENT.replace(
-      "when: { fact: age, op: gte, value: 18 }",
+      "when: { fact: age, op: gte, value: 18, unit: years }",
       "when:\n      all:\n        - { fact: age, op: gte, value: 65 }\n        - { fact: age, op: lte, value: 40 }",
     );
     expect(

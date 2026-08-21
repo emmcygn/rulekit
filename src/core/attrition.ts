@@ -67,7 +67,7 @@ export type Attrition = {
   patients: { patient: string; band: PatientBand; evaluation: Evaluation }[];
 };
 
-export function bandOf(e: Evaluation): PatientBand {
+export function bandOf<E extends { overall: Evaluation["overall"] }>(e: E): PatientBand {
   return e.overall === "eligible" ? "potentially-eligible" : e.overall === "ineligible" ? "screen-fail" : "not-evaluable";
 }
 
@@ -82,6 +82,96 @@ export function soleReasonCriterionId(e: Evaluation): string | undefined {
   const fails = modeled.filter((r) => r.verdict === "fail");
   if (fails.length !== 1) return undefined;
   return modeled.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
+}
+
+/**
+ * A criterion still waiting on a human: unmodeled AND unresolved. Core's own
+ * evaluator always leaves unmodeled criteria `unknown`, so on core-produced
+ * evaluations this is just "unmodeled" — but a chart-review pass (the
+ * workbench's) may resolve an unmodeled criterion's verdict, and then it is no
+ * longer parked. `soleReason` ignores parked criteria only.
+ */
+export const isParked = (r: { unmodeled: boolean; verdict: "pass" | "fail" | "unknown" }): boolean =>
+  r.unmodeled && r.verdict === "unknown";
+
+/** Core's overall-aggregation rule over a (possibly rewritten) results list. */
+export function overallOf(
+  results: readonly { verdict: "pass" | "fail" | "unknown" }[],
+): Evaluation["overall"] {
+  if (results.some((r) => r.verdict === "fail")) return "ineligible";
+  if (results.some((r) => r.verdict === "unknown")) return "undetermined";
+  return "eligible";
+}
+
+/**
+ * The structural shape `attritionFrom` actually reads. Core's `Evaluation`
+ * satisfies it; so does a consumer's widened evaluation type (the workbench
+ * adds chart-review provenance) — attribution math never touches the extras.
+ */
+export type AttritionInput = {
+  patient: string;
+  overall: Evaluation["overall"];
+  results: readonly {
+    id: string;
+    ref?: string;
+    kind: "inclusion" | "exclusion";
+    unmodeled: boolean;
+    verdict: "pass" | "fail" | "unknown";
+  }[];
+};
+
+export type AttritionOf<E extends AttritionInput> = {
+  n: number;
+  bands: Record<PatientBand, number>;
+  rows: CriterionAttrition[];
+  patients: { patient: string; band: PatientBand; evaluation: E }[];
+};
+
+/**
+ * Attrition over evaluations that already exist — the entry point for callers
+ * that rewrite verdicts between the engine and the display (chart review).
+ * Criterion order/metadata comes from the first evaluation's results, so with
+ * an empty input the rows list is empty (computeAttrition, which holds the
+ * rule set, returns a full zeroed rows list instead — the one documented
+ * divergence). For core-produced evaluations, `computeAttrition(rs, corpus)`
+ * and `attritionFrom(corpus.map(p => evalPatient(rs, p)))` agree exactly —
+ * a test pins that equivalence.
+ */
+export function attritionFrom<E extends AttritionInput>(evaluations: readonly E[]): AttritionOf<E> {
+  const n = evaluations.length;
+  const bands: Record<PatientBand, number> = { "potentially-eligible": 0, "screen-fail": 0, "not-evaluable": 0 };
+  const patients = evaluations.map((evaluation) => {
+    const band = bandOf(evaluation);
+    bands[band] += 1;
+    return { patient: evaluation.patient, band, evaluation };
+  });
+  if (n === 0) return { n: 0, bands, rows: [], patients };
+
+  const verdictOf = (e: AttritionInput, id: string) => e.results.find((r) => r.id === id)?.verdict;
+
+  const soleReasonIds = evaluations.map((e) => {
+    const decisive = e.results.filter((r) => !isParked(r));
+    const fails = decisive.filter((r) => r.verdict === "fail");
+    if (fails.length !== 1) return undefined;
+    return decisive.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
+  });
+
+  let pool: readonly E[] = evaluations;
+  const rows: CriterionAttrition[] = evaluations[0]!.results.map((c) => {
+    const removedSequential = pool.filter((e) => verdictOf(e, c.id) === "fail").length;
+    pool = pool.filter((e) => verdictOf(e, c.id) !== "fail");
+    return {
+      id: c.id,
+      ...(c.ref !== undefined ? { ref: c.ref } : {}),
+      kind: c.kind,
+      unmodeled: c.unmodeled,
+      removedSequential,
+      failsAlone: evaluations.filter((e) => verdictOf(e, c.id) === "fail").length,
+      soleReason: soleReasonIds.filter((id) => id === c.id).length,
+    };
+  });
+
+  return { n, bands, rows, patients };
 }
 
 export function computeAttrition(rs: RuleSet, corpus: PatientFacts[]): Attrition {
