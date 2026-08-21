@@ -1,11 +1,7 @@
 {
   "name": "rulekit",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
+  "description": "Clinical-trial eligibility criteria as versioned, tested, conflict-checked YAML rules \u2014 deterministic engine, feasibility workbench, and an LLM facts compiler where humans confirm and only the engine decides",
   "scripts": {
     "test": "vitest run",
     "lint": "eslint .",
@@ -25,7 +21,14 @@
     "extract:corpus": "tsx scripts/extract-corpus.ts",
     "eval": "npm run build && promptfoo eval -c evals/promptfooconfig.yaml"
   },
-  "keywords": [],
+  "keywords": [
+    "clinical-trials",
+    "eligibility-criteria",
+    "rules-engine",
+    "rules-as-code",
+    "feasibility",
+    "yaml"
+  ],
   "author": "",
   "license": "Apache-2.0",
   "type": "module",
@@ -47,5 +50,9 @@
   },
   "bin": {
     "rules": "dist/cli/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mannycygn/rulekit"
   }
 }
