@@ -1,0 +1,1945 @@
+<title>The rulekit Thesis</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600&family=Martian+Mono:wght@600&display=swap">
+<style>
+  /* ============ Ferrous tokens — single theme, deliberately ============ */
+  :root{
+    --chrome:#EDE9E1; --paper:#FAF8F4; --paper-alt:#F3EFE7; --hairline:#E3DED4;
+    --rule:#C9C2B4; --ink:#17150F; --ink2:#6B655C; --ink3:#7E776A;
+    --fill:#D6D0C4; --hatch:#B3AB9B; --accent:#A6431E; --accent-deep:#8A3617;
+    --sans:'Public Sans','Helvetica Neue',Arial,sans-serif;
+    --mono:'Spline Sans Mono',ui-monospace,'SF Mono',Menlo,'Courier New',monospace;
+    --disp:'Martian Mono',ui-monospace,'SF Mono',Menlo,'Courier New',monospace;
+    --wrap:720px; --wrap-wide:980px; --r:2px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--chrome); color:var(--ink);
+    font:400 16.5px/1.65 var(--sans);
+    overflow-x:clip;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--fill)}
+  a{color:var(--accent)} a:hover{color:var(--accent-deep)}
+  img,svg{max-width:100%;height:auto}
+  i{font-style:normal}
+
+  /* ============ layout ============ */
+  .sec{padding:clamp(64px,12vh,140px) 20px;background:var(--chrome)}
+  .sec-band{background:var(--paper);border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline)}
+  .wrap{width:100%;max-width:var(--wrap);margin:0 auto}
+  .wrap-wide{width:100%;max-width:var(--wrap-wide);margin:0 auto}
+  .stack-lg > * + *{margin-top:28px}
+
+  /* ============ type ============ */
+  .eyebrow{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:18px}
+  .eyebrow .ch{color:var(--accent);margin-right:10px}
+  h1{font-weight:600;font-size:clamp(34px,6vw,60px);line-height:1.12;letter-spacing:-.015em;text-wrap:balance;color:var(--ink)}
+  h2{font-weight:600;font-size:clamp(28px,4.5vw,44px);line-height:1.14;letter-spacing:-.012em;text-wrap:balance;color:var(--ink);margin-bottom:18px}
+  h3{font-weight:600;font-size:19px;line-height:1.3;color:var(--ink);margin-bottom:10px}
+  .lede{font-size:clamp(17px,2.2vw,21px);line-height:1.5;color:var(--ink2);margin-bottom:26px;text-wrap:pretty}
+  .prose p{margin-bottom:1.05em;text-wrap:pretty}
+  .prose p:last-child{margin-bottom:0}
+  .small{font-size:13px;color:var(--ink2)}
+  .mono{font-family:var(--mono)}
+  .big-num{font-family:var(--disp);font-weight:600;font-size:clamp(34px,6vw,64px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .gloss{border-bottom:1px dotted var(--ink3)}
+  .gloss-note{font-family:var(--mono);font-size:.72em;color:var(--ink3);white-space:nowrap}
+  .gloss-note::before{content:'\00A0('} .gloss-note::after{content:')'}
+
+  /* ============ panels, code, evidence ============ */
+  .panel{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:20px 22px}
+  .panel-alt{background:var(--paper-alt);border:1px solid var(--rule);border-radius:var(--r);padding:20px 22px}
+  .code{font-family:var(--mono);font-size:13px;line-height:20px;background:var(--paper-alt);border:1px solid var(--rule);border-radius:var(--r);padding:10px 0;overflow-x:auto}
+  .cl{display:flex;padding:0 14px;border-left:2px solid transparent;white-space:pre}
+  .cl .n{width:26px;flex:none;text-align:right;padding-right:13px;color:var(--ink3)}
+  .cl.hl{background:var(--paper);border-left-color:var(--ink)}
+  .cl.hl-accent{background:var(--paper);border-left-color:var(--accent)}
+  .k{color:var(--ink2);font-weight:500} .s{color:var(--ink)} .dim{color:var(--ink3)}
+  .evidence{font-family:var(--mono);font-size:12.5px;line-height:1.6;background:var(--paper-alt);border:1px solid var(--rule);border-radius:var(--r);padding:12px 14px;white-space:pre;overflow-x:auto;color:var(--ink)}
+  .mk{width:9px;height:9px;display:inline-block;flex:none;vertical-align:baseline}
+  .mk-pass{background:var(--ink)}
+  .mk-fail{background:none;border:1.5px solid var(--ink2)}
+  .mk-unknown{background:repeating-linear-gradient(45deg,var(--hatch) 0 1.5px,transparent 1.5px 4px);border:1px solid var(--hatch)}
+  .mk-legend{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--ink2)}
+  .mk-legend span{display:inline-flex;align-items:center;gap:7px}
+
+  /* ============ figures ============ */
+  .fig{margin:26px 0}
+  .fig svg{display:block;width:100%;height:auto}
+  .fig-cap{font-size:13px;line-height:1.55;color:var(--ink2);margin-top:12px;max-width:62ch}
+  .fig-scroll{overflow-x:auto;border-radius:var(--r)}
+
+  /* ============ reveal system ============ */
+  .js [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .7s cubic-bezier(.22,.7,.3,1),transform .7s cubic-bezier(.22,.7,.3,1)}
+  .js [data-reveal="fade"]{transform:none}
+  .js [data-reveal="left"]{transform:translateX(-24px)}
+  .js [data-reveal="right"]{transform:translateX(24px)}
+  .js [data-reveal="scale"]{transform:scale(.96)}
+  .js [data-reveal].on{opacity:1;transform:none}
+
+  /* ============ scrub scenes ============ */
+  .scrub{position:relative;background:var(--chrome)}
+  .scrub-stage{position:sticky;top:0;height:100vh;height:100svh;display:flex;flex-direction:column;justify-content:center;justify-content:safe center;padding:24px 20px;overflow-y:auto;background:var(--chrome)}
+  .js [data-step]{opacity:0;transition:opacity .5s ease,transform .5s ease}
+  .js [data-step].from-left{transform:translateX(-24px)}
+  .js [data-step].from-right{transform:translateX(24px)}
+  .js [data-step].from-up{transform:translateY(12px)}
+  .js [data-step].step-on{opacity:1;transform:none}
+  svg [data-step]{transition:opacity .5s ease,transform .5s ease}
+  .scrub-dots{display:flex;gap:8px;justify-content:center;margin-top:18px}
+  .scrub-dots i{width:7px;height:7px;border:1px solid var(--rule);border-radius:1px;background:var(--paper)}
+  .scrub-dots i.cur{background:var(--accent);border-color:var(--accent)}
+
+  /* ============ progress rail ============ */
+  .rail{position:fixed;left:0;top:0;bottom:0;width:3px;z-index:60;pointer-events:none}
+  .rail-track{position:absolute;inset:0;background:var(--hairline)}
+  .rail-fill{position:absolute;top:0;left:0;width:100%;height:0;background:var(--accent)}
+  .rail-tick{position:absolute;left:0;width:9px;height:2px;background:var(--rule)}
+
+  /* ============ hero ============ */
+  #hero{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:80px 20px 48px;background:var(--chrome)}
+  .hero-mark{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.08em;color:var(--ink);margin-bottom:34px}
+  .hero-mark i{width:7px;height:7px;background:var(--accent)}
+  .hero-kicker{font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:22px;max-width:56ch;line-height:1.6}
+  .hero-fig{margin:44px 0 30px}
+  .hero-cue{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:auto;padding-top:36px}
+  .hero-cue .bar{width:1px;height:26px;background:var(--rule);position:relative;overflow:hidden}
+  .hero-cue .bar::after{content:'';position:absolute;left:0;top:-8px;width:1px;height:8px;background:var(--accent);animation:cueDrop 1.8s ease-in-out infinite}
+  @keyframes cueDrop{0%{top:-8px}70%{top:26px}100%{top:26px}}
+  .h-inc{animation:hFromL 1.1s cubic-bezier(.22,.7,.3,1) .35s both}
+  .h-exc{animation:hFromR 1.1s cubic-bezier(.22,.7,.3,1) .85s both}
+  .h-band{animation:hIn .8s ease 1.7s both}
+  .h-band-pulse{animation:hPulse 2.6s ease-in-out 2.6s infinite alternate}
+  @keyframes hFromL{from{transform:translateX(-360px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes hFromR{from{transform:translateX(360px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes hIn{from{opacity:0}to{opacity:1}}
+  @keyframes hPulse{from{opacity:.55}to{opacity:1}}
+
+  /* ============ ch01 problem ============ */
+  .drift-stack{position:relative;margin:8px 0 6px;display:flex;flex-direction:column;gap:14px}
+  .drift-src{background:var(--paper);border:1px solid var(--ink);border-radius:var(--r);padding:18px 20px;max-width:600px}
+  .drift-card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:12px 16px;max-width:520px;box-shadow:0 1px 0 var(--hairline)}
+  .drift-card .dc-tag{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:6px}
+  .drift-card .dc-body{font-family:var(--mono);font-size:13px;color:var(--ink)}
+  .drift-card:nth-of-type(2){transform-origin:left;margin-left:4%}
+  .drift-card:nth-of-type(3){margin-left:10%}
+  .drift-card:nth-of-type(4){margin-left:16%}
+  .drift-card:nth-of-type(5){margin-left:23%}
+  .drift-card:nth-of-type(6){margin-left:30%}
+  .js .drift-card{transition:opacity .7s cubic-bezier(.22,.7,.3,1),transform .7s cubic-bezier(.22,.7,.3,1)}
+  .js .drift-card:not(.on){transform:translateY(-18px) rotate(0deg)}
+  .js .drift-card:nth-of-type(2).on{transform:rotate(-1.1deg)}
+  .js .drift-card:nth-of-type(3).on{transform:rotate(.9deg)}
+  .js .drift-card:nth-of-type(4).on{transform:rotate(-1.6deg)}
+  .js .drift-card:nth-of-type(5).on{transform:rotate(1.3deg)}
+  .js .drift-card:nth-of-type(6).on{transform:rotate(-.8deg)}
+  .drift-mark{color:var(--accent);font-weight:600;border-bottom:2px solid var(--accent)}
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:30px 0 12px}
+  .stat{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:20px 20px 16px}
+  .stat .lbl{font-size:13px;line-height:1.5;color:var(--ink2);margin-top:10px}
+  .stat .src{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-top:10px}
+
+  /* ============ ch02 prose→code scrub ============ */
+  #pc .pc-quote{font-weight:600;font-size:clamp(24px,4.2vw,42px);line-height:1.25;letter-spacing:-.01em;max-width:22ch;text-wrap:balance}
+  #pc .pc-quote .qm{color:var(--rule)}
+  #pc .pc-kicker{font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:18px}
+  #pc .pc-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:22px;align-items:start;width:100%;max-width:var(--wrap-wide);margin:0 auto}
+  #pc .pc-note{background:var(--paper);border:1px solid var(--rule);border-left:2px solid var(--accent);border-radius:var(--r);padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink)}
+  #pc .pc-note .nt{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:6px}
+  #pc .pc-notes{position:relative;min-height:170px}
+  #pc .pc-notes .pc-note{position:absolute;inset:0 auto auto 0;width:100%}
+  #pc [data-active-step="1"] .cl[data-hl="1"],
+  #pc [data-active-step="2"] .cl[data-hl="2"],
+  #pc [data-active-step="3"] .cl[data-hl="3"],
+  #pc [data-active-step="4"] .cl[data-hl="4"]{background:var(--paper);border-left-color:var(--accent)}
+  @media (max-width:760px){
+    #pc .pc-grid{grid-template-columns:minmax(0,1fr)}
+    #pc .pc-notes{min-height:150px}
+  }
+
+  /* ============ ch03 engine ============ */
+  .js #tree-fig .tn{opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .6s ease}
+  .js #tree-fig.on .tn{opacity:1;transform:none}
+  #tree-fig.on .t1{transition-delay:.05s}#tree-fig.on .t2{transition-delay:.25s}
+  #tree-fig.on .t3{transition-delay:.45s}#tree-fig.on .t4{transition-delay:.65s}
+  #tree-fig.on .t5{transition-delay:.85s}#tree-fig.on .t6{transition-delay:1.05s}
+  #tree-fig.on .t7{transition-delay:1.25s}
+  #kl .kl-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:22px;align-items:start;width:100%;max-width:var(--wrap-wide);margin:0 auto}
+  #kl .kl-notes{position:relative;min-height:300px}
+  #kl .kl-notes > div{position:absolute;inset:0 auto auto 0;width:100%}
+  #kl .kl-head{width:100%;max-width:var(--wrap-wide);margin:0 auto 16px}
+  #kl .facts-card{display:inline-block;background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.7}
+  #kl .facts-card .fc-t{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px}
+  #kl .gate{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13.5px;padding:9px 12px;background:var(--paper-alt);border:1px solid var(--rule);border-radius:var(--r);margin-bottom:8px;white-space:nowrap;overflow-x:auto}
+  #kl .kl-note{background:var(--paper);border:1px solid var(--rule);border-left:2px solid var(--accent);border-radius:var(--r);padding:14px 16px;font-size:14px;line-height:1.55}
+  #kl .kl-note .nt{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:6px}
+  #kl .versus{display:grid;grid-template-columns:1fr;gap:10px}
+  #kl .versus .v-card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:12px 14px;font-size:13.5px;line-height:1.55}
+  #kl .versus .v-card.bad{border-style:dashed}
+  #kl .versus .v-tag{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink3)}
+  @media (max-width:760px){
+    #kl .kl-grid{grid-template-columns:minmax(0,1fr)}
+    #kl .kl-notes{min-height:470px}
+  }
+  .verdict-table{width:100%;border-collapse:collapse;font-size:14px;background:var(--paper);border:1px solid var(--rule)}
+  .verdict-table th,.verdict-table td{border:1px solid var(--hairline);padding:9px 12px;text-align:left;vertical-align:middle}
+  .verdict-table th{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--ink2);background:var(--paper-alt)}
+  .verdict-table td strong{font-weight:600}
+  .cascade{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .cascade .cr{display:flex;align-items:center;gap:14px;background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:12px 16px;flex-wrap:wrap}
+  .cascade .cr .pid{font-family:var(--mono);font-size:12.5px;font-weight:500;width:74px;flex:none;color:var(--ink)}
+  .cascade .cr .marks{display:flex;gap:8px;align-items:center}
+  .cascade .cr .arrow{color:var(--ink3);font-family:var(--mono);font-size:12px}
+  .cascade .cr .out{font-family:var(--mono);font-size:12.5px;font-weight:600}
+  .cascade .cr .why{font-size:12.5px;color:var(--ink2);flex-basis:100%;margin-left:88px}
+  @media (max-width:560px){.cascade .cr .why{margin-left:0}}
+
+  /* ============ ch04 conflicts ============ */
+  #cf .cf-col{width:100%;max-width:var(--wrap-wide);margin:0 auto;display:flex;flex-direction:column;gap:16px}
+  #cf .cf-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  #cf .crit-card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:14px 16px;font-size:13.5px;line-height:1.55}
+  #cf .crit-card .cc-id{font-family:var(--mono);font-size:12.5px;font-weight:600;display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
+  #cf .crit-card .cc-ref{color:var(--ink3);font-weight:400}
+  #cf .crit-card .cc-vb{color:var(--ink2)}
+  #cf .cf-figwrap{transition:opacity .5s ease}
+  #cf [data-active-step="4"] .cf-figwrap{opacity:.28}
+  #cf .cf-notes{position:relative;min-height:300px}
+  #cf .cf-notes > div{position:absolute;inset:0 auto auto 0;width:100%}
+  #cf .cf-note{background:var(--paper);border:1px solid var(--rule);border-left:2px solid var(--accent);border-radius:var(--r);padding:14px 16px;font-size:14px;line-height:1.55}
+  #cf .cf-note .nt{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:6px}
+  #cf .refuse{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+  #cf .refuse .stamp{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;border:2px solid var(--ink);border-radius:var(--r);padding:6px 10px;display:inline-block;transform:rotate(-2deg);background:var(--paper)}
+  @media (max-width:760px){
+    #cf .cf-cards{grid-template-columns:1fr}
+    #cf .refuse{grid-template-columns:1fr}
+    #cf .cf-notes{min-height:540px}
+    #cf .scrub-stage:not([data-active-step="0"]) .cf-cards{display:none}
+  }
+  .cf-band-pulse{animation:hPulse 2.4s ease-in-out infinite alternate}
+
+  /* ============ coda ============ */
+  #coda .coda-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:28px 0}
+  #coda .coda-cell{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:20px}
+  #coda .coda-cell .cv{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.4vw,38px);line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  #coda .coda-cell .cl2{font-size:13.5px;line-height:1.55;color:var(--ink2);margin-top:8px}
+  #coda .claim{border-left:2px solid var(--ink);padding:4px 0 4px 20px;font-size:clamp(17px,2.2vw,20px);line-height:1.5;color:var(--ink);margin:30px 0}
+  #coda .claim .who{display:block;font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:10px}
+  #coda .warnpanel{background:var(--paper-alt);border:1px solid var(--rule);border-radius:var(--r);padding:18px 20px;font-size:14px;line-height:1.6;color:var(--ink)}
+  #coda .warnpanel .wt{font-family:var(--disp);font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:8px}
+  #coda .closing{margin:64px 0 20px;text-align:center}
+  #coda .closing .cm{font-family:var(--disp);font-weight:600;font-size:clamp(17px,3vw,26px);letter-spacing:.02em;line-height:1.5}
+  #coda .closing .cm .sep{color:var(--accent);padding:0 .35em}
+  #coda .closing i{display:inline-block;width:8px;height:8px;background:var(--accent);margin-bottom:22px}
+  #coda .colophon{text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--ink3);line-height:1.8;margin-top:44px;padding-top:24px;border-top:1px solid var(--hairline)}
+
+  /* ============ reduced motion: opacity-only or nothing ============ */
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation:none !important}
+    .js [data-reveal],.js [data-step],.js .drift-card,.js #tree-fig .tn,svg [data-step]{transform:none !important;transition:opacity .2s linear !important}
+    #cf .cf-figwrap,#pc .pc-notes .pc-note,#kl .kl-notes > div,#cf .cf-notes > div{transition:opacity .2s linear !important}
+    .js .drift-card:nth-of-type(n).on{transform:none !important}
+  }
+</style>
+<script>document.documentElement.classList.add('js');</script>
+
+<div class="rail" aria-hidden="true">
+  <div class="rail-track"></div>
+  <div class="rail-fill" id="rail-fill"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 00 · HERO                                                        -->
+<!-- ================================================================ -->
+<section class="sec" id="hero" data-section data-title="Thesis">
+  <div class="wrap-wide">
+    <p class="hero-mark"><i></i>rulekit</p>
+    <h1>Eligibility criteria are the most consequential logic in a clinical trial. Almost everywhere, they are prose in a Word document.</h1>
+    <p class="hero-kicker">This is a thesis about treating them as code instead — versioned, tested, conflict-checked — told in one scroll. Agents propose evidence. Humans confirm it. A deterministic engine is the only thing that ever decides.</p>
+
+    <figure class="fig hero-fig" role="group" aria-label="Two eligibility intervals on a number line: an inclusion admitting 30 and above, an exclusion firing below 45, and their overlap from 30 to 45 highlighted as a contradiction">
+      <div class="fig-scroll">
+      <svg viewBox="0 0 960 260" style="min-width:620px" role="img" aria-label="Number line for the lab value eGFR. An inclusion bar covers 30 to infinity, an exclusion bar covers everything below 45. The band from 30 to 45 where both apply is marked in accent.">
+        <!-- band: [30, 45) -->
+        <g class="h-band">
+          <rect x="345" y="52" width="142.5" height="156" fill="#A6431E" fill-opacity=".12" class="h-band-pulse"/>
+          <line x1="345" y1="52" x2="345" y2="208" stroke="#A6431E" stroke-width="1.5"/>
+          <line x1="487.5" y1="52" x2="487.5" y2="208" stroke="#A6431E" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <text x="416" y="240" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="15" fill="#A6431E">[30, 45)</text>
+        </g>
+        <!-- axis -->
+        <line x1="40" y1="130" x2="925" y2="130" stroke="#C9C2B4" stroke-width="1"/>
+        <g font-family="Spline Sans Mono, monospace" font-size="11" fill="#7E776A" text-anchor="middle">
+          <line x1="60"    y1="125" x2="60"    y2="135" stroke="#C9C2B4"/><text x="60"    y="152">0</text>
+          <line x1="345"   y1="125" x2="345"   y2="135" stroke="#C9C2B4"/><text x="345"   y="152">30</text>
+          <line x1="487.5" y1="125" x2="487.5" y2="135" stroke="#C9C2B4"/><text x="487.5" y="152">45</text>
+          <line x1="630"   y1="125" x2="630"   y2="135" stroke="#C9C2B4"/><text x="630"   y="152">60</text>
+          <line x1="915"   y1="125" x2="915"   y2="135" stroke="#C9C2B4"/><text x="915"   y="152">90</text>
+          <text x="895" y="118" text-anchor="end" fill="#6B655C">egfr →</text>
+        </g>
+        <!-- inclusion [30, ∞) -->
+        <g class="h-inc">
+          <rect x="345" y="66" width="580" height="14" fill="#D6D0C4" stroke="#17150F" stroke-width="1.25"/>
+          <line x1="345" y1="60" x2="345" y2="86" stroke="#17150F" stroke-width="2.5"/>
+          <text x="345" y="48" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">inclusion · admits [30, ∞)</text>
+        </g>
+        <!-- exclusion (−∞, 45) -->
+        <g class="h-exc">
+          <rect x="40" y="180" width="447.5" height="14" fill="#D6D0C4" stroke="#17150F" stroke-width="1.25"/>
+          <line x1="487.5" y1="174" x2="487.5" y2="200" stroke="#17150F" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="487.5" y="220" text-anchor="end" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">exclusion · fires (−∞, 45)</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption class="fig-cap">Two reasonable-looking criteria. Every patient in the ignited band passes one and is thrown out by the other — for all inputs. By the end of this page you will know exactly how a machine proves that sentence, and when it refuses to.</figcaption>
+    </figure>
+
+    <div class="hero-cue"><span class="bar"></span><span>scroll — about ten minutes, best read in order</span></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- 01 · THE PROBLEM                                                 -->
+<!-- ================================================================ -->
+<section class="sec sec-band" id="problem" data-section data-title="The problem">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">01</span>the problem</p>
+    <h2 data-reveal>Law, written as prose, copied by hand</h2>
+    <p class="lede" data-reveal><span class="gloss">Eligibility criteria<span class="gloss-note">who may join a trial</span></span> decide who gets an experimental drug. They are not versioned as behaviour, not tested, not checked for contradiction — and when they change, nobody can say who is affected without a manual chart review.</p>
+    <div class="prose" data-reveal>
+      <p>The <span class="gloss">protocol<span class="gloss-note">the trial's rulebook document</span></span> states each criterion once, in a paragraph. Then every team that needs it makes its own working copy — and watch what happens to one number on the way down:</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <figure class="fig" role="group" aria-label="One protocol paragraph copied into five hand-made translations that drift apart">
+      <div class="drift-stack">
+        <div class="drift-src" data-reveal>
+          <span class="dc-tag" style="font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:6px">protocol · the source of truth</span>
+          <span style="font-size:14.5px;line-height:1.6">“Inclusion I3: eGFR at least <strong>30</strong> mL/min/1.73m². … Exclusion E3: eGFR below <strong>45</strong> at screening.”</span>
+        </div>
+        <div class="drift-card" data-reveal data-reveal-delay="150">
+          <span class="dc-tag">screening spreadsheet</span>
+          <span class="dc-body">egfr_min&nbsp;&nbsp;30&nbsp;&nbsp;inclusion&nbsp;&nbsp;✓</span>
+        </div>
+        <div class="drift-card" data-reveal data-reveal-delay="300">
+          <span class="dc-tag">coordinator checklist</span>
+          <span class="dc-body">☐ eGFR <span class="drift-mark">over 30</span> — confirm with lab</span>
+        </div>
+        <div class="drift-card" data-reveal data-reveal-delay="450">
+          <span class="dc-tag">feasibility SQL</span>
+          <span class="dc-body">WHERE egfr <span class="drift-mark">&gt; 30</span></span>
+        </div>
+        <div class="drift-card" data-reveal data-reveal-delay="600">
+          <span class="dc-tag">EDC edit check</span>
+          <span class="dc-body">flag if eGFR &lt; 45 <span class="drift-mark">(mL/min)</span></span>
+        </div>
+        <div class="drift-card" data-reveal data-reveal-delay="750">
+          <span class="dc-tag">amendment redline, v2 draft</span>
+          <span class="dc-body">E3 revised: eGFR below <span class="drift-mark">40</span></span>
+        </div>
+      </div>
+      <figcaption class="fig-cap">An illustration, not a real site's documents — but the failure modes are the classics: “at least 30” quietly becomes “over 30”, a unit changes meaning, and a stale draft circulates. The boundary patient — eGFR exactly 30 — is eligible in the protocol and rejected by the SQL, and nobody can say which copy is current.</figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap">
+    <div class="prose" data-reveal>
+      <p>Drift like this surfaces as a protocol <span class="gloss">amendment<span class="gloss-note">a formal protocol change</span></span> — re-consenting, re-training, re-printing, IRB re-review. The Tufts Center for the Study of Drug Development put numbers on it:</p>
+    </div>
+    <div class="stat-row" data-reveal-children data-stagger="140">
+      <div class="stat">
+        <span class="big-num">$<span data-count-to="141">0</span>K</span>
+        <p class="lbl">median direct cost of one substantial amendment, Phase II</p>
+        <p class="src">Tufts CSDD</p>
+      </div>
+      <div class="stat">
+        <span class="big-num">$<span data-count-to="535">0</span>K</span>
+        <p class="lbl">median direct cost of one substantial amendment, Phase III</p>
+        <p class="src">Tufts CSDD</p>
+      </div>
+      <div class="stat">
+        <span class="big-num">~<span data-count-to="45">0</span>%</span>
+        <p class="lbl">of substantial amendments judged avoidable</p>
+        <p class="src">Tufts CSDD</p>
+      </div>
+    </div>
+    <div class="prose" data-reveal>
+      <p>A recurring cause is eligibility logic: a threshold that contradicts another threshold, a criterion nobody realised excluded a third of the screening pool, a change whose effect on already-enrolled participants surfaces only after it ships. Two of those three are catchable <em>before the protocol leaves the building</em> — by a tool that can read the criteria as logic. So the first move is to make them logic.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- 02 · PROSE → CODE                                                -->
+<!-- ================================================================ -->
+<section class="sec" id="prose-to-code" data-section data-title="Prose → code">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">02</span>prose → code</p>
+    <h2 data-reveal>One sentence becomes one rule</h2>
+    <p class="lede" data-reveal>Keep scrolling and watch a real criterion cross over. The trick is not the YAML — it is that the protocol's exact words make the trip too.</p>
+  </div>
+</section>
+
+<section class="scrub" id="pc" data-scrub data-steps="5" style="height:560vh">
+  <div class="scrub-stage">
+    <div class="pc-big" data-step="0" style="text-align:center;max-width:var(--wrap);margin:0 auto">
+      <p class="pc-quote"><span class="qm">“</span>eGFR at least 30&nbsp;mL/min/1.73m²<span class="qm">”</span></p>
+      <p class="pc-kicker">Inclusion criterion I3, as the protocol writes it. eGFR is a kidney-function lab value. Now scroll: each field of the rule lights up as it appears.</p>
+    </div>
+    <div class="pc-grid" data-step="1+">
+      <figure class="fig" role="group" aria-label="A YAML rule assembling field by field from the protocol sentence" style="margin:0">
+        <div class="code" aria-label="ruleset.yaml excerpt">
+          <div class="cl" data-hl="1"><span class="n">1</span><span><span class="dim">-</span> <span class="k">id</span>: egfr-min</span></div>
+          <div class="cl" data-step="2+" data-hl="2"><span class="n">2</span><span>  <span class="k">ref</span>: I3</span></div>
+          <div class="cl" data-step="2+" data-hl="2"><span class="n">3</span><span>  <span class="k">kind</span>: inclusion</span></div>
+          <div class="cl" data-step="3+" data-hl="3"><span class="n">4</span><span>  <span class="k">verbatim</span>: <span class="s">"eGFR at least 30 mL/min/1.73m²"</span></span></div>
+          <div class="cl" data-step="4+" data-hl="4"><span class="n">5</span><span>  <span class="k">when</span>: { <span class="k">fact</span>: egfr, <span class="k">op</span>: gte, <span class="k">value</span>: 30 }</span></div>
+        </div>
+      </figure>
+      <div class="pc-notes">
+        <div class="pc-note" data-step="1"><span class="nt">id</span>A stable name. It appears in every trace, coverage report and diff downstream, so renaming one is a breaking change — ids are treated as API.</div>
+        <div class="pc-note" data-step="2"><span class="nt">ref · kind</span><span class="mono">ref</span> is the protocol's own numbering (I3), not ours. <span class="mono">kind</span> says which way the criterion points — inclusion admits, exclusion removes. That orientation matters enormously in chapter 03.</div>
+        <div class="pc-note" data-step="3"><span class="nt">verbatim — the load-bearing field</span>The protocol's exact sentence, never edited to fit the language. The words travel <em>with</em> the logic, so the file stays auditable against the source document forever. If a criterion can't be expressed at all, it is kept as <span class="mono">unmodeled: true</span> with its verbatim text — carried, never dropped.</div>
+        <div class="pc-note" data-step="4"><span class="nt">when — the executable meaning</span>“at least 30” becomes <span class="mono">op: gte, value: 30</span> against the declared fact <span class="mono">egfr</span>. Sentence and semantics now live in one diffable, reviewable file. A human wrote this line and a human reviews it — no model translates protocols by itself.</div>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- 03 · THE ENGINE                                                  -->
+<!-- ================================================================ -->
+<section class="sec sec-band" id="engine" data-section data-title="The engine">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">03</span>the engine</p>
+    <h2 data-reveal>A condition language you can hold in your head</h2>
+    <p class="lede" data-reveal>Rules compose through exactly three combinators — <span class="mono">all</span>, <span class="mono">any</span>, <span class="mono">not</span> — over four families of leaf. Nothing else. No arbitrary expressions, ever.</p>
+  </div>
+  <div class="wrap-wide">
+    <figure class="fig" id="tree-fig" data-reveal="fade" role="group" aria-label="A condition tree: an all node over a numeric leaf, an any node with two leaves, and a not node with one leaf">
+      <div class="fig-scroll">
+      <svg viewBox="0 0 900 330" role="img" aria-label="Condition tree diagram. Root node all connects to three children: a numeric comparison leaf age gte 18, an any combinator over a code-set leaf and a presence leaf, and a not combinator over a temporal-window leaf." style="min-width:640px">
+        <!-- edges -->
+        <g stroke="#C9C2B4" stroke-width="1.5" fill="none">
+          <path class="tn t2" d="M450 52 L150 120"/>
+          <path class="tn t3" d="M450 52 L450 120"/>
+          <path class="tn t4" d="M450 52 L750 120"/>
+          <path class="tn t5" d="M450 152 L350 220"/>
+          <path class="tn t6" d="M450 152 L560 220"/>
+          <path class="tn t7" d="M750 152 L750 220"/>
+        </g>
+        <!-- root -->
+        <g class="tn t1">
+          <rect x="405" y="20" width="90" height="32" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="450" y="41" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-weight="600" font-size="13" fill="#17150F">all</text>
+        </g>
+        <!-- level 2 -->
+        <g class="tn t2">
+          <rect x="60" y="120" width="180" height="46" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+          <text x="150" y="139" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">age gte 18</text>
+          <text x="150" y="156" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#7E776A">numeric compare</text>
+        </g>
+        <g class="tn t3">
+          <rect x="405" y="120" width="90" height="32" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="450" y="141" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-weight="600" font-size="13" fill="#17150F">any</text>
+        </g>
+        <g class="tn t4">
+          <rect x="705" y="120" width="90" height="32" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="750" y="141" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-weight="600" font-size="13" fill="#17150F">not</text>
+        </g>
+        <!-- level 3 -->
+        <g class="tn t5">
+          <rect x="255" y="220" width="190" height="46" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+          <text x="350" y="239" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">medications in {rxnorm…}</text>
+          <text x="350" y="256" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#7E776A">code-set</text>
+        </g>
+        <g class="tn t6">
+          <rect x="480" y="220" width="160" height="46" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+          <text x="560" y="239" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">egfr exists</text>
+          <text x="560" y="256" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#7E776A">presence</text>
+        </g>
+        <g class="tn t7">
+          <rect x="655" y="220" width="190" height="46" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+          <text x="750" y="239" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">medications anyWithin 30d</text>
+          <text x="750" y="256" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#7E776A">temporal window</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption class="fig-cap">The whole language: <span class="mono">all</span>/<span class="mono">any</span>/<span class="mono">not</span> nesting over numeric comparison, code-set membership, presence (<span class="mono">exists</span>), and one temporal window (<span class="mono">anyWithin</span>, days only). That closure is a design choice — general-purpose rule engines can only be understood by running them; this one can be analysed statically, which is what chapter 04 cashes in.</figcaption>
+    </figure>
+  </div>
+  <div class="wrap">
+    <div class="prose" data-reveal>
+      <p>The evaluator is a pure function of (rule set, one patient's facts): same inputs, same verdict, forever. Nothing calls a clock, nothing calls a random number, nothing calls a model. Now the interesting part — what happens when a fact is <em>missing</em>. Which, for real patients, is constantly.</p>
+    </div>
+  </div>
+</section>
+
+<section class="scrub" id="kl" data-scrub data-steps="5" style="height:620vh" data-section data-title="Three values">
+  <div class="scrub-stage">
+    <div class="kl-head" data-step="0+">
+      <p class="eyebrow" style="margin-bottom:8px"><span class="ch">03</span>three values, not two</p>
+      <div class="facts-card" data-step="0+">
+        <span class="fc-t">patient SYN-042 · confirmed facts</span>
+        age: 63&nbsp;&nbsp;·&nbsp;&nbsp;lvef: 38&nbsp;&nbsp;·&nbsp;&nbsp;egfr: <span style="color:var(--ink3)">— absent</span>
+      </div>
+    </div>
+    <div class="kl-grid">
+      <figure class="fig" role="group" aria-label="Tri-state evaluation: facts flow into three leaves, results propagate up through an all gate" style="margin:0">
+        <div class="fig-scroll">
+        <svg viewBox="0 0 780 250" style="min-width:540px" role="img" aria-label="An all node over three leaves: age gte 18 evaluates true, lvef lte 40 evaluates true, egfr gte 30 evaluates unknown because the fact is absent. The root evaluates unknown.">
+          <defs>
+            <pattern id="a-hatch" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+              <rect width="5" height="5" fill="#FAF8F4"/>
+              <line x1="0" y1="0" x2="0" y2="5" stroke="#B3AB9B" stroke-width="1.6"/>
+            </pattern>
+          </defs>
+          <g stroke="#C9C2B4" stroke-width="1.5" fill="none">
+            <path d="M390 56 L130 148"/><path d="M390 56 L390 148"/><path d="M390 56 L650 148"/>
+          </g>
+          <g>
+            <rect x="345" y="20" width="90" height="36" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+            <text x="390" y="44" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-weight="600" font-size="15" fill="#17150F">all</text>
+          </g>
+          <g>
+            <rect x="20" y="148" width="220" height="50" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+            <text x="130" y="169" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="14" fill="#17150F">age gte 18</text>
+            <text x="130" y="188" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11" fill="#7E776A">I1 · inclusion</text>
+          </g>
+          <g>
+            <rect x="280" y="148" width="220" height="50" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+            <text x="390" y="169" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="14" fill="#17150F">lvef lte 40</text>
+            <text x="390" y="188" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11" fill="#7E776A">I2 · inclusion</text>
+          </g>
+          <g>
+            <rect x="540" y="148" width="220" height="50" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+            <text x="650" y="169" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="14" fill="#17150F">egfr gte 30</text>
+            <text x="650" y="188" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11" fill="#7E776A">I3 · inclusion</text>
+          </g>
+          <!-- observed values -->
+          <g data-step="1+" font-family="Spline Sans Mono, monospace" font-size="13" text-anchor="middle">
+            <text x="130" y="226" fill="#17150F">age = 63</text>
+            <text x="390" y="226" fill="#17150F">lvef = 38</text>
+            <text x="650" y="226" fill="#7E776A">no value</text>
+          </g>
+          <!-- leaf result chips -->
+          <g data-step="1+">
+            <rect x="231" y="139" width="18" height="18" fill="#17150F"/>
+            <text x="222" y="153" text-anchor="end" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">true</text>
+          </g>
+          <g data-step="1+">
+            <rect x="491" y="139" width="18" height="18" fill="#17150F"/>
+            <text x="482" y="153" text-anchor="end" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">true</text>
+          </g>
+          <g data-step="1+">
+            <rect x="751" y="139" width="18" height="18" fill="url(#a-hatch)" stroke="#B3AB9B"/>
+            <text x="742" y="153" text-anchor="end" font-family="Spline Sans Mono, monospace" font-size="12" fill="#6B655C">unknown</text>
+          </g>
+          <!-- root result -->
+          <g data-step="2+">
+            <rect x="426" y="11" width="18" height="18" fill="url(#a-hatch)" stroke="#B3AB9B"/>
+            <text x="452" y="25" font-family="Spline Sans Mono, monospace" font-size="13" fill="#17150F">= unknown</text>
+          </g>
+        </svg>
+        </div>
+        <div class="mk-legend" style="margin-top:12px">
+          <span><i class="mk mk-pass"></i>true / pass</span>
+          <span><i class="mk mk-fail"></i>false / fail</span>
+          <span><i class="mk mk-unknown"></i>unknown</span>
+        </div>
+      </figure>
+      <div class="kl-notes">
+        <div data-step="0">
+          <div class="kl-note"><span class="nt">step 1 · a real patient</span>SYN-042 is one of the synthetic fixtures. Their chart has age and LVEF, but no eGFR result. In the format's own words: <strong>an absent key is unknown, never false</strong> — the single most important sentence in the spec. Scroll on.</div>
+        </div>
+        <div data-step="1">
+          <div class="kl-note"><span class="nt">step 2 · facts flow into leaves</span>Each leaf compares one fact. <span class="mono">age = 63 ≥ 18</span> → true. <span class="mono">lvef = 38 ≤ 40</span> → true. And <span class="mono">egfr</span>? There is nothing to compare. The leaf evaluates <em>unknown</em> — a first-class third value, not an error and not a default.</div>
+        </div>
+        <div data-step="2">
+          <div class="kl-note"><span class="nt">step 3 · unknown propagates up</span><span class="mono">all(true, true, unknown) = unknown</span>. This is <span class="gloss">strong Kleene logic<span class="gloss-note">three-valued truth tables</span></span>: unknown flows through the gates with no imputation and no silent coercion. The criterion's honest answer is “we can't tell yet”, so that is the answer.</div>
+        </div>
+        <div data-step="3">
+          <div>
+            <div class="gate"><i class="mk mk-unknown"></i><span>all(true,&nbsp;unknown)&nbsp;=&nbsp;unknown</span></div>
+            <div class="gate"><i class="mk mk-unknown"></i><span>any(false,&nbsp;unknown)&nbsp;=&nbsp;unknown</span></div>
+            <div class="gate"><i class="mk mk-fail"></i><span>all(false,&nbsp;unknown)&nbsp;=&nbsp;false</span></div>
+            <div class="gate"><i class="mk mk-pass"></i><span>any(true,&nbsp;unknown)&nbsp;=&nbsp;true</span></div>
+            <div class="kl-note" style="margin-top:10px"><span class="nt">step 4 · the four gates worth memorising</span>The top two say uncertainty survives. The bottom two are the useful absorbers: <span class="mono">all(false, unknown) = false</span> means one confirmed failure settles it — no chart review needed — and <span class="mono">any(true, unknown) = true</span> likewise.</div>
+          </div>
+        </div>
+        <div data-step="4">
+          <div class="versus">
+            <div class="v-card bad"><span class="v-tag">a two-valued engine</span>egfr absent → treated as false → the exclusion <span class="mono">egfr lt 45</span> never fires → the patient <strong>silently passes</strong> a renal-safety check that was never actually checked.</div>
+            <div class="v-card"><span class="v-tag">rulekit</span>egfr absent → unknown → the criterion is unknown → the patient lands in <span class="mono">undetermined</span>, the pile that says “a human must look”.</div>
+            <div class="kl-note"><span class="nt">step 5 · the one everyone gets wrong</span><strong>Missing data never silently passes.</strong> Boolean logic has no way to say “we don't know”, so two-valued screeners quietly convert ignorance into an answer. The third value exists precisely so they can't.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="sec sec-band" id="verdict" data-section data-title="The verdict">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">03</span>orientation &amp; the verdict</p>
+    <h2 data-reveal>Fail beats unknown beats pass</h2>
+    <div class="prose" data-reveal>
+      <p>One twist before the verdict: a criterion's result is not its condition's value, because <strong>exclusions invert</strong>. When an exclusion's condition is true, the exclusion has <em>fired</em> — and the patient fails it.</p>
+    </div>
+    <figure class="fig" role="group" aria-label="Criterion orientation table: how condition values map to verdicts for inclusions and exclusions">
+      <div class="fig-scroll" data-reveal>
+        <table class="verdict-table" style="min-width:520px">
+          <thead><tr><th>kind</th><th>condition true</th><th>condition false</th><th>condition unknown</th></tr></thead>
+          <tbody>
+            <tr><td class="mono" style="font-size:13px">inclusion</td><td><i class="mk mk-pass"></i> <strong>pass</strong></td><td><i class="mk mk-fail"></i> <strong>fail</strong></td><td><i class="mk mk-unknown"></i> unknown</td></tr>
+            <tr><td class="mono" style="font-size:13px">exclusion</td><td><i class="mk mk-fail"></i> <strong>fail</strong> — it fired</td><td><i class="mk mk-pass"></i> <strong>pass</strong></td><td><i class="mk mk-unknown"></i> unknown</td></tr>
+            <tr><td class="mono" style="font-size:13px">unmodeled: true</td><td colspan="3"><i class="mk mk-unknown"></i> always unknown — carried as text, needs chart review</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </figure>
+    <div class="prose" data-reveal>
+      <p>Then the whole patient is aggregated by one rule, first match wins: <strong>any fail → <span class="mono">ineligible</span></strong>; else <strong>any unknown → <span class="mono">undetermined</span></strong>; else <strong><span class="mono">eligible</span></strong>. Watch it cascade:</p>
+    </div>
+    <figure class="fig" role="group" aria-label="Three patients cascading to three overall verdicts">
+      <div class="cascade" data-reveal-children data-stagger="160">
+        <div class="cr">
+          <span class="pid">SYN-007</span>
+          <span class="marks"><i class="mk mk-pass"></i><i class="mk mk-pass"></i><i class="mk mk-fail"></i><i class="mk mk-unknown"></i></span>
+          <span class="arrow">→</span><span class="out">ineligible</span>
+          <p class="why">One confirmed fail settles it. The unknown no longer matters — nobody pulls the rest of this chart. That is why fail deliberately beats unknown.</p>
+        </div>
+        <div class="cr">
+          <span class="pid">SYN-019</span>
+          <span class="marks"><i class="mk mk-pass"></i><i class="mk mk-pass"></i><i class="mk mk-pass"></i><i class="mk mk-unknown"></i></span>
+          <span class="arrow">→</span><span class="out">undetermined</span>
+          <p class="why">No fails, one unknown. This is never rounded off — it is the count that says how much human work remains, and every surface that reports numbers must show it.</p>
+        </div>
+        <div class="cr">
+          <span class="pid">SYN-102</span>
+          <span class="marks"><i class="mk mk-pass"></i><i class="mk mk-pass"></i><i class="mk mk-pass"></i><i class="mk mk-pass"></i></span>
+          <span class="arrow">→</span><span class="out">eligible</span>
+          <p class="why">Every criterion affirmatively passed on confirmed facts. Nothing defaulted its way in.</p>
+        </div>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- 04 · CONFLICT DETECTION                                          -->
+<!-- ================================================================ -->
+<section class="sec" id="conflicts-intro" data-section data-title="Conflict detection">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">04</span>conflict detection</p>
+    <h2 data-reveal>Proving two criteria contradict — with no patients at all</h2>
+    <p class="lede" data-reveal>Because the language is closed, <span class="mono">rules check</span> can do interval arithmetic on the criteria themselves. What follows is the seeded contradiction in the teaching pack, exactly as the tool reports it. It is also a story about a claim that once went too far.</p>
+  </div>
+</section>
+
+<section class="scrub" id="cf" data-scrub data-steps="5" style="height:620vh">
+  <div class="scrub-stage">
+    <div class="cf-col">
+      <div class="cf-cards" data-step="0+">
+        <div class="crit-card">
+          <p class="cc-id">egfr-min <span class="cc-ref">I3 · inclusion</span></p>
+          <p class="cc-vb">“eGFR at least 30 mL/min/1.73m²”</p>
+          <p class="mono" style="font-size:12px;margin-top:6px">when: { fact: egfr, op: gte, value: 30 }</p>
+        </div>
+        <div class="crit-card">
+          <p class="cc-id">renal-safety <span class="cc-ref">E3 · exclusion</span></p>
+          <p class="cc-vb">“eGFR below 45 at screening”</p>
+          <p class="mono" style="font-size:12px;margin-top:6px">when: { fact: egfr, op: lt, value: 45 }</p>
+        </div>
+      </div>
+
+      <div class="cf-figwrap">
+        <figure class="fig" role="group" aria-label="Number line showing the inclusion interval from 30 up, the exclusion interval below 45, and their contradictory overlap from 30 to 45" style="margin:0">
+          <div class="fig-scroll">
+          <svg viewBox="0 0 960 250" style="min-width:620px" role="img" aria-label="Number line for egfr. Inclusion bar slides in covering 30 to infinity, exclusion bar slides in covering everything below 45, and their intersection from 30 inclusive to 45 exclusive is highlighted as the contradictory band.">
+            <g data-step="3+">
+              <rect x="345" y="46" width="142.5" height="156" fill="#A6431E" fill-opacity=".12" class="cf-band-pulse"/>
+              <line x1="345" y1="46" x2="345" y2="202" stroke="#A6431E" stroke-width="1.5"/>
+              <line x1="487.5" y1="46" x2="487.5" y2="202" stroke="#A6431E" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <text x="416" y="234" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="14" fill="#A6431E">[30, 45)</text>
+            </g>
+            <line x1="40" y1="124" x2="925" y2="124" stroke="#C9C2B4" stroke-width="1"/>
+            <g font-family="Spline Sans Mono, monospace" font-size="11" fill="#7E776A" text-anchor="middle">
+              <line x1="60" y1="119" x2="60" y2="129" stroke="#C9C2B4"/><text x="60" y="146">0</text>
+              <line x1="345" y1="119" x2="345" y2="129" stroke="#C9C2B4"/><text x="345" y="146">30</text>
+              <line x1="487.5" y1="119" x2="487.5" y2="129" stroke="#C9C2B4"/><text x="487.5" y="146">45</text>
+              <line x1="630" y1="119" x2="630" y2="129" stroke="#C9C2B4"/><text x="630" y="146">60</text>
+              <line x1="915" y1="119" x2="915" y2="129" stroke="#C9C2B4"/><text x="915" y="146">90</text>
+              <text x="895" y="112" text-anchor="end" fill="#6B655C">egfr →</text>
+            </g>
+            <g data-step="1+" class="from-left">
+              <rect x="345" y="60" width="580" height="14" fill="#D6D0C4" stroke="#17150F" stroke-width="1.25"/>
+              <line x1="345" y1="54" x2="345" y2="80" stroke="#17150F" stroke-width="2.5"/>
+              <text x="345" y="44" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">egfr-min admits [30, ∞)</text>
+            </g>
+            <g data-step="2+" class="from-right">
+              <rect x="40" y="174" width="447.5" height="14" fill="#D6D0C4" stroke="#17150F" stroke-width="1.25"/>
+              <line x1="487.5" y1="168" x2="487.5" y2="194" stroke="#17150F" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <text x="487.5" y="214" text-anchor="end" font-family="Spline Sans Mono, monospace" font-size="12" fill="#17150F">renal-safety fires (−∞, 45)</text>
+            </g>
+          </svg>
+          </div>
+        </figure>
+      </div>
+
+      <div class="cf-notes">
+        <div data-step="0">
+          <div class="cf-note"><span class="nt">two authors, eleven pages apart</span>Both criteria are individually sensible: admit adequate kidney function, exclude fragile kidney function. They were written by different people in different sections of the protocol. Scroll — the checker reads them as geometry.</div>
+        </div>
+        <div data-step="1">
+          <div class="cf-note"><span class="nt">the inclusion, as an interval</span><span class="mono">gte 30</span> becomes the interval <span class="mono">[30, ∞)</span> — a closed left bracket at 30, unbounded above. Only patients inside it can pass I3.</div>
+        </div>
+        <div data-step="2">
+          <div class="cf-note"><span class="nt">the exclusion, as an interval</span><span class="mono">lt 45</span> becomes <span class="mono">(−∞, 45)</span> — everything strictly below 45. Any patient inside it gets thrown out by E3. Now look at where the bars overlap.</div>
+        </div>
+        <div data-step="3">
+          <div>
+            <div class="evidence" aria-label="rules check output, verbatim">✕ ERROR contradictory-band [egfr-min, renal-safety] every patient with egfr in [30, 45) passes inclusion and is then excluded by "renal-safety" — for all inputs, not just a test corpus
+    egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)</div>
+            <div class="cf-note" style="margin-top:10px"><span class="nt">the flagship finding</span>That is the engine's output, verbatim. Not “a test patient hit a weird case” — a proof over the intervals themselves: <em>every possible patient</em> with eGFR in [30, 45) passes inclusion and is then excluded. <span class="mono">rules check</span> exits non-zero, so in CI this contradiction fails the build instead of failing the trial.</div>
+          </div>
+        </div>
+        <div data-step="4">
+          <div>
+            <div class="refuse">
+              <div class="crit-card">
+                <p class="cc-id">frail-long-stay <span class="cc-ref">exclusion · two facts</span></p>
+                <p class="cc-vb">“Age over 80 AND index hospitalisation longer than 21 days”</p>
+                <p class="mono" style="font-size:12px;margin-top:6px">when: { all: [ age gt 80, index_hospital_days gt 21 ] }</p>
+              </div>
+              <div class="panel" style="display:flex;flex-direction:column;gap:10px;justify-content:center;align-items:flex-start">
+                <span class="stamp">no band claim</span>
+                <p style="font-size:13.5px;line-height:1.55;color:var(--ink2)">The checker stays silent — skipped, not downgraded.</p>
+              </div>
+            </div>
+            <div class="cf-note" style="margin-top:10px"><span class="nt">the honesty beat — a true story</span>“For all inputs” is a sentence that must never be wrong. In adversarial review, an earlier checker claimed a band against an exclusion like this one — but an 85-year-old only fires it if the <em>second</em> conjunct also holds, and interval arithmetic can't show that it ever does. The claim was false. The fix: an exclusion whose <span class="mono">all</span>-chain touches more than one fact makes <strong>no claim at all</strong>. That false positive is now pinned as regression test B1 in <span class="mono">tests/adversarial/conflicts.test.ts</span>. The scope is stated just as plainly: single-fact constraints through <span class="mono">all</span> chains, interval arithmetic — explicitly not an SMT solver. A clean run means “no conflicts <em>within that scope</em>”, and the CLI prints the scope next to the clean result.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- SECTIONS-B (spliced) -->
+<style>
+/* ============ AGENT B FIGURE STYLES — all classes b-prefixed ============ */
+
+/* ---- shared bits ---- */
+.b-kicker { font-family: var(--disp); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+.b-stage-inner { width: 100%; max-width: 940px; margin: 0 auto; }
+.b-stage-inner h3 { margin-bottom: 4px; }
+.b-stage-sub { font-size: 13px; color: var(--ink2); margin-bottom: 18px; }
+.b-caption-slot { min-height: 64px; margin-top: 16px; }
+
+/* ---- patient cards / criterion rows (chapter 05) ---- */
+.b-pcard { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r, 2px); padding: 14px 16px; }
+.b-pcard-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.b-pid { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink); }
+.b-pmeta { font-size: 12.5px; color: var(--ink2); }
+.b-facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.b-fact { font-family: var(--mono); font-size: 12px; padding: 3px 8px; background: var(--paper-alt); border: 1px solid var(--hairline); border-radius: var(--r, 2px); color: var(--ink); }
+.b-fact b { font-weight: 600; }
+.b-fact.b-fact-absent { color: var(--ink3); border-style: dashed; }
+
+.b-crits { margin-top: 14px; border-top: 1px solid var(--rule); }
+.b-crit { display: grid; grid-template-columns: 18px 34px 1fr; gap: 10px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--hairline); }
+.b-crit .mk { position: relative; top: 1px; }
+.b-ref { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink); }
+.b-crit-name { font-family: var(--mono); font-size: 12.5px; font-weight: 500; color: var(--ink); }
+.b-verbatim { font-size: 12px; color: var(--ink3); margin-top: 1px; }
+.b-trace-line { font-family: var(--mono); font-size: 12.5px; color: var(--ink); margin-top: 5px; }
+.b-trace-line .b-tag { color: var(--ink3); font-size: 11px; }
+
+/* mark lands with a small drop (engine toggles .step-on on the mark itself) */
+.b-mk-land { transform: scale(1.7) translateY(-5px); transition: opacity .25s ease, transform .3s cubic-bezier(.2,.7,.3,1.25); }
+.b-mk-land.step-on { transform: none; }
+
+/* typewriter: mono text clipped by max-width in ch units */
+.b-type { display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: bottom; max-width: 0; }
+.step-on .b-type { max-width: var(--b-ch, 40ch); transition: max-width 1s steps(32, end) .25s; }
+
+.b-verdict { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; padding: 12px 14px; background: var(--paper-alt); border-left: 3px solid var(--ink); border-radius: var(--r, 2px); }
+.b-verdict .b-vword { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--ink); }
+.b-verdict .b-vnote { font-size: 12.5px; color: var(--ink2); }
+.b-minimarks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-family: var(--mono); font-size: 11.5px; color: var(--ink2); }
+.b-minimarks span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ---- funnel scene (chapter 06) ---- */
+.b-field { position: relative; height: 320px; margin-top: 10px; }
+.b-dot { position: absolute; width: 13px; height: 13px; left: var(--ex); top: var(--ey); transform: translate(-50%,-50%); transition: left .7s cubic-bezier(.4,0,.2,1), top .7s cubic-bezier(.4,0,.2,1), background .35s, border-color .35s; }
+.b-dot::after { content: attr(data-id); position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 9px; color: var(--ink3); white-space: nowrap; }
+/* verdict looks (defaults = final state; early steps neutralize below) */
+.b-dot.b-v-fail { background: var(--paper); border: 1.5px solid var(--ink2); }
+.b-dot.b-v-ne { background: repeating-linear-gradient(45deg, var(--hatch) 0 1.5px, transparent 1.5px 4px); border: 1px solid var(--hatch); }
+/* pre-verdict: plain fill dots (steps 0–1) */
+#b-funnel-scene [data-active-step="0"] .b-dot,
+#b-funnel-scene [data-active-step="1"] .b-dot { background: var(--fill); border: 1px solid var(--rule); }
+/* pre-travel: start-grid positions (steps 0–2) */
+#b-funnel-scene [data-active-step="0"] .b-dot,
+#b-funnel-scene [data-active-step="1"] .b-dot,
+#b-funnel-scene [data-active-step="2"] .b-dot { left: var(--sx); top: var(--sy); }
+.b-band-box { position: absolute; bottom: 0; height: 118px; border: 1px solid var(--rule); border-radius: var(--r, 2px); background: var(--paper); }
+.b-band-label { position: absolute; top: -22px; left: 0; right: 0; text-align: center; font-family: var(--mono); font-size: 10.5px; color: var(--ink2); white-space: nowrap; }
+.b-band-count { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-family: var(--disp); font-size: 15px; font-weight: 600; color: var(--ink); }
+.b-gauntlet { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.b-gauntlet .b-gchip { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border: 1px solid var(--rule); border-radius: var(--r, 2px); background: var(--paper-alt); color: var(--ink); }
+.b-law { padding: 14px 16px; background: var(--paper); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--r, 2px); font-size: 15px; line-height: 1.55; color: var(--ink); }
+.b-law .b-law-tag { display: block; font-family: var(--disp); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.b-bug { font-size: 13px; line-height: 1.6; color: var(--ink2); padding: 12px 14px; background: var(--paper-alt); border-radius: var(--r, 2px); margin-top: 12px; }
+.b-bug b { color: var(--ink); }
+
+/* ---- amendment scene (chapter 07) ---- */
+.b-vpills { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.b-vpill { font-family: var(--mono); font-size: 12px; padding: 4px 10px; border: 1px solid var(--rule); border-radius: var(--r, 2px); background: var(--paper-alt); color: var(--ink2); }
+.b-vpill.b-vpill-on { color: var(--ink); background: var(--paper); border-color: var(--ink); }
+.b-diffblock { font-family: var(--mono); font-size: 12.5px; line-height: 22px; padding: 10px 14px; background: var(--paper-alt); border: 1px solid var(--hairline); border-radius: var(--r, 2px); margin-top: 12px; overflow-x: auto; white-space: nowrap; }
+.b-diffblock b { font-weight: 600; }
+.b-flipfield { margin-top: 14px; position: relative; }
+.b-flip-head { display: flex; justify-content: space-between; font-family: var(--disp); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.b-fliprows { position: relative; }
+.b-fliprows::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px dashed var(--rule); }
+.b-fliprow { position: relative; height: 46px; border-bottom: 1px solid var(--hairline); }
+.b-fchip { position: absolute; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--ink); padding: 4px 9px; border-radius: var(--r, 2px); transition: left .6s cubic-bezier(.4,0,.2,1), background .4s, border-color .4s; left: calc(100% - 118px); background: var(--paper); border: 1.5px solid var(--ink2); }
+.b-freason { position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; color: var(--ink2); max-width: 46%; }
+/* pre-flip states (defaults above = flipped): fr1 flips at step 3, fr2 at 4, fr3 at 5, fr4 at 6, fr5 at 7 */
+#b-amend-scene [data-active-step="0"] .b-fchip,
+#b-amend-scene [data-active-step="1"] .b-fchip,
+#b-amend-scene [data-active-step="2"] .b-fchip,
+#b-amend-scene [data-active-step="3"] .b-fr2 .b-fchip,
+#b-amend-scene [data-active-step="3"] .b-fr3 .b-fchip,
+#b-amend-scene [data-active-step="3"] .b-fr4 .b-fchip,
+#b-amend-scene [data-active-step="3"] .b-fr5 .b-fchip,
+#b-amend-scene [data-active-step="4"] .b-fr3 .b-fchip,
+#b-amend-scene [data-active-step="4"] .b-fr4 .b-fchip,
+#b-amend-scene [data-active-step="4"] .b-fr5 .b-fchip,
+#b-amend-scene [data-active-step="5"] .b-fr4 .b-fchip,
+#b-amend-scene [data-active-step="5"] .b-fr5 .b-fchip,
+#b-amend-scene [data-active-step="6"] .b-fr5 .b-fchip {
+  left: 0;
+  background: repeating-linear-gradient(45deg, rgba(179,171,155,.55) 0 1.5px, var(--paper-alt) 1.5px 4px);
+  border: 1px solid var(--hatch);
+}
+.b-enrolled { margin-top: 16px; padding: 12px 16px; border-left: 3px solid var(--accent); background: var(--paper); border-radius: var(--r, 2px); }
+.b-enrolled-title { font-size: 13px; font-weight: 600; color: var(--accent); }
+.b-enrolled .b-erow { font-family: var(--mono); font-size: 12px; line-height: 21px; color: var(--ink); margin-top: 4px; }
+.b-enrolled .b-erow span { color: var(--ink2); }
+.b-enrolled-note { font-size: 11.5px; color: var(--ink2); margin-top: 5px; }
+
+/* ---- facts compiler scenes (chapter 08) ---- */
+.b-note-doc { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r, 2px); font-family: var(--mono); font-size: 11.5px; line-height: 1.7; color: var(--ink); overflow: hidden; }
+.b-note-head { padding: 10px 16px 8px; border-bottom: 1px solid var(--hairline); color: var(--ink2); font-size: 10.5px; letter-spacing: .02em; }
+.b-note-head b { color: var(--ink); font-size: 11.5px; }
+.b-note-body { padding: 10px 16px 14px; max-height: 640px; transition: max-height 1.1s ease; }
+#b-note-scene [data-active-step="0"] .b-note-body { max-height: 64px; }
+.b-note-body p { margin: 0 0 8px; }
+.b-note-sec { color: var(--ink3); font-size: 10px; letter-spacing: .1em; }
+.b-q { background-image: linear-gradient(var(--fill), var(--fill)); background-repeat: no-repeat; background-size: 100% 100%; transition: background-size .8s ease .2s; border-radius: 1px; }
+#b-note-scene [data-active-step="0"] .b-q,
+#b-note-scene [data-active-step="1"] .b-q { background-size: 0% 100%; }
+.b-factcard { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r, 2px); padding: 11px 14px; }
+.b-factcard-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.b-fc-fact { font-family: var(--mono); font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.b-fc-meta { font-size: 11px; color: var(--ink2); }
+.b-conf { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; }
+.b-conf-num { font-family: var(--mono); font-size: 11.5px; color: var(--ink); }
+.b-confbar { width: 64px; height: 5px; background: var(--paper-alt); border: 1px solid var(--hairline); border-radius: 1px; overflow: hidden; }
+.b-confbar i { display: block; height: 100%; background: var(--ink2); width: var(--b-conf, 0%); transition: width .9s ease .2s; }
+#b-note-scene [data-active-step="0"] .b-confbar i,
+#b-note-scene [data-active-step="1"] .b-confbar i { width: 0; }
+.b-fc-src { font-family: var(--mono); font-size: 10.5px; color: var(--ink3); margin-top: 6px; }
+.b-status { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--r, 2px); border: 1px solid var(--rule); color: var(--ink2); background: var(--paper-alt); }
+.b-status.b-status-confirmed { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+
+.b-gate-wrap { position: relative; margin-top: 16px; padding: 18px 0 8px; overflow: hidden; }
+.b-gate-bar { position: absolute; left: 55%; top: 0; bottom: 0; width: 0; border-left: 3px double var(--ink); }
+.b-gate-label { position: absolute; left: 55%; top: -6px; transform: translateX(-50%); font-family: var(--disp); font-size: 9.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink); background: var(--paper-alt); padding: 1px 7px; border: 1px solid var(--rule); border-radius: var(--r, 2px); white-space: nowrap; }
+.b-gate-lane { position: relative; min-height: 72px; margin: 14px 0; }
+.b-gate-card { position: relative; width: min(48%, 250px); transition: transform .8s cubic-bezier(.4,0,.2,1); }
+.b-gate-card .b-factcard { padding: 8px 11px; }
+.b-gate-pass { transform: translateX(calc(114% + 12px)); }
+#b-note-scene [data-active-step="0"] .b-gate-pass,
+#b-note-scene [data-active-step="1"] .b-gate-pass,
+#b-note-scene [data-active-step="2"] .b-gate-pass { transform: translateX(0); }
+.b-gate-verdict { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 40%; font-family: var(--mono); font-size: 10.5px; color: var(--ink2); }
+.b-fab { animation: b-bounce .85s cubic-bezier(.3,.6,.4,1) both; }
+#b-note-scene [data-active-step="0"] .b-fab,
+#b-note-scene [data-active-step="1"] .b-fab,
+#b-note-scene [data-active-step="2"] .b-fab,
+#b-note-scene [data-active-step="3"] .b-fab,
+#b-note-scene [data-active-step="4"] .b-fab { animation: none; transform: translateX(0); }
+@keyframes b-bounce {
+  0%   { transform: translateX(0); }
+  44%  { transform: translateX(96%); }
+  62%  { transform: translateX(18%); }
+  80%  { transform: translateX(42%); }
+  100% { transform: translateX(28%); }
+}
+.b-stamp { display: inline-block; font-family: var(--disp); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); border: 1.5px solid var(--accent); border-radius: var(--r, 2px); padding: 2px 7px; transform: rotate(-2deg); background: var(--paper); }
+.b-aphorism { font-size: 15.5px; color: var(--ink); }
+
+/* review queue mockup card */
+.b-qcard { background: var(--paper); border: 1px solid var(--rule); border-left: 3px solid var(--ink); border-radius: var(--r, 2px); padding: 13px 16px; }
+.b-qcard-row { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+.b-quote-box { margin-top: 9px; padding: 9px 12px; background: var(--paper-alt); border-radius: var(--r, 2px); font-size: 12px; line-height: 19px; color: var(--ink); }
+.b-quote-box .b-q { background-size: 100% 100%; }
+.b-btnrow { display: flex; align-items: center; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
+.b-btn { font-size: 12px; font-weight: 500; padding: 4px 12px; border: 1px solid var(--rule); border-radius: var(--r, 2px); background: var(--paper); color: var(--ink); }
+.b-btn-act { background: var(--accent); border-color: var(--accent); color: var(--paper); transition: box-shadow .35s; }
+#b-review-scene [data-active-step="1"] .b-btn-act,
+#b-review-scene [data-active-step="2"] .b-btn-act,
+#b-review-scene [data-active-step="3"] .b-btn-act { box-shadow: 0 0 0 3px rgba(166,67,30,.25); }
+.b-swap > .b-after { display: none; }
+#b-review-scene [data-active-step="2"] .b-swap > .b-before,
+#b-review-scene [data-active-step="3"] .b-swap > .b-before { display: none; }
+#b-review-scene [data-active-step="2"] .b-swap > .b-after,
+#b-review-scene [data-active-step="3"] .b-swap > .b-after { display: inline-flex; }
+.b-e4frag { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 12px; color: var(--ink); padding: 10px 13px; background: var(--paper-alt); border-radius: var(--r, 2px); margin-top: 12px; }
+
+/* ---- workbench UI insets ---- */
+.b-ui { min-width: 660px; background: var(--chrome); border: 1px solid var(--rule); border-radius: 3px; font-family: var(--sans); font-size: 13px; color: var(--ink); }
+.b-ui-top { height: 38px; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: var(--paper); border-bottom: 1px solid var(--rule); border-radius: 3px 3px 0 0; }
+.b-ui-logo { display: flex; align-items: center; gap: 7px; font-family: var(--disp); font-weight: 600; font-size: 12px; letter-spacing: .08em; }
+.b-ui-logo i { width: 6px; height: 6px; background: var(--accent); display: inline-block; }
+.b-ui-pill { font-family: var(--mono); font-size: 11px; height: 20px; display: inline-flex; align-items: center; padding: 0 7px; border: 1px solid var(--hairline); border-radius: var(--r, 2px); color: var(--ink2); background: var(--paper-alt); white-space: nowrap; }
+.b-ui-tabs { height: 34px; display: flex; gap: 18px; padding: 0 20px; align-items: stretch; border-bottom: 1px solid var(--hairline); background: var(--paper); }
+.b-ui-tab { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--ink2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.b-ui-tab.b-on { color: var(--ink); border-color: var(--accent); }
+.b-ui-tab .b-ct { font-family: var(--mono); font-size: 10.5px; color: var(--ink3); }
+.b-ui-view { padding: 16px 20px 18px; background: var(--paper); border-radius: 0 0 3px 3px; display: flex; flex-direction: column; gap: 12px; }
+.b-ui-vhead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.b-ui-vhead b { font-size: 16px; font-weight: 600; }
+.b-ui-vhead .b-sub { font-size: 12px; color: var(--ink2); }
+.b-frow { display: grid; grid-template-columns: 172px 1fr 62px 62px 50px; gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--hairline); }
+.b-frow-head { font-size: 10.5px; color: var(--ink2); border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+.b-frow .b-cname { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+.b-frow .b-cverb { font-size: 11px; color: var(--ink3); }
+.b-frow .b-num { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--ink2); }
+.b-frow .b-num-strong { color: var(--ink); font-weight: 600; }
+.b-bar { height: 13px; display: flex; }
+.b-bar i { display: block; height: 100%; }
+.b-bar .b-seg-pass { background: var(--fill); }
+.b-bar .b-seg-fail { background: var(--ink); }
+.b-hatchfill { background: repeating-linear-gradient(45deg, var(--hatch) 0 2px, #E9E4DA 2px 5px); }
+.b-legend { display: flex; gap: 14px; font-size: 10.5px; color: var(--ink2); align-items: center; flex-wrap: wrap; }
+.b-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.b-legend .b-sw { width: 11px; height: 9px; display: inline-block; }
+.b-bandline { display: flex; align-items: center; gap: 16px; font-size: 12.5px; flex-wrap: wrap; }
+.b-bandline span { display: inline-flex; align-items: center; gap: 7px; }
+.b-seltrace { border-top: 1px solid var(--hairline); padding-top: 10px; }
+.b-seltrace .b-strow { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; line-height: 21px; }
+.b-arow { display: grid; grid-template-columns: 84px 62px 1fr; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--hairline); align-items: center; font-size: 12px; }
+.b-arow .b-aid { font-family: var(--mono); font-weight: 500; }
+.b-arow .b-ameta { color: var(--ink2); }
+.b-arow .b-awhy { font-family: var(--mono); font-size: 11.5px; }
+.b-agroup { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink2); padding: 8px 0 4px; border-bottom: 1px solid var(--rule); }
+
+/* ---- G11 + system map + stats (chapters 08–09) ---- */
+.b-wire { stroke-dasharray: 600; stroke-dashoffset: 600; transition: stroke-dashoffset .9s ease .15s; }
+.b-wire.step-on { stroke-dashoffset: 0; }
+.b-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.b-stat { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r, 2px); padding: 14px 16px; }
+.b-stat .b-stat-num { font-family: var(--disp); font-size: 20px; font-weight: 600; color: var(--ink); }
+.b-stat .b-stat-lab { font-size: 12px; color: var(--ink2); margin-top: 4px; line-height: 1.45; }
+
+/* ---- responsive ---- */
+@media (max-width: 640px) {
+  .b-field { height: 260px; }
+  .b-dot::after { display: none; }
+  .b-band-label { white-space: normal; font-size: 9.5px; top: -32px; }
+  .b-stage-inner h3 { font-size: 16px; }
+  .b-stage-sub { margin-bottom: 10px; }
+  .b-bug { font-size: 12px; line-height: 1.5; }
+  .b-law { font-size: 13.5px; }
+  .b-note-body { font-size: 10px; line-height: 1.55; }
+  .b-pcard { padding: 11px 12px; }
+  .b-verdict .b-vnote { font-size: 11.5px; }
+  .b-stats { grid-template-columns: 1fr 1fr; }
+  .b-freason { font-size: 10px; }
+  .b-gate-verdict { font-size: 9.5px; }
+  .b-caption-slot { min-height: 84px; }
+}
+@media (max-width: 420px) {
+  .b-stats { grid-template-columns: 1fr; }
+}
+
+/* ---- reduced motion: collapse every B animation ---- */
+@media (prefers-reduced-motion: reduce) {
+  .b-fab { animation: none !important; transform: translateX(28%); }
+  .b-type, .step-on .b-type { max-width: none !important; transition: none !important; }
+  .b-dot, .b-fchip, .b-gate-card, .b-confbar i, .b-note-body, .b-q, .b-wire,
+  .b-crit .b-mk-land, .b-btn-act { transition: none !important; }
+  .b-wire { stroke-dashoffset: 0; }
+  .b-crit .b-mk-land { opacity: 1; transform: none; }
+}
+</style>
+
+<!-- ================= 05 · THE PATIENTS ================= -->
+<section class="sec sec-band" id="cases" data-section data-title="Case studies">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">05</span>the patients</p>
+    <h2 data-reveal>The engine meets people</h2>
+    <p class="lede" data-reveal>Rules and conflicts are abstractions until a patient walks through them. Here are three cases from the ten hand-written fixture patients the workbench ships with — every one of them synthetic, and every number below the engine's actual output.</p>
+    <div class="prose" data-reveal>
+      <p>Each case runs the same way: the patient's facts flow through the criterion rows, one mark lands per criterion — <i class="mk mk-pass"></i> solid for pass, <i class="mk mk-fail"></i> outline for fail, <i class="mk mk-unknown"></i> hatch for unknown — and the <span class="gloss">trace<span class="gloss-note">the engine's printed reasoning</span></span> types out the arithmetic. The trace is the point. A verdict you cannot explain is a verdict you cannot audit.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Case 1: SYN-115 -->
+<section class="scrub" id="b-case-115" data-scrub data-steps="4" style="height: 500vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 720px;">
+      <p class="b-kicker">case 1 · the trivial no</p>
+      <h3>SYN-115 — one row is enough</h3>
+      <p class="b-stage-sub">The simplest thing an eligibility engine can do, done legibly.</p>
+
+      <div class="b-pcard" data-step="0+">
+        <div class="b-pcard-top">
+          <span class="b-pid">SYN-115</span>
+          <span class="b-pmeta">F &#183; 17y &#183; synthetic fixture</span>
+        </div>
+        <div class="b-facts">
+          <span class="b-fact">age = <b>17</b></span>
+          <span class="b-fact">lvef = <b>34</b></span>
+          <span class="b-fact">egfr = <b>90</b></span>
+          <span class="b-fact">medications = <b>[]</b></span>
+        </div>
+
+        <div class="b-crits">
+          <div class="b-crit" data-step="1+">
+            <i class="mk mk-fail b-mk-land" data-step="2+"></i>
+            <span class="b-ref">I1</span>
+            <div>
+              <span class="b-crit-name">age-min</span> <span class="b-verbatim">&#8220;Age 18 years or older&#8221; &#183; inclusion</span>
+              <div class="b-trace-line" data-step="2+"><span class="b-type" style="--b-ch: 26ch">age = 17, required &gt;= 18</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="b-verdict" data-step="3+">
+          <i class="mk mk-fail"></i>
+          <span class="b-vword">overall: ineligible</span>
+          <span class="b-vnote">a missed inclusion decides on its own</span>
+        </div>
+        <div class="b-minimarks" data-step="3+">
+          <span><i class="mk mk-pass"></i>I2</span>
+          <span><i class="mk mk-pass"></i>I3</span>
+          <span><i class="mk mk-pass"></i>E1</span>
+          <span><i class="mk mk-pass"></i>E3</span>
+          <span><i class="mk mk-unknown"></i>E4</span>
+          <span style="color: var(--ink3);">&#8212; still evaluated: the trace stays complete, the answer cannot change</span>
+        </div>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- Case 2: SYN-042 in the contradictory band -->
+<section class="scrub" id="b-case-042" data-scrub data-steps="6" style="height: 700vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 760px;">
+      <p class="b-kicker">case 2 · inside the band</p>
+      <h3>SYN-042 — the contradiction, worn by a person</h3>
+      <p class="b-stage-sub">The previous chapter found the band [30,&#8202;45) by interval arithmetic, for all inputs. This is what it looks like with someone standing in it.</p>
+
+      <div class="b-pcard" data-step="0+">
+        <div class="b-pcard-top">
+          <span class="b-pid">SYN-042</span>
+          <span class="b-pmeta">F &#183; 63y &#183; synthetic fixture</span>
+        </div>
+        <div class="b-facts">
+          <span class="b-fact">age = <b>63</b></span>
+          <span class="b-fact">lvef = <b>38</b></span>
+          <span class="b-fact">egfr = <b>41</b></span>
+          <span class="b-fact b-fact-absent">medications — no list on file</span>
+        </div>
+
+        <div class="b-crits">
+          <div class="b-crit" data-step="1+">
+            <i class="mk mk-pass b-mk-land" data-step="1+"></i>
+            <span class="b-ref">I3</span>
+            <div>
+              <span class="b-crit-name">egfr-min</span> <span class="b-verbatim">&#8220;eGFR at least 30 mL/min/1.73m&#178;&#8221; &#183; inclusion</span>
+              <div class="b-trace-line" data-step="1+"><span class="b-type" style="--b-ch: 27ch">egfr = 41, required &gt;= 30</span></div>
+            </div>
+          </div>
+          <div class="b-crit" data-step="2+">
+            <i class="mk mk-fail b-mk-land" data-step="2+"></i>
+            <span class="b-ref">E3</span>
+            <div>
+              <span class="b-crit-name">renal-safety</span> <span class="b-verbatim">&#8220;eGFR below 45 at screening&#8221; &#183; exclusion &#183; added by Amendment 2</span>
+              <div class="b-trace-line" data-step="2+"><span class="b-type" style="--b-ch: 26ch">egfr = 41, required &lt; 45</span> <span class="b-tag">&#8212; exclusion fired</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <figure class="fig" role="group" aria-label="Number line showing the contradictory eGFR band from 30 to 45, with SYN-042 at 41 inside it" data-step="3+" style="margin-top: 16px;">
+        <div class="fig-scroll">
+        <svg viewBox="0 0 640 158" role="img" aria-label="I3 admits eGFR of 30 and above; E3 fires below 45; the overlap from 30 to 45 traps SYN-042 at eGFR 41" style="width: 100%; min-width: 500px; height: auto; display: block;">
+          <defs>
+            <pattern id="b-hatch-band" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#A6431E" stroke-width="1.4" opacity="0.55"/>
+            </pattern>
+          </defs>
+          <g data-step="3+">
+            <text x="30" y="30" font-family="Spline Sans Mono, monospace" font-size="11" fill="#6B655C">I3 egfr-min &#183; admits [30, &#8734;)</text>
+            <rect x="223" y="38" width="387" height="15" fill="#D6D0C4" stroke="#C9C2B4"/>
+            <text x="332" y="95" font-family="Spline Sans Mono, monospace" font-size="11" fill="#6B655C">&#8592; E3 renal-safety &#183; fires (&#8722;&#8734;, 45)</text>
+            <rect x="30" y="84" width="290" height="15" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+            <line x1="30" y1="122" x2="610" y2="122" stroke="#C9C2B4"/>
+            <g font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C" text-anchor="middle">
+              <text x="30" y="140">0</text><text x="223" y="140">30</text><text x="320" y="140">45</text><text x="610" y="140">90</text>
+            </g>
+            <line x1="223" y1="118" x2="223" y2="126" stroke="#7E776A"/>
+            <line x1="320" y1="118" x2="320" y2="126" stroke="#7E776A"/>
+          </g>
+          <g data-step="4+">
+            <rect x="223" y="34" width="97" height="69" fill="url(#b-hatch-band)" stroke="#A6431E" stroke-width="1.5"/>
+            <text x="271" y="26" font-family="Spline Sans Mono, monospace" font-size="11.5" font-weight="600" fill="#A6431E" text-anchor="middle">[30, 45)</text>
+            <circle cx="294" cy="122" r="5" fill="#17150F"/>
+            <text x="294" y="153" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#17150F" text-anchor="middle">SYN-042 &#183; 41</text>
+          </g>
+        </svg>
+        </div>
+        <figcaption class="fig-cap" data-step="4+">Every patient with eGFR in [30,&#8202;45) passes the inclusion and is then excluded &#8212; for all inputs, not just this corpus. The checker said so before anyone was screened.</figcaption>
+      </figure>
+
+      <div class="b-verdict" data-step="5+">
+        <i class="mk mk-fail"></i>
+        <span class="b-vword">overall: ineligible</span>
+        <span class="b-vnote">eGFR 41 walks through the inclusion gate at 41 &#8805; 30 and straight into the exclusion at 41 &lt; 45</span>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- Case 3: the tri-state case -->
+<section class="scrub" id="b-case-unknown" data-scrub data-steps="4" style="height: 500vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 720px;">
+      <p class="b-kicker">case 3 · the third value</p>
+      <h3>SYN-042 again — the question with no answer</h3>
+      <p class="b-stage-sub">Same patient. Her medication list never arrived &#8212; and the washout criterion needs it.</p>
+
+      <div class="b-pcard" data-step="0+">
+        <div class="b-pcard-top">
+          <span class="b-pid">SYN-042</span>
+          <span class="b-pmeta">F &#183; 63y</span>
+        </div>
+        <div class="b-facts">
+          <span class="b-fact b-fact-absent">medications — no reconciliation on file</span>
+        </div>
+
+        <div class="b-crits">
+          <div class="b-crit" data-step="1+">
+            <i class="mk mk-unknown b-mk-land" data-step="1+"></i>
+            <span class="b-ref">E1</span>
+            <div>
+              <span class="b-crit-name">anticoag-washout</span> <span class="b-verbatim">&#8220;Anticoagulant use within 30 days&#8221; &#183; exclusion</span>
+              <div class="b-trace-line" data-step="1+"><span class="b-type" style="--b-ch: 32ch">medications missing &#8594; unknown</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" data-step="2+" style="margin-top: 16px;">
+        <p style="font-size: 14.5px; line-height: 1.6; margin: 0;">The condition language runs on <span class="gloss">three-valued logic<span class="gloss-note">pass, fail, unknown &#8212; Kleene's</span></span>. A question the data cannot answer evaluates <b>unknown</b> &#8212; not <i>no</i>, not <i>probably no</i>. <strong>The engine refuses to guess.</strong></p>
+      </div>
+
+      <div class="b-verdict" data-step="3+">
+        <i class="mk mk-unknown"></i>
+        <span class="b-vnote" style="font-size: 13px;">E1 stays hatched in her trace even though E3 already decided her verdict &#8212; unknowns are never coerced to fit the outcome. When nothing else decides, unknown reaches the top: three of the ten fixtures end <span class="mono">undetermined</span>, a first-class outcome, not an error.</span>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ================= 06 · THE FUNNEL ================= -->
+<section class="sec" id="funnel" data-section data-title="The funnel">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">06</span>the funnel</p>
+    <h2 data-reveal>Ten dots, three bands</h2>
+    <p class="lede" data-reveal>Run all ten fixtures through the current rule set and each lands in exactly one <span class="gloss">band<span class="gloss-note">screening outcome bucket</span></span>. The engine's answer, verbatim: <span class="mono" style="font-size: 0.85em;">screened 10: 0 eligible &#183; 7 ineligible &#183; 3 undetermined</span>.</p>
+  </div>
+</section>
+
+<section class="scrub" id="b-funnel-scene" data-scrub data-steps="6" data-section data-title="Screening" style="height: 700vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 860px;">
+      <h3>The screening funnel, live</h3>
+      <p class="b-stage-sub">10 synthetic fixture patients &#183; DEMO-HF-001 v3.0 &#183; ruleset v1.1.0</p>
+
+      <div class="b-gauntlet" data-step="1+">
+        <span class="b-gchip">I1 age-min</span>
+        <span class="b-gchip">I2 lvef-max</span>
+        <span class="b-gchip">I3 egfr-min</span>
+        <span class="b-gchip">E1 anticoag-washout</span>
+        <span class="b-gchip">E3 renal-safety</span>
+        <span class="b-gchip">E4 nyha-class-iv &#183; unmodeled</span>
+      </div>
+
+      <div class="b-field" data-step="0+">
+        <!-- band boxes -->
+        <div class="b-band-box" data-step="3+" style="left: 0; width: 26%;">
+          <span class="b-band-label"><i class="mk mk-pass"></i> potentially eligible</span>
+          <span class="b-band-count">0</span>
+        </div>
+        <div class="b-band-box" data-step="3+" style="left: 31%; width: 38%;">
+          <span class="b-band-label"><i class="mk mk-fail"></i> screen fail</span>
+          <span class="b-band-count">7</span>
+        </div>
+        <div class="b-band-box" data-step="3+" style="left: 74%; width: 26%;">
+          <span class="b-band-label"><i class="mk mk-unknown"></i> not evaluable</span>
+          <span class="b-band-count">3</span>
+        </div>
+        <!-- 10 dots: --sx/--sy start grid · --ex/--ey band position -->
+        <span class="b-dot b-v-fail" data-step="0+" data-id="SYN-007" style="--sx:10%; --sy:16%; --ex:37%; --ey:66%;"></span>
+        <span class="b-dot b-v-fail" data-step="0+" data-id="SYN-019" style="--sx:30%; --sy:16%; --ex:45%; --ey:66%;"></span>
+        <span class="b-dot b-v-fail" data-step="0+" data-id="SYN-042" style="--sx:50%; --sy:16%; --ex:53%; --ey:66%;"></span>
+        <span class="b-dot b-v-fail" data-step="0+" data-id="SYN-058" style="--sx:70%; --sy:16%; --ex:61%; --ey:66%;"></span>
+        <span class="b-dot b-v-ne"   data-step="0+" data-id="SYN-061" style="--sx:90%; --sy:16%; --ex:79%; --ey:70%;"></span>
+        <span class="b-dot b-v-fail" data-step="0+" data-id="SYN-088" style="--sx:10%; --sy:38%; --ex:41%; --ey:82%;"></span>
+        <span class="b-dot b-v-fail" data-step="0+" data-id="SYN-097" style="--sx:30%; --sy:38%; --ex:49%; --ey:82%;"></span>
+        <span class="b-dot b-v-ne"   data-step="0+" data-id="SYN-104" style="--sx:50%; --sy:38%; --ex:87%; --ey:70%;"></span>
+        <span class="b-dot b-v-fail" data-step="0+" data-id="SYN-115" style="--sx:70%; --sy:38%; --ex:57%; --ey:82%;"></span>
+        <span class="b-dot b-v-ne"   data-step="0+" data-id="SYN-121" style="--sx:90%; --sy:38%; --ex:83%; --ey:82%;"></span>
+      </div>
+
+      <div class="b-caption-slot">
+        <div class="b-law" data-step="4+">
+          <span class="b-law-tag">the one-status-per-patient law</span>
+          A patient's band comes from the engine's verdict and nothing else &#8212; the CLI and the workbench can never tell different stories.
+        </div>
+        <div class="b-bug" data-step="5+">
+          That sentence is a scar, not a slogan. A review of this repo caught the funnel draining patients in criterion order while the CLI bucketed by overall verdict &#8212; on the 100-patient commander-hf corpus the two disagreed on <b>every headline number</b> (0 vs 2 potentially eligible, 97 vs 92 screen failures), and swapping two criteria in the YAML &#8212; a no-op to the engine &#8212; moved a patient between the demo's two biggest buckets. The fix is one rule in <span class="mono">src/core/attrition.ts</span>: the waterfall may only <i>distribute</i> patients who are already screen failures.
+        </div>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="sec sec-band" id="funnel-inset">
+  <div class="wrap-wide">
+    <h3 data-reveal>What the coordinator sees</h3>
+    <div class="prose" data-reveal><p>The workbench's Funnel view is the same computation with a face. Counts in it are counts of ten &#8212; the workbench cohort is the fixtures, and it says so.</p></div>
+    <figure class="fig" role="group" aria-label="Mockup of the rulekit workbench Funnel view over the ten fixture patients" data-reveal>
+      <div class="fig-scroll">
+        <div class="b-ui">
+          <div class="b-ui-top">
+            <span class="b-ui-logo"><i></i>rulekit</span>
+            <span class="b-ui-pill">DEMO-HF-001</span>
+            <span class="b-ui-pill">v3.0 &#183; Amd 2 &#183; effective 04-Aug-2026</span>
+            <span class="b-ui-pill">ruleset v1.1.0</span>
+          </div>
+          <div class="b-ui-tabs">
+            <span class="b-ui-tab b-on">Screening funnel</span>
+            <span class="b-ui-tab">Thresholds</span>
+            <span class="b-ui-tab">Amendment</span>
+            <span class="b-ui-tab">Checks <span class="b-ct">3</span></span>
+            <span class="b-ui-tab">Review</span>
+          </div>
+          <div class="b-ui-view">
+            <div class="b-ui-vhead"><b>Screening funnel</b><span class="b-sub">cohort n = 10 &#183; hand-written fixtures &#183; synthetic</span></div>
+            <div>
+              <div class="b-frow b-frow-head">
+                <span></span>
+                <span class="b-legend"><span><span class="b-sw" style="background: var(--fill);"></span> pass</span><span><span class="b-sw" style="background: var(--ink);"></span> screen fail</span><span><span class="b-sw b-hatchfill"></span> not evaluable</span></span>
+                <span style="text-align: right;">removed<br>(sequential)</span>
+                <span style="text-align: right;">fails alone<br>(of n=10)</span>
+                <span style="text-align: right;">sole<br>reason</span>
+              </div>
+              <div class="b-frow">
+                <div><span class="b-ref">I1</span> <span class="b-cname">age-min</span><div class="b-cverb">Age 18 years or older</div></div>
+                <div class="b-bar" style="width: 100%;"><i class="b-seg-pass" style="width: 90%;"></i><i class="b-seg-fail" style="width: 10%;"></i></div>
+                <span class="b-num b-num-strong">&#8722;1</span><span class="b-num">1</span><span class="b-num">1</span>
+              </div>
+              <div class="b-frow">
+                <div><span class="b-ref">I2</span> <span class="b-cname">lvef-max</span><div class="b-cverb">LVEF &#8804; 40% on echo</div></div>
+                <div class="b-bar" style="width: 90%;"><i class="b-seg-pass" style="width: 88.9%;"></i><i class="b-seg-fail" style="width: 11.1%;"></i></div>
+                <span class="b-num b-num-strong">&#8722;1</span><span class="b-num">1</span><span class="b-num">1</span>
+              </div>
+              <div class="b-frow">
+                <div><span class="b-ref">I3</span> <span class="b-cname">egfr-min</span><div class="b-cverb">eGFR &#8805; 30 &#183; &#9888; never fails on the corpus</div></div>
+                <div class="b-bar" style="width: 80%;"><i class="b-seg-pass" style="width: 100%;"></i></div>
+                <span class="b-num">0</span><span class="b-num">0</span><span class="b-num">0</span>
+              </div>
+              <div class="b-frow">
+                <div><span class="b-ref">E1</span> <span class="b-cname">anticoag-washout</span><div class="b-cverb">Anticoagulant use, 30d window</div></div>
+                <div class="b-bar" style="width: 80%;"><i class="b-seg-pass" style="width: 75%;"></i><i class="b-hatchfill" style="width: 12.5%;"></i><i class="b-seg-fail" style="width: 12.5%;"></i></div>
+                <span class="b-num b-num-strong">&#8722;1</span><span class="b-num">1</span><span class="b-num">1</span>
+              </div>
+              <div class="b-frow">
+                <div><span class="b-ref">E3</span> <span class="b-cname">renal-safety</span><div class="b-cverb">eGFR &#60; 45 &#183; added by Amd 2</div></div>
+                <div class="b-bar" style="width: 70%;"><i class="b-seg-pass" style="width: 42.9%;"></i><i class="b-seg-fail" style="width: 57.1%;"></i></div>
+                <span class="b-num b-num-strong">&#8722;4</span><span class="b-num">4</span><span class="b-num b-num-strong">3</span>
+              </div>
+              <div class="b-frow" style="grid-template-columns: 172px 1fr 186px; color: var(--ink2);">
+                <div><span class="b-ref" style="color: var(--ink2);">E4</span> <span class="b-cname">nyha-class-iv</span><div class="b-cverb">not computable from structured data</div></div>
+                <div class="b-bar b-hatchfill" style="width: 30%;"></div>
+                <span style="font-size: 11.5px; font-style: italic;">chart review required &#183; applies to all 3 remaining</span>
+              </div>
+            </div>
+            <div class="b-bandline">
+              <span><i class="mk mk-fail"></i><span style="color: var(--ink2);">7 screen fail</span></span>
+              <span><i class="mk mk-unknown"></i><span style="color: var(--ink2); font-style: italic;">3 not evaluable &#8212; E4 pending chart review</span></span>
+              <span><i class="mk mk-pass"></i><b>0 potentially eligible</b></span>
+            </div>
+            <div class="b-seltrace">
+              <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; flex-wrap: wrap;">
+                <span style="font-size: 11px; color: var(--ink3);">selected</span>
+                <span class="mono" style="font-size: 12.5px; font-weight: 600;">SYN-042</span>
+                <span style="font-size: 12px; color: var(--ink2);">F &#183; 63y &#183; no medication reconciliation on file</span>
+                <span style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;"><i class="mk mk-fail"></i>screen fail</span>
+              </div>
+              <div class="b-strow"><i class="mk mk-pass"></i>I1 age-min &#8212; age = 63, required &gt;= 18</div>
+              <div class="b-strow"><i class="mk mk-pass"></i>I2 lvef-max &#8212; lvef = 38, required &lt;= 40</div>
+              <div class="b-strow"><i class="mk mk-pass"></i>I3 egfr-min &#8212; egfr = 41, required &gt;= 30</div>
+              <div class="b-strow"><i class="mk mk-unknown"></i>E1 anticoag-washout &#8212; medications missing &#8594; unknown</div>
+              <div class="b-strow"><i class="mk mk-fail"></i>E3 renal-safety &#8212; egfr = 41, required &lt; 45 <span style="color: var(--ink2);">(in contradictory band [30, 45) &#8212; see Checks)</span></div>
+              <div class="b-strow"><i class="mk mk-unknown"></i>E4 nyha-class-iv &#8212; unmodeled, chart review</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="fig-cap">The Funnel view: per-criterion attrition over the ten fixtures, and a full per-patient trace on click. Every number on screen derives from <span class="mono">evalPatient().overall</span> &#8212; the same call the CLI makes.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ================= 07 · THE AMENDMENT ================= -->
+<section class="sec" id="amendment" data-section data-title="The amendment">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">07</span>the amendment</p>
+    <h2 data-reveal>The day the protocol changes</h2>
+    <p class="lede" data-reveal>A protocol <span class="gloss">amendment<span class="gloss-note">formal change to trial rules</span></span> is where prose criteria hurt most. A substantial one carries a median direct cost of <b>$<span data-count-to="141" data-count-dur="1100">0</span>K</b> in Phase II and <b>$<span data-count-to="535" data-count-dur="1100">0</span>K</b> in Phase III, and roughly <b><span data-count-to="45" data-count-dur="900">0</span>%</b> are judged avoidable (Tufts CSDD).</p>
+    <div class="prose" data-reveal>
+      <p>DEMO-HF-001 moves from v2.0 to v3.0 (Amendment 2): one new exclusion drops in, one washout window widens. In a Word document, the impact question &#8212; <em>who changes answer?</em> &#8212; takes a manual chart review. In a rule file, it is a diff. Not a diff of the text: a <span class="gloss">behavioural diff<span class="gloss-note">which patients change answer</span></span>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="scrub" id="b-amend-scene" data-scrub data-steps="10" data-section data-title="Who flips" style="height: 1100vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 800px;">
+      <h3>Amendment 2, replayed</h3>
+      <p class="b-stage-sub">as surfaced in the workbench's Amendment view</p>
+
+      <div class="b-vpills" data-step="0+">
+        <span class="b-vpill">Protocol v2.0 &#183; ruleset v1.0.0</span>
+        <span style="color: var(--ink2);">&#8594;</span>
+        <span class="b-vpill b-vpill-on">Protocol v3.0 (Amendment 2) &#183; ruleset v1.1.0</span>
+        <span style="font-size: 11.5px; color: var(--ink2);">site-effective 04-Aug-2026</span>
+      </div>
+
+      <div class="b-diffblock" data-step="1+">
+        <div><b>+ added</b>&#160;&#160;exclusion <b>renal-safety</b> [E3] <span style="color: var(--ink2);">&#8212; &#8220;eGFR below 45 at screening&#8221;</span></div>
+        <div><b>~ changed</b> <b>anticoag-washout</b> [E1] <span style="color: var(--ink2);">windowDays 14 &#8594; 30</span></div>
+      </div>
+
+      <div class="b-flipfield" data-step="2+">
+        <div class="b-flip-head"><span>undetermined (v2.0)</span><span>screen fail (v3.0)</span></div>
+        <div class="b-fliprows">
+          <div class="b-fliprow b-fr1">
+            <span class="b-fchip">SYN-007</span>
+            <span class="b-freason" data-step="3+">eGFR = 38 &lt; 45 &#183; renal-safety</span>
+          </div>
+          <div class="b-fliprow b-fr2">
+            <span class="b-fchip">SYN-019</span>
+            <span class="b-freason" data-step="4+">eGFR = 42 &lt; 45 &#183; renal-safety</span>
+          </div>
+          <div class="b-fliprow b-fr3">
+            <span class="b-fchip">SYN-042</span>
+            <span class="b-freason" data-step="5+">eGFR = 41 &lt; 45 &#183; renal-safety</span>
+          </div>
+          <div class="b-fliprow b-fr4">
+            <span class="b-fchip">SYN-058</span>
+            <span class="b-freason" data-step="6+">eGFR = 33 &lt; 45 &#183; renal-safety</span>
+          </div>
+          <div class="b-fliprow b-fr5">
+            <span class="b-fchip">SYN-088</span>
+            <span class="b-freason" data-step="7+">warfarin 21d ago &#8212; inside widened 30d window</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="b-enrolled" data-step="8+">
+        <div class="b-enrolled-title">Already enrolled &#8212; requires PI / IRB review</div>
+        <div class="b-erow">002-0041 <span>randomized 02-Jun-2026 &#183; eGFR = 39 &#8212; now meets E3</span></div>
+        <div class="b-erow">003-0017 <span>randomized 21-May-2026 &#183; eGFR = 44 &#8212; now meets E3</span></div>
+        <div class="b-enrolled-note">continuation / re-consent decision per protocol &#167;5.4 &#183; 2 participants</div>
+      </div>
+
+      <div data-step="9+" style="margin-top: 14px; font-size: 14px; line-height: 1.6; color: var(--ink);">
+        Five of ten fixtures flip, each carrying the criterion that did it &#8212; and the two participants who are <em>already inside the trial</em> light up before the amendment ships, not months after. That last list is the one a clinical reader feels in their stomach.
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="sec sec-band" id="amendment-inset">
+  <div class="wrap-wide">
+    <h3 data-reveal>The diff is a command, and a view</h3>
+    <div class="prose" data-reveal><p>From the CLI, over the fixtures, verbatim:</p></div>
+    <div class="evidence" data-reveal>$ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.0.yaml \
+    rules/trials/demo-hf-001/ruleset.yaml --corpus fixtures/patients
+rulesetVersion 1.0.0 &#8594; 1.1.0
++ added renal-safety
+~ changed anticoag-washout
+5 patient(s) flip:
+  SYN-007: undetermined &#8594; ineligible  (renal-safety)
+  SYN-019: undetermined &#8594; ineligible  (renal-safety)
+  SYN-042: undetermined &#8594; ineligible  (renal-safety)
+  SYN-058: undetermined &#8594; ineligible  (renal-safety)
+  SYN-088: undetermined &#8594; ineligible  (anticoag-washout)</div>
+    <figure class="fig" role="group" aria-label="Mockup of the rulekit workbench Amendment view" data-reveal style="margin-top: 22px;">
+      <div class="fig-scroll">
+        <div class="b-ui">
+          <div class="b-ui-top">
+            <span class="b-ui-logo"><i></i>rulekit</span>
+            <span class="b-ui-pill">DEMO-HF-001</span>
+            <span class="b-ui-pill">v3.0 &#183; Amd 2 &#183; effective 04-Aug-2026</span>
+            <span class="b-ui-pill">ruleset v1.1.0</span>
+          </div>
+          <div class="b-ui-tabs">
+            <span class="b-ui-tab">Screening funnel</span>
+            <span class="b-ui-tab">Thresholds</span>
+            <span class="b-ui-tab b-on">Amendment</span>
+            <span class="b-ui-tab">Checks <span class="b-ct">3</span></span>
+            <span class="b-ui-tab">Review</span>
+          </div>
+          <div class="b-ui-view">
+            <div class="b-ui-vhead"><b>Amendment impact</b><span class="b-sub">behavioural diff across the fixtures &#183; n = 10</span></div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span class="b-ui-pill" style="font-size: 12px; height: 24px;">Protocol v2.0</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9.5 4.5L13 8l-3.5 3.5" stroke="#6B655C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="b-ui-pill" style="font-size: 12px; height: 24px; color: var(--ink); border-color: var(--rule);">Protocol v3.0 (Amendment 2)</span>
+              <span style="font-size: 11.5px; color: var(--ink2);">sponsor-issued 14-Jul-2026 &#183; IRB-approved 28-Jul-2026 &#183; site-effective 04-Aug-2026</span>
+              <span class="mono" style="margin-left: auto; font-size: 11px; color: var(--ink3);">ruleset v1.0.0 &#8594; v1.1.0</span>
+            </div>
+            <div class="mono" style="font-size: 12px; line-height: 22px; padding: 10px 12px; background: var(--paper-alt); border-radius: 2px;">
+              <div><b>+ added</b>&#160;&#160;exclusion <b>renal-safety</b> [E3] <span style="color: var(--ink2);">&#8212; &#8220;eGFR below 45 at screening&#8221;</span></div>
+              <div><b>~ changed</b> <b>anticoag-washout</b> [E1] <span style="color: var(--ink2);">windowDays 14 &#8594; 30</span></div>
+            </div>
+            <div style="font-size: 13px;"><b>5 of 10</b> fixtures flip undetermined &#8594; screen fail <span style="color: var(--ink2);">(3 remain not evaluable, was 8)</span>. All 5 flips are in that direction.</div>
+            <div>
+              <div class="b-agroup">E3 renal-safety &#8212; 4 flips</div>
+              <div class="b-arow"><span class="b-aid">SYN-007</span><span class="b-ameta">M &#183; 61y</span><span class="b-awhy">eGFR = 38 &#60; 45</span></div>
+              <div class="b-arow"><span class="b-aid">SYN-019</span><span class="b-ameta">F &#183; 64y</span><span class="b-awhy">eGFR = 42 &#60; 45</span></div>
+              <div class="b-arow"><span class="b-aid">SYN-042</span><span class="b-ameta">F &#183; 63y</span><span class="b-awhy">eGFR = 41 &#60; 45</span></div>
+              <div class="b-arow"><span class="b-aid">SYN-058</span><span class="b-ameta">M &#183; 60y</span><span class="b-awhy">eGFR = 33 &#60; 45</span></div>
+              <div class="b-agroup">E1 anticoag-washout &#8212; 1 flip</div>
+              <div class="b-arow"><span class="b-aid">SYN-088</span><span class="b-ameta">M &#183; 47y</span><span class="b-awhy">warfarin 21d ago &#8212; inside widened 30d window</span></div>
+            </div>
+            <div style="border-left: 2px solid var(--ink); padding-left: 14px;">
+              <div style="font-size: 12.5px; font-weight: 600;">Already enrolled &#8212; requires PI / IRB review</div>
+              <div class="mono" style="font-size: 12px; line-height: 21px; margin-top: 4px;">
+                <div>002-0041 <span style="color: var(--ink2);">randomized 02-Jun-2026 &#183; eGFR = 39 &#8212; now meets E3</span></div>
+                <div>003-0017 <span style="color: var(--ink2);">randomized 21-May-2026 &#183; eGFR = 44 &#8212; now meets E3</span></div>
+              </div>
+              <div style="font-size: 11.5px; color: var(--ink2); margin-top: 4px;">continuation / re-consent decision per protocol &#167;5.4 &#183; 2 participants</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="fig-cap">The Amendment view: structural diff on top, behavioural diff underneath, and &#8212; the part nobody ships &#8212; amendment impact on already-randomized participants, surfaced for PI/IRB review rather than discovered later.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ================= 08 · THE OTHER SIDE ================= -->
+<section class="sec" id="compiler" data-section data-title="The facts compiler">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">08</span>the other side</p>
+    <h2 data-reveal>Where facts come from</h2>
+    <p class="lede" data-reveal>Rules were the easy half. Real eligibility data is locked in narrative notes, and the tempting move is to let a language model read the chart and answer &#8220;is this patient eligible?&#8221; rulekit refuses that shape.</p>
+    <div class="prose" data-reveal>
+      <p>Instead there is a <span class="gloss">facts compiler<span class="gloss-note">notes in, typed facts out</span></span>: the model reads a note and proposes a typed fact &#8212; a name, a value, a confidence score, and a verbatim quote from the source document. Watch it work on a synthetic echo report for a patient you have already met.</p>
+    </div>
+  </div>
+</section>
+
+<section class="scrub" id="b-note-scene" data-scrub data-steps="7" data-section data-title="Grounding" style="height: 800vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 780px;">
+      <h3>One note, one fact, one gate</h3>
+      <p class="b-stage-sub">corpus/notes/echo-2026-03-12.txt &#8212; hand-written, synthetic, ground truth by construction</p>
+
+      <div class="b-note-doc" data-step="0+">
+        <div class="b-note-head">
+          <b>LAKESHORE GENERAL (FICTIONAL)</b> &#8212; DEPARTMENT OF CARDIOVASCULAR IMAGING<br>
+          TRANSTHORACIC ECHOCARDIOGRAM &#183; Patient: SYN-042 &#183; Study date: 2026-03-12 &#183; synthetic: true
+        </div>
+        <div class="b-note-body">
+          <p><span class="b-note-sec">FINDINGS</span><br>Left ventricle: moderately to severely dilated. LVEF 32% by biplane Simpson's method. Global hypokinesis with regional akinesis of the inferolateral wall. &#8943;</p>
+          <p><span class="b-note-sec">CLINICAL CORRELATION</span><br>The patient was seen in the reading room by the ordering team. She reports marked limitation of physical activity, comfortable at rest, with dyspnea on climbing a single flight of stairs; <span class="b-q">symptoms consistent with NYHA class III heart failure</span>. She was hospitalized for decompensated heart failure in November 2025.</p>
+          <p>Serum NT-proBNP drawn the same morning was 2140 pg/mL.</p>
+        </div>
+      </div>
+
+      <div class="b-factcard" data-step="2+" style="margin-top: 14px;">
+        <div class="b-factcard-top">
+          <span class="b-ref">E4</span>
+          <span class="b-fc-fact">nyha_class = III</span>
+          <span class="b-status">proposed</span>
+          <span class="b-conf"><span class="b-conf-num">0.94</span><span class="b-confbar"><i style="--b-conf: 94%;"></i></span></span>
+          <span class="b-fc-meta">llm/claude-opus-5</span>
+        </div>
+        <div class="b-fc-src">source: echo-2026-03-12 &#183; quote: &#8220;symptoms consistent with NYHA class III heart failure&#8221; &#183; <span class="gloss">NYHA class<span class="gloss-note">heart-failure symptom severity scale</span></span></div>
+      </div>
+
+      <div class="b-gate-wrap" data-step="3+">
+        <span class="b-gate-label">grounding gate</span>
+        <span class="b-gate-bar" aria-hidden="true"></span>
+        <div class="b-gate-lane">
+          <div class="b-gate-card b-gate-pass">
+            <div class="b-factcard"><div class="b-factcard-top"><span class="b-fc-fact" style="font-size: 12px;">nyha_class = III</span><span class="b-conf-num">0.94</span></div></div>
+          </div>
+          <div class="b-gate-verdict" data-step="3+">grounded: quote verified verbatim &#8594; enters the review queue</div>
+        </div>
+        <div class="b-gate-lane" data-step="4+">
+          <div class="b-gate-card b-fab">
+            <div class="b-factcard" style="border-color: var(--accent);"><div class="b-factcard-top"><span class="b-fc-fact" style="font-size: 12px;">egfr = 28</span><span class="b-conf-num">0.88</span></div>
+            <div class="b-fc-src">quote: &#8220;renal function is severely impaired&#8221;</div></div>
+          </div>
+          <div class="b-gate-verdict" data-step="5+"><span class="b-stamp">rejected</span><br>quote is not a substring of echo-2026-03-12</div>
+        </div>
+      </div>
+
+      <div class="b-caption-slot">
+        <p class="b-aphorism" data-step="5+"><strong>A fact that can't cite its source doesn't exist.</strong> The gate is mechanical: the quote must appear verbatim in the document, or the proposal never reaches a human.</p>
+        <p class="small" data-step="6+" style="margin-top: 8px;">The rejected proposal above is illustrative. On the recorded eval set &#8212; 10 authored notes, 61 proposals &#8212; 58 survived the gate (95.1%); it caught 2 wrong facts and over-blocked 1 right one.</p>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="scrub" id="b-review-scene" data-scrub data-steps="4" data-section data-title="Review" style="height: 500vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 780px;">
+      <h3>The last mile is a person</h3>
+      <p class="b-stage-sub">the workbench's Review queue &#8212; confidence orders it, and does nothing else</p>
+
+      <div class="b-qcard" data-step="0+">
+        <div class="b-qcard-row">
+          <span class="mono" style="font-size: 13px; font-weight: 600;">SYN-042</span>
+          <span style="font-size: 12px; color: var(--ink2);">F &#183; 63y</span>
+          <span class="b-ref">E4</span>
+          <span class="b-fc-fact">nyha_class = III</span>
+          <span class="b-swap"><span class="b-status b-before">proposed</span><span class="b-status b-status-confirmed b-after">confirmed</span></span>
+          <span class="b-conf"><span class="b-conf-num">0.94</span><span class="b-confbar"><i style="--b-conf: 94%; width: 94%;"></i></span></span>
+        </div>
+        <div class="b-quote-box">
+          <div class="mono" style="font-size: 10.5px; color: var(--ink2); margin-bottom: 4px;">echo-2026-03-12 &#183; grounded: quote verified verbatim</div>
+          &#8220;&#8230;dyspnea on climbing a single flight of stairs; <span class="b-q">symptoms consistent with NYHA class III heart failure</span>. She was hospitalized for decompensated heart failure in November 2025.&#8221;
+        </div>
+        <div class="b-btnrow">
+          <span class="b-btn b-btn-act">Confirm</span>
+          <span class="b-btn">Edit value</span>
+          <span class="b-btn">Reject</span>
+          <span style="margin-left: auto; font-size: 11.5px; color: var(--ink2);">confirm writes reviewedBy + timestamp to facts/SYN-042.yaml and re-evaluates live</span>
+        </div>
+      </div>
+
+      <div class="b-e4frag" data-step="2+">
+        <span class="b-swap"><i class="mk mk-unknown b-before"></i><i class="mk mk-pass b-after"></i></span>
+        <span>E4 nyha-class-iv &#8212; <span class="b-swap"><span class="b-before">unknown &#183; chart review pending</span><span class="b-after">resolved: class III is not class IV &#8212; the exclusion cannot fire</span></span></span>
+      </div>
+
+      <div class="b-caption-slot">
+        <div data-step="3+" style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--hairline); font-size: 12.5px; color: var(--ink2);">
+          <span><b style="color: var(--ink);">Proposed facts never reach the engine.</b> Verdicts use confirmed and pipeline facts only.</span>
+          <span class="mono" style="margin-left: auto;">audit trail = git history of corpus/facts/</span>
+        </div>
+      </div>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="sec sec-band" id="g11">
+  <div class="wrap">
+    <h3 data-reveal>The invariant, drawn</h3>
+    <figure class="fig" role="group" aria-label="Diagram of invariant G11: agents propose, humans confirm, the engine decides; the model has no connection to the verdict" data-reveal>
+      <div class="fig-scroll">
+      <svg viewBox="0 0 680 200" role="img" aria-label="Three boxes in sequence: agents propose, humans confirm, the engine decides. The engine emits verdict plus trace. A dashed line from agents to the verdict is crossed out and labeled no wire." style="width: 100%; min-width: 560px; height: auto; display: block;">
+        <defs>
+          <marker id="b-arr-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" fill="#17150F"/>
+          </marker>
+        </defs>
+        <g>
+          <rect x="16" y="30" width="180" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+          <text x="106" y="52" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12.5" font-weight="600" fill="#17150F">agents propose</text>
+          <text x="106" y="70" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">typed fact &#183; quote &#183; confidence</text>
+          <rect x="250" y="30" width="180" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+          <text x="340" y="52" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12.5" font-weight="600" fill="#17150F">humans confirm</text>
+          <text x="340" y="70" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">confirm &#183; edit &#183; reject</text>
+          <rect x="484" y="30" width="180" height="52" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="574" y="52" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12.5" font-weight="600" fill="#17150F">the engine decides</text>
+          <text x="574" y="70" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">deterministic &#183; versioned rules</text>
+          <line x1="196" y1="56" x2="242" y2="56" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-ink)"/>
+          <line x1="430" y1="56" x2="476" y2="56" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-ink)"/>
+          <rect x="504" y="140" width="140" height="34" rx="2" fill="#F3EFE7" stroke="#C9C2B4"/>
+          <text x="574" y="161" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">verdict + trace</text>
+          <line x1="574" y1="82" x2="574" y2="132" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-ink)"/>
+        </g>
+        <g>
+          <path d="M106 82 C 106 160, 380 157, 496 157" fill="none" stroke="#A6431E" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <g transform="translate(300,151)">
+            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#A6431E" stroke-width="2"/>
+            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#A6431E" stroke-width="2"/>
+          </g>
+          <text x="300" y="185" text-anchor="middle" font-family="Martian Mono, monospace" font-size="10" font-weight="600" letter-spacing="1" fill="#A6431E">NO WIRE &#8212; G11</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption class="fig-cap">G11: the model never sorts patients and never emits a verdict. A <span class="mono">proposed</span> fact is invisible to the engine until a person confirms it.</figcaption>
+    </figure>
+    <div class="prose" data-reveal>
+      <p>That is not just an engineering preference: it is close to a checklist implementation of the FDA's Non-Device CDS Criterion 4 &#8212; the clinician can independently review the basis for the recommendation &#8212; and of the assistive-not-autonomous posture in the FDA's January 2025 draft guidance on AI in regulatory decision-making.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 09 · THE WHOLE SYSTEM ================= -->
+<section class="sec" id="system" data-section data-title="The whole system">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">09</span>the whole system</p>
+    <h2 data-reveal>Assembled</h2>
+    <p class="lede" data-reveal>Everything this thesis has shown is one loop, and it fits on a single diagram.</p>
+  </div>
+</section>
+
+<section class="scrub" id="b-map-scene" data-scrub data-steps="6" style="height: 700vh">
+  <div class="scrub-stage">
+    <div class="b-stage-inner" style="max-width: 900px;">
+      <figure class="fig" role="group" aria-label="System map: versioned rules and confirmed facts feed a deterministic engine, which feeds a CLI and a workbench; clinical notes flow through LLM proposal, a grounding gate, and human review back into confirmed facts">
+        <div class="fig-scroll">
+          <svg viewBox="0 0 760 480" role="img" aria-label="rulekit system map" style="width: 100%; min-width: 660px; height: auto; display: block;">
+            <defs>
+              <marker id="b-arr-map" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                <path d="M0 0L10 5L0 10z" fill="#17150F"/>
+              </marker>
+            </defs>
+            <!-- step 0: sources -->
+            <g data-step="0+">
+              <rect x="30" y="30" width="195" height="56" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="127" y="52" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" font-weight="600" fill="#17150F">ruleset.yaml</text>
+              <text x="127" y="70" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">versioned criteria</text>
+              <rect x="30" y="112" width="195" height="48" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="127" y="132" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" font-weight="600" fill="#17150F">fact-model.yaml</text>
+              <text x="127" y="149" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">typed vocabulary + units</text>
+              <rect x="30" y="186" width="195" height="48" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="127" y="206" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" font-weight="600" fill="#17150F">confirmed facts</text>
+              <text x="127" y="223" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">corpus/facts/*.yaml</text>
+            </g>
+            <!-- step 1: engine -->
+            <g data-step="1+">
+              <path class="b-wire" d="M225 58 C 265 58, 270 105, 297 118" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="1+"/>
+              <path class="b-wire" d="M225 136 L 297 145" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="1+"/>
+              <path class="b-wire" d="M225 210 C 265 210, 270 185, 297 172" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="1+"/>
+              <rect x="300" y="88" width="185" height="130" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+              <text x="392" y="112" text-anchor="middle" font-family="Martian Mono, monospace" font-size="12.5" font-weight="600" fill="#17150F">engine</text>
+              <g font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C" text-anchor="middle">
+                <text x="392" y="136">evaluate + trace</text>
+                <text x="392" y="156">conflict passes</text>
+                <text x="392" y="176">tests + firing coverage</text>
+                <text x="392" y="196">behavioural diff</text>
+              </g>
+            </g>
+            <!-- step 2: surfaces -->
+            <g data-step="2+">
+              <path class="b-wire" d="M485 122 C 520 122, 525 108, 552 105" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="2+"/>
+              <path class="b-wire" d="M485 185 C 520 185, 525 198, 552 202" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="2+"/>
+              <rect x="555" y="78" width="180" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="645" y="99" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" font-weight="600" fill="#17150F">CLI</text>
+              <text x="645" y="117" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">check &#183; test &#183; diff &#183; screen</text>
+              <rect x="555" y="176" width="180" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="645" y="197" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" font-weight="600" fill="#17150F">workbench</text>
+              <text x="645" y="215" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="9.5" fill="#6B655C">funnel &#183; amendment &#183; review</text>
+            </g>
+            <!-- step 3: the other side -->
+            <g data-step="3+">
+              <rect x="30" y="350" width="140" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="100" y="371" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" font-weight="600" fill="#17150F">clinical notes</text>
+              <text x="100" y="388" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">narrative text</text>
+              <path class="b-wire" d="M170 376 L 205 376" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="3+"/>
+              <rect x="208" y="350" width="160" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="288" y="371" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" font-weight="600" fill="#17150F">LLM proposes</text>
+              <text x="288" y="388" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">fact + quote + 0.xx</text>
+              <path class="b-wire" d="M368 376 L 403 376" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="3+"/>
+              <rect x="406" y="350" width="130" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="471" y="371" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" font-weight="600" fill="#17150F">grounding gate</text>
+              <text x="471" y="388" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">quote &#8834; source?</text>
+              <path class="b-wire" d="M536 376 L 571 376" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="3+"/>
+              <rect x="574" y="350" width="160" height="52" rx="2" fill="#FAF8F4" stroke="#C9C2B4"/>
+              <text x="654" y="371" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" font-weight="600" fill="#17150F">human review</text>
+              <text x="654" y="388" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">confirm &#183; edit &#183; reject</text>
+            </g>
+            <!-- step 4: close the loop + no-wire -->
+            <g data-step="4+">
+              <path class="b-wire" d="M654 350 C 654 265, 300 265, 140 238" fill="none" stroke="#17150F" stroke-width="1.5" marker-end="url(#b-arr-map)" data-step="4+"/>
+              <text x="425" y="255" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">confirmed facts, with provenance</text>
+              <path d="M310 350 C 330 300, 355 260, 375 222" fill="none" stroke="#A6431E" stroke-width="1.5" stroke-dasharray="5 5"/>
+              <g transform="translate(348,290)">
+                <line x1="-7" y1="-7" x2="7" y2="7" stroke="#A6431E" stroke-width="2"/>
+                <line x1="-7" y1="7" x2="7" y2="-7" stroke="#A6431E" stroke-width="2"/>
+              </g>
+              <text x="318" y="318" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9.5" font-weight="600" letter-spacing="1" fill="#A6431E">NEVER</text>
+            </g>
+            <!-- step 5: caption -->
+            <g data-step="5+">
+              <text x="380" y="452" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">every verdict traces to a rule version + a fact + the sentence that fact came from</text>
+            </g>
+          </svg>
+        </div>
+      </figure>
+    </div>
+    <div class="scrub-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="sec sec-band" id="b-stats-strip">
+  <div class="wrap-wide">
+    <h3 data-reveal>Measured on this repo</h3>
+    <div class="b-stats" data-reveal-children data-stagger="90">
+      <div class="b-stat"><div class="b-stat-num">10 + 100</div><div class="b-stat-lab">fixture patients + corpus patients &#8212; synthetic end to end</div></div>
+      <div class="b-stat"><div class="b-stat-num">0 &#183; 7 &#183; 3</div><div class="b-stat-lab">the ten fixtures' bands: potentially eligible &#183; screen fail &#183; not evaluable</div></div>
+      <div class="b-stat"><div class="b-stat-num">5 of 10</div><div class="b-stat-lab">fixtures flip on Amendment 2, each with the criterion that did it</div></div>
+      <div class="b-stat"><div class="b-stat-num">58 / 61</div><div class="b-stat-lab">proposals survive the grounding gate (95.1%) &#8212; 2 wrong facts caught, 1 right one over-blocked</div></div>
+      <div class="b-stat"><div class="b-stat-num">98.3%</div><div class="b-stat-lab">extraction precision and recall &#8212; on authored notes, where ground truth exists by construction</div></div>
+      <div class="b-stat"><div class="b-stat-num">ECE 0.071</div><div class="b-stat-lab">confidence scores are self-estimates &#8212; they order the review queue and never auto-confirm anything</div></div>
+    </div>
+    <p class="small" data-reveal style="margin-top: 14px;">All numbers from this repo's recorded runs over synthetic data. None of them are claims about clinical performance on real records.</p>
+  </div>
+</section>
+
+<!-- /SECTIONS-B -->
+
+<!-- ================================================================ -->
+<!-- CODA · WHAT EXISTS                                               -->
+<!-- ================================================================ -->
+<section class="sec sec-band" id="coda" data-section data-title="What exists">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="ch">CODA</span>what exists today</p>
+    <h2 data-reveal>Not a pitch deck. A repo.</h2>
+    <p class="lede" data-reveal>Everything above runs on a laptop, against files in a git repo — no backend, no accounts, no telemetry. Apache-2.0.</p>
+
+    <div class="coda-grid" data-reveal-children data-stagger="110">
+      <div class="coda-cell">
+        <span class="cv"><span data-count-to="470">0</span></span>
+        <p class="cl2">passing tests across engine, CLI, schema, extraction and adversarial suites</p>
+      </div>
+      <div class="coda-cell">
+        <span class="cv">2</span>
+        <p class="cl2">trial packs: <span class="mono">commander-hf</span> — COMMANDER HF (NCT01877915), 12 criteria transcribed verbatim from the registry, 8 modelled, 4 honestly <span class="mono">unmodeled: true</span> — and <span class="mono">demo-hf-001</span>, the teaching pack with its contradiction seeded on purpose</p>
+      </div>
+      <div class="coda-cell">
+        <span class="cv"><span data-count-to="100">0</span></span>
+        <p class="cl2">synthetic patients in the corpus (Synthea-derived, deterministically messed and re-normalized), plus 10 hand-written edge-case fixtures — every person in this project is invented</p>
+      </div>
+      <div class="coda-cell">
+        <span class="cv">4 + 5</span>
+        <p class="cl2">CLI verbs — <span class="mono">check · test · diff · screen</span> — and five workbench tabs: Funnel, Thresholds, Amendment, Checks, Review</p>
+      </div>
+      <div class="coda-cell">
+        <span class="cv"><span data-count-to="56.7" data-count-format="dec1">0</span>%</span>
+        <p class="cl2">of the 12,060 criterion lines in the Chia corpus (996 real Phase IV trials) classify as expressible in the condition language as written; 12.2% partially, 31.1% not at all. <strong>A heuristic classification</strong> — regex surface patterns, not validated against human labels. Read it as an order-of-magnitude sanity check, nothing stronger.</p>
+      </div>
+      <div class="coda-cell">
+        <span class="cv">v1</span>
+        <p class="cl2">the format is the artifact: <span class="mono">FORMAT.md</span> + JSON Schema specify the rule language independently of this engine, so anyone can write a second implementation. A format outlives its first engine.</p>
+      </div>
+    </div>
+
+    <blockquote class="claim" data-reveal>
+      The honest claim, which is narrower than it first sounds: there is <strong>no open implementation</strong> of the full two-sided architecture — typed fact + verbatim quote + confidence + confirm/edit/reject + a deterministic engine as the only decider — as one artifact, with the format specified separately from the engine.
+      <span class="who">README.md · positioning, stated with its own caveats attached</span>
+    </blockquote>
+
+    <div class="warnpanel" data-reveal>
+      <span class="wt">⚠ not medical software</span>
+      This is a demonstration of rule-governance tooling. It is not validated, not cleared by any regulator, and not for clinical, feasibility, or research screening use. Every patient, note, clinician and institution in the repo is synthetic and fabricated; the trial criteria are transcribed from real public registry text, but the numbers this tool produces are about invented people.
+    </div>
+
+    <div class="closing" data-reveal>
+      <i></i>
+      <p class="cm">agents propose<span class="sep">·</span>humans confirm<span class="sep">·</span>the engine decides</p>
+    </div>
+
+    <p class="colophon" data-reveal="fade">rulekit · Apache-2.0 · set in Public Sans, Spline Sans Mono &amp; Martian Mono<br>Synthea sample data © MITRE (Apache-2.0) · Chia corpus CC-BY-4.0, Kury et al. 2020 · criteria text quoted from ClinicalTrials.gov with NCT ids</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- stagger parents: promote children to reveal targets ---------- */
+  document.querySelectorAll('[data-reveal-children]').forEach(function(p){
+    var inc = parseInt(p.getAttribute('data-stagger') || '80', 10);
+    var i = 0;
+    Array.prototype.forEach.call(p.children, function(c){
+      if (!c.hasAttribute('data-reveal')) c.setAttribute('data-reveal', '');
+      if (!c.hasAttribute('data-reveal-delay')) c.setAttribute('data-reveal-delay', String(i * inc));
+      i++;
+    });
+  });
+
+  /* ---------- reveal on intersection ---------- */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      var el = e.target;
+      io.unobserve(el);
+      var d = parseInt(el.getAttribute('data-reveal-delay') || '0', 10);
+      if (reduced || d <= 0) el.classList.add('on');
+      else setTimeout(function(){ el.classList.add('on'); }, d);
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('[data-reveal]').forEach(function(el){
+    if (el.getBoundingClientRect().bottom < 0) { el.classList.add('on'); return; }
+    io.observe(el);
+  });
+
+  /* ---------- counters ---------- */
+  function fmtCount(n, f){
+    if (f === 'raw') return String(Math.round(n));
+    if (f === 'dec1') return n.toFixed(1);
+    return Math.round(n).toLocaleString('en-US');
+  }
+  function runCounter(el){
+    var to = parseFloat(el.getAttribute('data-count-to'));
+    var dur = parseInt(el.getAttribute('data-count-dur') || '1200', 10);
+    var f = el.getAttribute('data-count-format') || 'int';
+    if (reduced) { el.textContent = fmtCount(to, f); return; }
+    var t0 = null;
+    function tick(t){
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmtCount(to * e, f);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  var cio = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      cio.unobserve(e.target);
+      runCounter(e.target);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count-to]').forEach(function(el){ cio.observe(el); });
+
+  /* ---------- progress rail ---------- */
+  var railFill = document.getElementById('rail-fill');
+  var rail = railFill ? railFill.parentNode : null;
+  var ticks = [];
+  function layoutTicks(){
+    if (!rail) return;
+    ticks.forEach(function(t){ t.el.remove(); });
+    ticks = [];
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    if (max <= 0) return;
+    document.querySelectorAll('[data-section]').forEach(function(sec){
+      var top = sec.getBoundingClientRect().top + window.scrollY;
+      var el = document.createElement('div');
+      el.className = 'rail-tick';
+      el.style.top = Math.min(99.6, (top / max) * 100) + '%';
+      if (sec.getAttribute('data-title')) el.title = sec.getAttribute('data-title');
+      rail.appendChild(el);
+      ticks.push({ el: el });
+    });
+  }
+  function railUpdate(){
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    if (railFill) railFill.style.height = (p * 100) + '%';
+    /* end-of-page sweep: elements too close to the document end can never
+       reach the observer's threshold — reveal whatever remains */
+    if (p > 0.985) document.querySelectorAll('[data-reveal]:not(.on)').forEach(function(el){
+      el.classList.add('on');
+      io.unobserve(el);
+    });
+  }
+
+  /* ---------- scrub scenes ---------- */
+  function stepMatch(spec, s){
+    if (!spec) return false;
+    return spec.trim().split(/\s+/).some(function(t){
+      if (/^\d+\+$/.test(t)) return s >= parseInt(t, 10);
+      var m = t.match(/^(\d+)-(\d+)$/);
+      if (m) return s >= +m[1] && s <= +m[2];
+      return s === +t;
+    });
+  }
+  var scrubs = Array.prototype.map.call(document.querySelectorAll('[data-scrub]'), function(w){
+    var stage = w.querySelector('.scrub-stage');
+    var steps = parseInt(w.getAttribute('data-steps'), 10) || 1;
+    var els = Array.prototype.slice.call(stage.querySelectorAll('[data-step]'));
+    var dots = stage.querySelector('.scrub-dots');
+    if (dots) for (var i = 0; i < steps; i++) dots.appendChild(document.createElement('i'));
+    return { w: w, stage: stage, steps: steps, els: els, dots: dots, cur: -1 };
+  });
+  function setStep(sc, s){
+    sc.cur = s;
+    sc.stage.setAttribute('data-active-step', String(s));
+    sc.els.forEach(function(el){
+      el.classList.toggle('step-on', stepMatch(el.getAttribute('data-step'), s));
+    });
+    if (sc.dots) Array.prototype.forEach.call(sc.dots.children, function(d, i){
+      d.className = i === s ? 'cur' : '';
+    });
+  }
+  function updateScrubs(){
+    scrubs.forEach(function(sc){
+      var r = sc.w.getBoundingClientRect();
+      var total = sc.w.offsetHeight - sc.stage.offsetHeight;
+      var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : (r.top <= 0 ? 1 : 0);
+      var s = Math.min(sc.steps - 1, Math.floor(p * sc.steps));
+      if (s !== sc.cur) setStep(sc, s);
+    });
+  }
+
+  /* ---------- scroll loop ---------- */
+  var ticking = false;
+  function onScroll(){
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      ticking = false;
+      railUpdate();
+      updateScrubs();
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', function(){ layoutTicks(); railUpdate(); updateScrubs(); });
+  window.addEventListener('load', function(){ layoutTicks(); railUpdate(); updateScrubs(); });
+
+  layoutTicks();
+  railUpdate();
+  scrubs.forEach(function(sc){ setStep(sc, 0); });
+  updateScrubs();
+})();
+</script>
