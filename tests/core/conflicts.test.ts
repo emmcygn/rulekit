@@ -35,6 +35,48 @@ describe("contradictory band (the spec's flagship conflict)", () => {
   });
 });
 
+describe("contradictory inclusions (no patient can pass the set)", () => {
+  it("age >= 65 and age <= 40 across two inclusions → error naming both", () => {
+    const out = detectConflicts(rs(`
+  - { id: elderly, ref: I1, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 65 } }
+  - { id: young, ref: I2, kind: inclusion, verbatim: v, when: { fact: age, op: lte, value: 40 } }`));
+    const f = out.find((x) => x.code === "contradictory-inclusions");
+    expect(f?.level).toBe("error");
+    expect(f?.criteria.sort()).toEqual(["elderly", "young"]);
+    expect(f?.evidence).toBe(
+      "age: inclusion constraints intersect to the empty set — \"elderly\" admits [65, ∞) ∩ \"young\" admits (−∞, 40]",
+    );
+    expect(out.find((x) => x.code === "unsatisfiable-criterion")).toBeUndefined();
+  });
+
+  it("a single inclusion with an empty interval stays unsatisfiable-criterion, not contradictory-inclusions", () => {
+    const out = detectConflicts(rs(`
+  - id: impossible
+    kind: inclusion
+    verbatim: v
+    when:
+      all:
+        - { fact: age, op: gte, value: 65 }
+        - { fact: age, op: lt, value: 60 }`));
+    expect(out.find((x) => x.code === "unsatisfiable-criterion")?.level).toBe("error");
+    expect(out.find((x) => x.code === "contradictory-inclusions")).toBeUndefined();
+  });
+
+  it("compatible inclusions on the same fact do not fire", () => {
+    const out = detectConflicts(rs(`
+  - { id: floor, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 18 } }
+  - { id: ceiling, kind: inclusion, verbatim: v, when: { fact: age, op: lte, value: 80 } }`));
+    expect(out.find((x) => x.code === "contradictory-inclusions")).toBeUndefined();
+  });
+
+  it("an exclusion never contributes to the inclusion intersection", () => {
+    const out = detectConflicts(rs(`
+  - { id: floor, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 65 } }
+  - { id: cap, kind: exclusion, verbatim: v, when: { fact: age, op: lte, value: 40 } }`));
+    expect(out.find((x) => x.code === "contradictory-inclusions")).toBeUndefined();
+  });
+});
+
 describe("unsatisfiable and vacuous", () => {
   it("age >= 65 AND age < 60 in one criterion → unsatisfiable error", () => {
     const out = detectConflicts(rs(`

@@ -49,12 +49,25 @@ export function detectConflicts(rs: RuleSet): Finding[] {
   }
 
   // inclusion-admitted interval per fact
-  const admitted = new Map<string, { interval: Interval; sources: string[] }>();
+  const admitted = new Map<string, { interval: Interval; sources: { id: string; interval: Interval }[] }>();
   for (const a of analyzed.filter((x) => x.kind === "inclusion")) {
     for (const [fact, iv] of a.intervals) {
       const prev = admitted.get(fact) ?? { interval: FULL, sources: [] };
-      admitted.set(fact, { interval: intersect(prev.interval, iv), sources: [...prev.sources, a.id] });
+      admitted.set(fact, { interval: intersect(prev.interval, iv), sources: [...prev.sources, { id: a.id, interval: iv }] });
     }
+  }
+
+  // two or more inclusions that no single value can satisfy: the whole rule set admits nobody.
+  // A lone inclusion with an empty interval is already reported as unsatisfiable-criterion.
+  for (const [fact, adm] of admitted) {
+    if (!isEmpty(adm.interval) || adm.sources.length < 2) continue;
+    out.push({
+      level: "error",
+      code: "contradictory-inclusions",
+      criteria: adm.sources.map((s) => s.id),
+      message: `no patient can pass: the inclusion constraints on ${fact} from ${adm.sources.map((s) => `"${s.id}"`).join(" and ")} intersect to the empty set — for all inputs, not just a test corpus`,
+      evidence: `${fact}: inclusion constraints intersect to the empty set — ${adm.sources.map((s) => `"${s.id}" admits ${fmtInterval(s.interval)}`).join(" ∩ ")}`,
+    });
   }
 
   for (const e of analyzed.filter((x) => x.kind === "exclusion")) {
@@ -66,7 +79,7 @@ export function detectConflicts(rs: RuleSet): Finding[] {
         out.push({
           level: "error",
           code: "contradictory-band",
-          criteria: [...adm.sources, e.id],
+          criteria: [...adm.sources.map((s) => s.id), e.id],
           message: `every patient with ${fact} in ${fmtInterval(band)} passes inclusion and is then excluded by "${e.id}" — for all inputs, not just a test corpus`,
           evidence: `${fact}: inclusion admits ${fmtInterval(adm.interval)} ∩ exclusion fires ${fmtInterval(exclIv)} → contradictory band ${fmtInterval(band)}`,
         });
