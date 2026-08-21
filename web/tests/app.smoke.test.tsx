@@ -31,7 +31,7 @@ describe("workbench shell", () => {
     // from a criterion whose pool still contains them.
     fireEvent.click(screen.getByText("egfr-min"));
     fireEvent.click(screen.getByRole("button", { name: /SYN-042/ }));
-    expect(screen.getByText(/egfr = 41 < 45, exclusion fired/)).toBeDefined();
+    expect(screen.getByText(/egfr = 41, required < 45, exclusion fired/)).toBeDefined();
   });
 
   it("renders the thresholds tab with a live re-count", () => {

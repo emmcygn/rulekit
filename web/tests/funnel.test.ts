@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CriterionResult, Evaluation } from "../src/engine/api.js";
 import { computeFunnel } from "../src/funnel/compute.js";
-import { mockEngine } from "../src/engine/mock.js";
+import { realEngine } from "../src/engine/real.js";
 import { DEMO_COHORT, DEMO_RULESET_CURRENT } from "../src/data/index.js";
 
 /** Compact evaluation builder: "p" pass, "f" fail, "u" unknown, "U" unmodeled. */
@@ -90,7 +90,7 @@ describe("computeFunnel — sequential attrition", () => {
 });
 
 describe("computeFunnel — bundled demo cohort", () => {
-  const evals = DEMO_COHORT.map((p) => mockEngine.evalPatient(DEMO_RULESET_CURRENT, p));
+  const evals = DEMO_COHORT.map((p) => realEngine.evalPatient(DEMO_RULESET_CURRENT, p));
   const f = computeFunnel(evals);
 
   it("balances the books on the demo data", () => {

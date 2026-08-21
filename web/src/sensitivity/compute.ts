@@ -8,7 +8,7 @@
 import { parseDocument } from "yaml";
 import { parseRuleSet, type Condition, type Criterion, type PatientFacts } from "../../../src/core/schema.js";
 import type { Engine } from "../engine/api.js";
-import { OP_SYMBOL } from "../engine/mock.js";
+import { symbolOf } from "../engine/ops.js";
 import { cohortCounts } from "../funnel/compute.js";
 
 /** Display names for the facts the demo pack declares. */
@@ -66,7 +66,7 @@ function targetsIn(
     op: c.op,
   };
   if ("value" in c) {
-    const sym = c.op in OP_SYMBOL ? OP_SYMBOL[c.op as keyof typeof OP_SYMBOL] : c.op;
+    const sym = symbolOf(c.op);
     out.push({
       ...common,
       knob: "value",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseRuleSet } from "../../src/core/schema.js";
-import { mockEngine } from "../src/engine/mock.js";
+import { realEngine } from "../src/engine/real.js";
 import type { Evaluation, Flip } from "../src/engine/api.js";
 import { criterionOrder, enrolledImpact, groupFlips, structuralDiff } from "../src/amendment/compute.js";
 import {
@@ -52,7 +52,7 @@ describe("structuralDiff", () => {
 
 describe("groupFlips", () => {
   const order = criterionOrder(current);
-  const flips = mockEngine.behavioralDiff(DEMO_RULESET_PRIOR, DEMO_RULESET_CURRENT, DEMO_COHORT);
+  const flips = realEngine.behavioralDiff(DEMO_RULESET_PRIOR, DEMO_RULESET_CURRENT, DEMO_COHORT);
 
   it("finds the flips the amendment causes on the demo cohort", () => {
     expect(flips.map((f) => f.patient).sort()).toEqual([
@@ -95,8 +95,8 @@ describe("enrolledImpact", () => {
     participant: e.participant,
     site: e.site,
     randomized: e.randomized,
-    before: mockEngine.evalPatient(DEMO_RULESET_PRIOR, e.patient),
-    after: mockEngine.evalPatient(DEMO_RULESET_CURRENT, e.patient),
+    before: realEngine.evalPatient(DEMO_RULESET_PRIOR, e.patient),
+    after: realEngine.evalPatient(DEMO_RULESET_CURRENT, e.patient),
   }));
 
   it("surfaces only participants the amendment would now exclude", () => {

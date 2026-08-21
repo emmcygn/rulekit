@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseRuleSet } from "../../src/core/schema.js";
-import { mockEngine } from "../src/engine/mock.js";
+import { realEngine } from "../src/engine/real.js";
 import { cohortCounts } from "../src/funnel/compute.js";
 import {
   factValues,
@@ -13,7 +13,7 @@ import {
 import { DEMO_COHORT, DEMO_RULESET_CURRENT } from "../src/data/index.js";
 
 const targets = numericTargets(DEMO_RULESET_CURRENT);
-const evalAll = (yaml: string) => DEMO_COHORT.map((p) => mockEngine.evalPatient(yaml, p));
+const evalAll = (yaml: string) => DEMO_COHORT.map((p) => realEngine.evalPatient(yaml, p));
 
 describe("numericTargets", () => {
   it("finds every draggable knob in the rule set", () => {
@@ -90,7 +90,7 @@ describe("live re-count", () => {
 });
 
 describe("topYield", () => {
-  const ranked = topYield(DEMO_RULESET_CURRENT, DEMO_COHORT, mockEngine);
+  const ranked = topYield(DEMO_RULESET_CURRENT, DEMO_COHORT, realEngine);
 
   it("ranks criteria by how many patients relaxing them returns", () => {
     expect(ranked.map((r) => r.criterionId)).toEqual([
