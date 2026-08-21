@@ -67,14 +67,21 @@ describe("computeFunnel — sequential attrition", () => {
     expect(f.rows[1]!.failsAlone).toBe(2);
   });
 
-  it("credits sole reason only when a criterion is a patient's single failure", () => {
+  it("credits sole reason only when relaxing the criterion would make the patient eligible", () => {
     const f = computeFunnel([
       evaluation("A", "fpp"), // sole reason: criterion 0
       evaluation("B", "ffp"), // two failures: neither is sole
       evaluation("C", "ppf"), // sole reason: criterion 2
-      evaluation("D", "puf"), // one failure plus an unknown: still sole
+      evaluation("D", "puf"), // fail plus an unknown: relaxing 2 leaves D undetermined
     ]);
-    expect(f.rows.map((r) => r.soleReason)).toEqual([1, 0, 2]);
+    expect(f.rows.map((r) => r.soleReason)).toEqual([1, 0, 1]);
+  });
+
+  it("an unmodeled criterion's chart-review unknown does not cancel a sole reason", () => {
+    // The funnel parks unmodeled criteria in chart review rather than draining
+    // the pool, so they do not stop a relaxation from reaching "remaining".
+    const f = computeFunnel([evaluation("A", "fpU"), evaluation("B", "fuU")]);
+    expect(f.rows.map((r) => r.soleReason)).toEqual([1, 0, 0]);
   });
 
   it("lists the patients behind each bucket for the drill-down", () => {
@@ -104,6 +111,25 @@ describe("computeFunnel — bundled demo cohort", () => {
     const others = f.rows.filter((r) => r.id !== "renal-safety");
     expect(renal.soleReason).toBeGreaterThan(0);
     for (const row of others) expect(row.soleReason).toBeLessThanOrEqual(renal.soleReason);
+  });
+
+  it("excludes SYN-042 from renal-safety's sole reason: their washout is unknown", () => {
+    const syn042 = evals.find((e) => e.patient === "SYN-042")!;
+    const verdict = (id: string) => syn042.results.find((r) => r.id === id)!.verdict;
+    expect(verdict("renal-safety")).toBe("fail");
+    expect(verdict("anticoag-washout")).toBe("unknown");
+
+    const renal = f.rows.find((r) => r.id === "renal-safety")!;
+    expect(renal.patients.fail).not.toContain("SYN-042");
+    // Relaxing the eGFR floor would leave SYN-042 undetermined, not eligible,
+    // so they must not be counted as a sole-reason screen failure.
+    const soleReasonPatients = evals.filter(
+      (e) =>
+        e.results.find((r) => r.id === "renal-safety")!.verdict === "fail" &&
+        e.results.every((r) => r.id === "renal-safety" || r.unmodeled || r.verdict === "pass"),
+    );
+    expect(soleReasonPatients.map((e) => e.patient)).not.toContain("SYN-042");
+    expect(renal.soleReason).toBe(soleReasonPatients.length);
   });
 
   it("never drains the pool at the unmodeled criterion", () => {

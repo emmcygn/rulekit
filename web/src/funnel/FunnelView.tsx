@@ -58,7 +58,10 @@ export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onS
             <br />
             (of n={funnel.n})
           </span>
-          <span className="right-align">
+          <span
+            className="right-align"
+            title="Patients this criterion alone keeps out: it fails and every other modeled criterion passes. Patients with an unknown elsewhere are not counted — relaxing this criterion would leave them undetermined, not eligible."
+          >
             sole
             <br />
             reason

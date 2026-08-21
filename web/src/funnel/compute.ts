@@ -19,7 +19,13 @@ export type FunnelRow = {
   removedSequential: number;
   /** Patients in the whole cohort this criterion fails, ignoring order. */
   failsAlone: number;
-  /** Patients for whom this is the only failing criterion. */
+  /**
+   * Patients this criterion alone keeps out: it fails and every other modeled
+   * criterion passes, so relaxing it would move them into `remaining`. A
+   * patient with an unknown elsewhere is NOT counted — relaxing this criterion
+   * would leave them undetermined, not eligible. Unmodeled criteria are ignored
+   * because the funnel parks them in chart review instead of draining the pool.
+   */
   soleReason: number;
   /** Unmodeled criteria park the remaining pool in chart review instead of draining it. */
   chartReview: number;
@@ -45,9 +51,16 @@ export function computeFunnel(evaluations: Evaluation[]): Funnel {
   const verdictOf = (e: Evaluation, id: string) => e.results.find((r) => r.id === id)?.verdict;
 
   // Order-independent columns: what each criterion does to the full cohort.
-  const failIdsPerPatient = evaluations.map(
-    (e) => e.results.filter((r) => r.verdict === "fail").map((r) => r.id),
-  );
+  // A criterion is a patient's sole reason only when relaxing it would actually
+  // make them eligible — one fail and everything else a pass. An unknown
+  // anywhere else means the patient would come out undetermined instead, so
+  // they belong to no criterion's sole-reason bucket.
+  const soleReasonIdPerPatient = evaluations.map((e) => {
+    const modeled = e.results.filter((r) => !r.unmodeled);
+    const fails = modeled.filter((r) => r.verdict === "fail");
+    if (fails.length !== 1) return undefined;
+    return modeled.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
+  });
 
   let pool = evaluations;
   let screenFail = 0;
@@ -62,7 +75,7 @@ export function computeFunnel(evaluations: Evaluation[]): Funnel {
     }
 
     const failsAlone = evaluations.filter((e) => verdictOf(e, c.id) === "fail").length;
-    const soleReason = failIdsPerPatient.filter((ids) => ids.length === 1 && ids[0] === c.id).length;
+    const soleReason = soleReasonIdPerPatient.filter((id) => id === c.id).length;
 
     if (c.unmodeled) {
       // Not computable from structured data: everyone still standing needs a
