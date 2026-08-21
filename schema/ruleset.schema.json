@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rulekit/rulekit/schema/ruleset.schema.json",
+  "title": "rulekit rule set",
+  "description": "One trial's eligibility criteria as code. Normative definition of the format is FORMAT.md; this schema is the machine-checkable half of it. Constraints this file cannot express are listed in FORMAT.md under 'What the schema cannot check'.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ruleset", "rulesetVersion", "factModel", "criteria"],
+  "properties": {
+    "ruleset": {
+      "description": "Stable identifier for the rule set. Does not change across versions.",
+      "type": "string",
+      "minLength": 1
+    },
+    "rulesetVersion": {
+      "description": "Semantic version of this rule set. MAJOR = a criterion was removed or its meaning inverted; MINOR = a criterion was added or a threshold moved; PATCH = wording/provenance only, no behavioural change.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "factModel": {
+      "description": "Name of the fact model every `fact` reference is resolved against, e.g. `patient-facts/v1`.",
+      "type": "string",
+      "minLength": 1
+    },
+    "protocol": {
+      "description": "Sponsor's protocol identifier and version, as printed on the protocol document.",
+      "type": "string"
+    },
+    "status": {
+      "description": "Free text lifecycle label (`draft`, `irb-approved`, `completed`). Not interpreted by the engine.",
+      "type": "string"
+    },
+    "effective": {
+      "description": "ISO-8601 date this version became effective at the site.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "source": {
+      "description": "Where the criteria text came from.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nctId": { "type": "string", "pattern": "^NCT[0-9]{8}$" },
+        "url": { "type": "string" }
+      }
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/criterion" }
+    }
+  },
+  "$defs": {
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "verbatim"],
+      "properties": {
+        "id": {
+          "description": "Unique within the rule set, kebab-case. Appears in traces, coverage reports and behavioural diffs, so renaming one is a breaking change to every downstream artifact.",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "ref": {
+          "description": "The criterion's position in the source protocol (`I1`, `E4`, `AGE`). Free text — the protocol's numbering, not ours.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "inclusion: the condition must be true for the patient to qualify. exclusion: the condition being true disqualifies the patient.",
+          "enum": ["inclusion", "exclusion"]
+        },
+        "verbatim": {
+          "description": "The criterion exactly as written in the protocol. Required even when `unmodeled`, and never edited to fit the language.",
+          "type": "string",
+          "minLength": 1
+        },
+        "when": { "$ref": "#/$defs/condition" },
+        "unmodeled": {
+          "description": "This criterion cannot be expressed in the condition language. It is carried as verbatim text and always evaluates `unknown`, which pushes affected patients to `undetermined` rather than silently passing them.",
+          "const": true
+        }
+      },
+      "oneOf": [
+        { "required": ["when"], "not": { "required": ["unmodeled"] } },
+        { "required": ["unmodeled"], "not": { "required": ["when"] } }
+      ]
+    },
+
+    "condition": {
+      "description": "A closed condition language: three combinators over four families of leaf. Deliberately not a general expression language — the closed set is what makes static interval analysis and the threshold slider tractable.",
+      "oneOf": [
+        { "$ref": "#/$defs/all" },
+        { "$ref": "#/$defs/any" },
+        { "$ref": "#/$defs/not" },
+        { "$ref": "#/$defs/leaf" }
+      ]
+    },
+    "all": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["all"],
+      "properties": {
+        "all": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/condition" } }
+      }
+    },
+    "any": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["any"],
+      "properties": {
+        "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/condition" } }
+      }
+    },
+    "not": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["not"],
+      "properties": { "not": { "$ref": "#/$defs/condition" } }
+    },
+
+    "leaf": {
+      "oneOf": [
+        { "$ref": "#/$defs/numericLeaf" },
+        { "$ref": "#/$defs/setLeaf" },
+        { "$ref": "#/$defs/existsLeaf" },
+        { "$ref": "#/$defs/withinLeaf" }
+      ]
+    },
+    "numericLeaf": {
+      "description": "Compare a `number` fact against a literal. A missing fact evaluates `unknown`; a present but non-numeric value also evaluates `unknown` (never a silent false).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "op", "value"],
+      "properties": {
+        "fact": { "$ref": "#/$defs/factName" },
+        "op": { "enum": ["eq", "neq", "gt", "gte", "lt", "lte"] },
+        "value": { "type": "number" },
+        "unit": {
+          "description": "The unit the literal is written in. No conversion is performed: a unit that differs from the fact model's declaration raises the `unit-mismatch` warning and the values are still compared as-is.",
+          "type": "string"
+        }
+      }
+    },
+    "setLeaf": {
+      "description": "Membership of a `code` fact in an inline value set. `in` is true when any entry matches; `notIn` is its exact negation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "op", "codes"],
+      "properties": {
+        "fact": { "$ref": "#/$defs/factName" },
+        "op": { "enum": ["in", "notIn"] },
+        "codes": { "$ref": "#/$defs/codeRef" }
+      }
+    },
+    "existsLeaf": {
+      "description": "Presence of the fact in the patient record. The one leaf that never returns `unknown` — absence is the answer, not a gap. See FORMAT.md: `exists` cannot distinguish 'never measured' from 'measured and quarantined'.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "op"],
+      "properties": {
+        "fact": { "$ref": "#/$defs/factName" },
+        "op": { "const": "exists" }
+      }
+    },
+    "withinLeaf": {
+      "description": "The single temporal operator: a code-set match on a `code` fact whose entry carries `daysAgo <= windowDays`. A matching entry with no date evaluates `unknown` — an undated med is not evidence of a washout.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "op", "codes", "windowDays"],
+      "properties": {
+        "fact": { "$ref": "#/$defs/factName" },
+        "op": { "const": "anyWithin" },
+        "codes": { "$ref": "#/$defs/codeRef" },
+        "windowDays": { "type": "integer", "exclusiveMinimum": 0 }
+      }
+    },
+
+    "codeRef": {
+      "description": "An inline value set. No terminology server: the codes a criterion needs are written into the criterion, so the rule set is self-contained and diffable.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "values"],
+      "properties": {
+        "system": {
+          "description": "Must be one of the systems the fact model declares for this fact (`snomed`, `rxnorm`, `rxnorm-class`, ...).",
+          "type": "string",
+          "minLength": 1
+        },
+        "values": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "factName": {
+      "description": "A fact declared by the rule set's `factModel`. An undeclared name is the `unknown-fact` error.",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

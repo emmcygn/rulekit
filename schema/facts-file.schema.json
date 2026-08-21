@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rulekit/rulekit/schema/facts-file.schema.json",
+  "title": "rulekit facts file",
+  "description": "The patient-side mirror of a rule set: one file per patient in `corpus/facts/`, where every fact carries where it came from and whether a human has signed off on it. This is the file the two-sided invariant lives in — an LLM may write entries here, but only `pipeline` and `confirmed` ones are compiled into patient-facts and reach the evaluator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patient", "facts"],
+  "properties": {
+    "patient": {
+      "description": "Patient id. `fixtures/patients/<id>.yaml` is canonical for that patient's identity (age, sex) — see corpus/notes/README.md.",
+      "type": "string",
+      "minLength": 1
+    },
+    "asOf": {
+      "description": "Screening date the `validWithinDays` recency windows are measured back from.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "facts": { "type": "array", "items": { "$ref": "#/$defs/factEntry" } }
+  },
+  "$defs": {
+    "factEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "value", "status", "extractedBy"],
+      "properties": {
+        "fact": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "value": {
+          "oneOf": [
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "string" },
+            { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/codeEntry" } }
+          ]
+        },
+        "unit": { "type": "string", "minLength": 1 },
+        "status": {
+          "description": "proposed: written by an extractor, invisible to the engine. confirmed: a human signed off; the engine reads it. rejected: history, kept for the audit trail, never evaluated.",
+          "enum": ["proposed", "confirmed", "rejected"]
+        },
+        "confidence": {
+          "description": "The extractor's own 0-1 self-estimate. Orders the review queue and flags `< 0.8` as unsure. It is NOT a calibrated probability and never gates evaluation.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "extractedBy": {
+          "description": "`pipeline` (deterministic flatten), `human` (typed in review), or `llm/<model-id>`.",
+          "type": "string",
+          "pattern": "^(pipeline|human|llm/[A-Za-z0-9][A-Za-z0-9._:-]*)$"
+        },
+        "source": {
+          "description": "Required for `llm/*` entries. The quote must appear verbatim in the named note's body or the grounding gate discards the fact.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["doc", "quote"],
+          "properties": {
+            "doc": { "type": "string", "minLength": 1 },
+            "quote": { "type": "string", "minLength": 1 }
+          }
+        },
+        "measuredAt": {
+          "description": "When the underlying observation was made — not when it was extracted.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "validWithinDays": { "type": "integer", "exclusiveMinimum": 0 },
+        "reviewedBy": { "type": ["string", "null"] },
+        "reviewedAt": { "type": ["string", "null"] }
+      },
+      "allOf": [
+        {
+          "$comment": "llm-extracted facts must cite a source and a confidence.",
+          "if": { "properties": { "extractedBy": { "pattern": "^llm/" } }, "required": ["extractedBy"] },
+          "then": { "required": ["source", "confidence"] }
+        },
+        {
+          "$comment": "pipeline facts are deterministic: no confidence, and never merely 'proposed'.",
+          "if": { "properties": { "extractedBy": { "const": "pipeline" } }, "required": ["extractedBy"] },
+          "then": {
+            "not": { "required": ["confidence"] },
+            "properties": { "status": { "enum": ["confirmed", "rejected"] } }
+          }
+        },
+        {
+          "$comment": "A human decision is the audit trail. Required on both outcomes, for every tier a human touched.",
+          "if": {
+            "properties": {
+              "status": { "enum": ["confirmed", "rejected"] },
+              "extractedBy": { "not": { "const": "pipeline" } }
+            },
+            "required": ["status", "extractedBy"]
+          },
+          "then": {
+            "required": ["reviewedBy", "reviewedAt"],
+            "properties": {
+              "reviewedBy": { "type": "string", "minLength": 1 },
+              "reviewedAt": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "$comment": "...and forbidden before one.",
+          "if": { "properties": { "status": { "const": "proposed" } }, "required": ["status"] },
+          "then": { "properties": { "reviewedBy": { "type": "null" } } }
+        }
+      ]
+    },
+    "codeEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "system"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "system": { "type": "string", "minLength": 1 },
+        "daysAgo": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

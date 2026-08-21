@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rulekit/rulekit/schema/fact-model.schema.json",
+  "title": "rulekit fact model",
+  "description": "The contract between a rule set and a patient record: which facts exist, what type each carries, and — for numbers — the unit they are stated in. A rule set names one fact model in its `factModel` field; every `fact` reference in it must resolve here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "facts"],
+  "properties": {
+    "name": {
+      "description": "Versioned model name, e.g. `patient-facts/v1`. Bump the version when a fact is removed, retyped, or has its unit changed.",
+      "type": "string",
+      "minLength": 1
+    },
+    "facts": {
+      "description": "Declared facts, keyed by name. Names are snake_case by convention; `lab_<slug>` marks a fact flattened out of a structured record rather than stated by a human.",
+      "type": "object",
+      "propertyNames": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/factDecl" }
+    }
+  },
+  "$defs": {
+    "factDecl": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "number" },
+            "unit": {
+              "description": "UCUM-style unit the value is stated in. Optional, but a numeric fact without a declared unit cannot raise the `unit-mismatch` warning, so declare one.",
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "systems"],
+          "properties": {
+            "type": { "const": "code" },
+            "systems": {
+              "description": "Code systems permitted for this fact. A criterion citing a system outside this list is the `unknown-code-system` error.",
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "values"],
+          "properties": {
+            "type": { "const": "enum" },
+            "values": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": { "type": { "const": "boolean" } }
+        }
+      ]
+    }
+  }
+}
