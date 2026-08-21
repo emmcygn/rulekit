@@ -1,6 +1,10 @@
 /**
- * Monaco, bundled locally (no CDN — the workbench makes no network calls) and
- * trimmed to the editor plus YAML tokenization.
+ * Monaco, bundled locally (no CDN loader — the editor itself fetches nothing at
+ * runtime) and trimmed to the editor plus YAML tokenization.
+ *
+ * Repo-wide caveat, so this comment does not read as a stronger claim than it
+ * is: `web/index.html` does load Google Fonts over the network. See the note in
+ * `web/src/data/index.ts`.
  */
 import * as monaco from "monaco-editor/editor.js";
 import "monaco-editor/features/register.all.js";

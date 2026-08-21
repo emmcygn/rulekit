@@ -15,11 +15,11 @@ Clinician: D. Osei, MD (fictional)
 
 SUBJECTIVE
 
-68-year-old man with HFrEF and permanent atrial fibrillation. He is here to discuss stroke-prevention strategy ahead of a possible trial referral.
+64-year-old woman with HFrEF and permanent atrial fibrillation. She is here to discuss stroke-prevention strategy ahead of a possible trial referral.
 
-History of present illness: he was previously maintained on apixaban 5 mg twice daily for atrial fibrillation. This was discontinued in March 2024 following a significant lower gastrointestinal bleed requiring three units of packed red cells. There has been no anticoagulant use since the GI bleed in March 2024, and no antiplatelet agent either. The decision to hold anticoagulation was made jointly with gastroenterology and has been revisited at each visit since.
+History of present illness: she was previously maintained on apixaban 5 mg twice daily for atrial fibrillation. This was discontinued in March 2024 following a significant lower gastrointestinal bleed requiring three units of packed red cells. There has been no anticoagulant use since the GI bleed in March 2024, and no antiplatelet agent either. The decision to hold anticoagulation was made jointly with gastroenterology and has been revisited at each visit since.
 
-He reports moderate limitation of activity, dyspnea on walking one block on the flat, consistent with NYHA class III symptoms. No recent hospitalization.
+She reports moderate limitation of activity, dyspnea on walking one block on the flat, consistent with NYHA class III symptoms. No recent hospitalization.
 
 OBJECTIVE
 
@@ -36,6 +36,6 @@ Notably absent by design: no oral anticoagulant, no direct oral anticoagulant, n
 
 ASSESSMENT AND PLAN
 
-HFrEF with permanent AF, off anticoagulation for two years for secondary GI bleeding. We will continue to withhold anticoagulation. Left atrial appendage occlusion has been discussed and he is interested; referral placed today.
+HFrEF with permanent AF, off anticoagulation for two years for secondary GI bleeding. We will continue to withhold anticoagulation. Left atrial appendage occlusion has been discussed and she is interested; referral placed today.
 
 Electronically signed by D. Osei, MD (fictional).

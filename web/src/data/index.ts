@@ -1,6 +1,14 @@
 /**
- * Bundled demo data. Everything here is synthetic and ships with the app —
- * the workbench makes no network calls (design spec §14, §15).
+ * Bundled demo data. Everything here is synthetic and ships with the app: no
+ * patient data, no rule set and no evaluation ever leaves the browser, and the
+ * app makes no API calls (design spec §14, §15).
+ *
+ * It is NOT true that the page makes no network requests at all — `web/index.html`
+ * preconnects to fonts.googleapis.com / fonts.gstatic.com and pulls a stylesheet
+ * from the former. The page degrades gracefully offline (system-font fallbacks),
+ * but the request is real, so the older "no network calls" wording in this
+ * comment was wrong and has been removed. Self-host the families to make the
+ * stronger claim true.
  *
  * The rule sets, the fact model, the rule-test suite and the patient corpus are
  * NOT copies: they are the canonical repo files, pulled in by Vite at build
@@ -101,7 +109,7 @@ export const DEMO_TRIAL = {
   id: "DEMO-HF-001",
   title: "Anticoagulation in HFrEF · synthetic protocol",
   protocolPill: "v3.0 · Amd 2 · effective 04-Aug-2026",
-  cohortNote: "synthetic fixtures · fixtures/patients · Site 002",
+  cohortNote: "synthetic fixtures · fixtures/patients · Site 002 (synthetic demo site)",
   amendment: {
     fromLabel: "Protocol v2.0",
     toLabel: "Protocol v3.0 (Amendment 2)",

@@ -8,7 +8,7 @@ import type { ProposedFactCard } from "./types.js";
  * Synthetic patients. See corpus/notes/README.md.
  */
 const ECHO_CONTEXT =
-  "The patient was seen in the reading room by the ordering team. He reports marked limitation of physical activity, comfortable at rest, with dyspnea on climbing a single flight of stairs; symptoms consistent with NYHA class III heart failure. He was hospitalized for decompensated heart failure in November 2025.";
+  "The patient was seen in the reading room by the ordering team. She reports marked limitation of physical activity, comfortable at rest, with dyspnea on climbing a single flight of stairs; symptoms consistent with NYHA class III heart failure. She was hospitalized for decompensated heart failure in November 2025.";
 
 const CLINIC_CONTEXT =
   "HFrEF on three of the four pillars of guideline-directed therapy. The missing pillar is an SGLT2 inhibitor.\n\nWe discussed adding dapagliflozin 10 mg daily but did not start it today. He is not currently taking an SGLT2 inhibitor.";
@@ -45,7 +45,7 @@ export const DEMO_QUEUE: ProposedFactCard[] = [
     value: true,
     confidence: 0.89,
     doc: "echo-2026-03-12",
-    quote: "He was hospitalized for decompensated heart failure in November 2025.",
+    quote: "She was hospitalized for decompensated heart failure in November 2025.",
     noteContext: ECHO_CONTEXT,
     flipsVerdict: false,
   },

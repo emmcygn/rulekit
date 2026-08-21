@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rulekit/rulekit/schema/patient-facts.schema.json",
+  "title": "rulekit patient facts",
+  "description": "The flat, provenance-free shape the evaluator actually consumes: one patient, a bag of fact values. Files in `fixtures/patients/` and `corpus/patients/` are written directly in this shape; `corpus/facts/*.yaml` (see facts-file.schema.json) is compiled down to it by keeping the pipeline and confirmed entries only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patient", "facts"],
+  "properties": {
+    "patient": { "type": "string", "minLength": 1 },
+    "facts": {
+      "description": "Keyed by fact name. A name absent here is not false — it is `unknown`, and the evaluator says so.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/factValue" }
+    }
+  },
+  "$defs": {
+    "factValue": {
+      "oneOf": [
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/$defs/codeEntry" } }
+      ]
+    },
+    "codeEntry": {
+      "description": "One coded row: a diagnosis, a prescription. `daysAgo` is what `anyWithin` measures against; omitting it makes every temporal criterion over this row evaluate `unknown`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "system"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "system": { "type": "string", "minLength": 1 },
+        "daysAgo": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

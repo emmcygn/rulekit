@@ -10,6 +10,23 @@ hand-written to give the facts compiler (design spec §11) something to extract.
 Ground truth exists by construction: we wrote the notes, so every expected fact
 is known, and `evals/` asserts against it.
 
+## Who a patient is: `fixtures/patients/` is canonical
+
+The same `SYN-xxx` id appears in up to three places — `fixtures/patients/`
+(structured record), `corpus/facts/` (extracted + reviewed facts), and a note
+here. **`fixtures/patients/<id>.yaml` is the single source of truth for
+identity: `age` and `sex`.** Notes and `corpus/facts/` entries must agree with
+it, including the pronouns and the stated age in the note prose — a review of
+this repo found SYN-007, SYN-019 and SYN-042 each described as a different
+person in two files at once, which is exactly the kind of drift that makes a
+coordinator stop trusting the tool.
+
+Changing a pronoun in a note is never a cosmetic edit: the grounding gate
+requires every `quote` in `corpus/facts/` to be an exact substring of the note
+body, so a note edit that touches a quoted sentence must be mirrored into
+`corpus/facts/*.yaml` and `evals/recorded/*.json` in the same commit.
+`npm run facts:check` is the gate that catches a half-done edit.
+
 ## File format
 
 Each `.txt` file is YAML front matter between `---` fences, then the note body:
