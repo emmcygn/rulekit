@@ -67,8 +67,8 @@ describe("shipped artifacts validate against the published schema", () => {
     expect(validate(FACTS_FILE, load(path))).toEqual([]);
   });
 
-  it("tests/fixtures/facts-good/SYN-900.yaml", () => {
-    expect(validate(FACTS_FILE, load("tests/fixtures/facts-good/SYN-900.yaml"))).toEqual([]);
+  it("tests/fixtures/facts-good/SYN-042.yaml", () => {
+    expect(validate(FACTS_FILE, load("tests/fixtures/facts-good/SYN-042.yaml"))).toEqual([]);
   });
 });
 
