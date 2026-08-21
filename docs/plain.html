@@ -569,6 +569,33 @@
   .bsec.live .ch-dot,.bsec.live .fly{will-change:transform}
   .thread.live .th-run{will-change:transform}
 
+  /* ================================================================ */
+  /* ============ ADDED: amendments =================================== */
+  /* ================================================================ */
+
+  /* ---- the byline, twice, quietly ---- */
+  .byline{font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:20px;letter-spacing:.01em}
+  .byline-close{text-align:center;font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:36px}
+
+  /* ---- a link that is not live yet, marked as such ---- */
+  .link-soon{color:var(--ink2);border-bottom:1px dotted var(--ink3);text-decoration:none}
+  .link-soon:hover{color:var(--ink2)}
+  .soon{font-family:var(--mono);font-size:.72em;color:var(--ink3);white-space:nowrap;margin-left:.35em}
+  .soon::before{content:'('} .soon::after{content:')'}
+
+  /* ---- ink-on-paper diagrams driven by the reveal system ---- */
+  .js svg[data-drawin] .dw line,.js svg[data-drawin] .dw rect,
+  .js svg[data-drawin] .dw path,.js svg[data-drawin] .dw circle{
+    stroke-dasharray:1;stroke-dashoffset:1;
+    transition:stroke-dashoffset 1s cubic-bezier(.4,0,.3,1) var(--dd,0s)}
+  .js [data-reveal].on svg[data-drawin] .dw line,.js [data-reveal].on svg[data-drawin] .dw rect,
+  .js [data-reveal].on svg[data-drawin] .dw path,.js [data-reveal].on svg[data-drawin] .dw circle{
+    stroke-dashoffset:0}
+  .js svg[data-drawin] .dw text,.js svg[data-drawin] .dw .fd{
+    opacity:0;transition:opacity .55s ease calc(var(--dd,0s) + .4s)}
+  .js [data-reveal].on svg[data-drawin] .dw text,
+  .js [data-reveal].on svg[data-drawin] .dw .fd{opacity:1}
+
   /* ============ reduced motion: opacity-only or nothing ============ */
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
@@ -607,6 +634,13 @@
     .js svg[data-selfdraw] [data-step] line,
     .js svg[data-selfdraw] [data-step] rect{stroke-dasharray:none !important;stroke-dashoffset:0 !important;transition:none !important}
     .bsec.live .ch-dot,.bsec.live .fly{will-change:auto !important}
+
+    /* amendments: the two new diagrams stop drawing themselves */
+    .js svg[data-drawin] .dw line,.js svg[data-drawin] .dw rect,
+    .js svg[data-drawin] .dw path,.js svg[data-drawin] .dw circle{
+      stroke-dasharray:none !important;stroke-dashoffset:0 !important;transition:none !important}
+    .js svg[data-drawin] .dw text,.js svg[data-drawin] .dw .fd{
+      opacity:1 !important;transition:none !important}
   }
 </style>
 <script>document.documentElement.classList.add('js');</script>
@@ -662,6 +696,7 @@
   <div class="wrap-wide">
     <p class="hero-mark"><i></i>rulekit</p>
     <h1>A trial's entry rules live in a PDF. You cannot run a PDF, so the mistakes turn up after the money is spent. rulekit rewrites the rules as code you can test.</h1>
+    <p class="byline">by Emmanuel Cuyugan</p>
     <p class="hero-kicker">The plain-language tour. No code needed, about six minutes, and it builds as it goes, so read it in order. There is an engineers' edition of the same story; the last section links to it.</p>
 
     <figure class="fig hero-fig" role="group" aria-label="A paragraph of prose becoming a set of runnable rules with three possible answers">
@@ -1306,8 +1341,101 @@
 <section class="sec sec-band" id="build" data-section data-title="The build" data-thread="decide">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">05</span>the build</p>
-    <h2 data-reveal>How it was built</h2>
-    <p class="lede" data-reveal>For readers who hire engineers: write the spec, build against it in parallel, and put hostile review in between.</p>
+    <h2 data-reveal>How it was made, and where it wants to go</h2>
+    <p class="lede" data-reveal>This is a prototype built in the open. The next part of it needs people who run trials.</p>
+    <div class="prose" data-reveal>
+      <p>Emmanuel Cuyugan built this against public registry text and invented patients. No coordinator, no screener and no data manager has yet held it up against a real screening day. That is the part he wants to do next, alongside the people who do that work. What follows is how the thing was made, so you can judge whether it was made with any care.</p>
+    </div>
+  </div>
+
+  <div class="wrap-wide">
+    <figure class="fig" data-reveal="fade" role="group" aria-label="A layered map of what rulekit is made of: YAML rule files pass through zod checking into a TypeScript engine, which feeds a React workbench and a command line report, with the note-reading step below a human gate, and the whole thing wrapped in vitest tests.">
+      <div class="fig-scroll">
+      <svg viewBox="0 0 900 470" style="min-width:700px" data-drawin role="img" aria-label="Rule files written in YAML are checked by zod at the door, then read by a TypeScript engine, which feeds a React workbench and a command line report. Below a human gate sits the Anthropic SDK note-reading step, scored offline by promptfoo. A box labelled vitest, 470 tests written before the code, encloses everything.">
+
+        <!-- the tests, wrapped around the whole of it -->
+        <g class="dw" style="--dd:.25s">
+          <rect x="16" y="16" width="868" height="438" rx="3" fill="none" stroke="#C9C2B4" stroke-width="1.5"/>
+          <text x="40" y="49" font-family="Martian Mono, monospace" font-weight="600" font-size="12" fill="#17150F">vitest</text>
+          <text x="112" y="49" font-family="Spline Sans Mono, monospace" font-size="11" fill="#6B655C">470 automated tests, written before the code they test</text>
+        </g>
+
+        <!-- the rules themselves -->
+        <g class="dw" style="--dd:.4s">
+          <rect x="48" y="136" width="180" height="108" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="138" y="167" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="13" fill="#17150F">YAML</text>
+          <text x="138" y="189" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">structured text</text>
+          <text x="138" y="205" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">people can read</text>
+          <text x="138" y="228" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#7E776A">the rules themselves</text>
+        </g>
+
+        <!-- the door -->
+        <g class="dw" style="--dd:.55s">
+          <line x1="232" y1="190" x2="254" y2="190" stroke="#17150F" stroke-width="1.5"/>
+          <path class="fd" d="M258 190 L248 185 L248 195 Z" fill="#17150F"/>
+          <rect x="262" y="150" width="140" height="80" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.5"/>
+          <text x="332" y="181" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="13" fill="#17150F">zod</text>
+          <text x="332" y="200" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">checks every file</text>
+          <text x="332" y="216" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">at the door</text>
+        </g>
+
+        <!-- the engine -->
+        <g class="dw" style="--dd:.7s">
+          <line x1="406" y1="190" x2="428" y2="190" stroke="#17150F" stroke-width="1.5"/>
+          <path class="fd" d="M432 190 L422 185 L422 195 Z" fill="#17150F"/>
+          <rect x="436" y="132" width="224" height="116" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="548" y="168" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="13" fill="#17150F">TypeScript</text>
+          <text x="548" y="190" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11" fill="#6B655C">typed code, mistakes</text>
+          <text x="548" y="207" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11" fill="#6B655C">surface before running</text>
+          <text x="548" y="230" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#7E776A">the engine and the command line</text>
+        </g>
+
+        <!-- the two screens it ends on -->
+        <g class="dw" style="--dd:.85s">
+          <line x1="664" y1="180" x2="688" y2="158" stroke="#17150F" stroke-width="1.5"/>
+          <path class="fd" d="M692 155 L681 156 L687 165 Z" fill="#17150F"/>
+          <line x1="664" y1="200" x2="688" y2="224" stroke="#17150F" stroke-width="1.5"/>
+          <path class="fd" d="M692 227 L687 217 L681 226 Z" fill="#17150F"/>
+          <rect x="694" y="118" width="172" height="64" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.5"/>
+          <text x="780" y="146" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="12" fill="#17150F">React</text>
+          <text x="780" y="166" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">the workbench app</text>
+          <rect x="694" y="200" width="172" height="64" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.5"/>
+          <text x="780" y="228" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="12" fill="#17150F">command line</text>
+          <text x="780" y="248" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">the printed report</text>
+        </g>
+
+        <!-- the gate, drawn as the page draws every gate -->
+        <g class="dw" style="--dd:1s">
+          <line x1="300" y1="285" x2="700" y2="285" stroke="#17150F" stroke-width="1.25"/>
+          <line x1="300" y1="290" x2="700" y2="290" stroke="#17150F" stroke-width="1.25"/>
+          <rect x="452" y="278" width="96" height="19" rx="2" fill="#F3EFE7" stroke="#C9C2B4" stroke-width="1.25"/>
+          <text x="500" y="291" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="9" letter-spacing="1" fill="#17150F">HUMAN GATE</text>
+        </g>
+
+        <!-- the note-reading step, under the gate -->
+        <g class="dw" style="--dd:1.15s">
+          <line x1="548" y1="326" x2="548" y2="258" stroke="#17150F" stroke-width="1.5"/>
+          <path class="fd" d="M548 252 L543 262 L553 262 Z" fill="#17150F"/>
+          <rect x="436" y="326" width="224" height="88" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.5"/>
+          <text x="548" y="358" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="12" fill="#17150F">Anthropic SDK</text>
+          <text x="548" y="379" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">reads notes, proposes facts</text>
+          <text x="548" y="399" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#7E776A">always behind that gate</text>
+        </g>
+
+        <!-- and the offline scoring of that step -->
+        <g class="dw" style="--dd:1.3s">
+          <rect x="100" y="336" width="210" height="68" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.5"/>
+          <text x="205" y="366" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="12" fill="#17150F">promptfoo</text>
+          <text x="205" y="387" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">scores that step offline</text>
+          <line x1="314" y1="370" x2="432" y2="370" stroke="#C9C2B4" stroke-width="1.5"/>
+        </g>
+      </svg>
+      </div>
+      <figcaption class="fig-cap">What it is made of, plainly. The rules are text files, not code. One typed engine reads them. Two screens read the engine. The note-reading step sits below the line and can only send work upward through a person. The outer box is the test suite, and it was written first.</figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap">
     <div class="prose" data-reveal>
       <p>The rule format was written down before the engine existed, so the code had something fixed to be wrong against. Reviewers were then told to attack it, and a claimed flaw only counted if it came with code that proved it. Every proven flaw became a permanent <span class="gloss">regression test<span class="gloss-note">keeps fixed bugs fixed</span></span> before anyone was allowed to fix it. Three of the scars:</p>
     </div>
@@ -1315,6 +1443,72 @@
       <div class="note"><span class="nt">the over-eager checker</span>The conflict checker once announced a clash that could not actually happen. A reviewer proved it, the checker learned to keep quiet in that case, and the false alarm is pinned down as a test in <span class="mono">tests/adversarial/conflicts.test.ts</span>.</div>
       <div class="note"><span class="nt">the two screens that disagreed</span>The report and the visual app each did their own arithmetic, and they disagreed on every headline count: 0 potentially eligible on one screen, 2 on the other, over the same 100 patients. The arithmetic moved into one shared module, <span class="mono">src/core/attrition.ts</span>, and a test now forces the two to agree.</div>
       <div class="note"><span class="nt">the sentence with its own bodyguard</span>The format's most important sentence, "an absent value is unknown, never false", has a test suite of its own (<span class="mono">tests/adversarial/kleene.test.ts</span>), so no future change can quietly weaken it.</div>
+    </div>
+  </div>
+
+  <div class="wrap-wide">
+    <figure class="fig" data-reveal="fade" role="group" aria-label="A commit graph of the repository assembling: scaffold, core engine, trial packs, data pipeline, workbench and facts compiler on the main line, then a branch of adversarial reviews and fixes gated by tests merging back in at docs.">
+      <div class="fig-scroll">
+      <svg viewBox="0 44 900 158" style="min-width:660px" data-drawin role="img" aria-label="A git style commit graph. Seven commits on a main line, labelled scaffold, core engine, trial packs, data pipeline, workbench, facts compiler and docs. A branch leaves after facts compiler carrying two commits, adversarial reviews and fixes gated by tests, and merges back into docs.">
+
+        <g class="dw" style="--dd:.25s">
+          <line x1="40" y1="160" x2="870" y2="160" stroke="#6B655C" stroke-width="1.5"/>
+          <text x="36" y="140" text-anchor="start" font-family="Spline Sans Mono, monospace" font-size="9.5" fill="#7E776A">main</text>
+        </g>
+
+        <g class="dw" style="--dd:.4s">
+          <circle cx="64" cy="160" r="6.5" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="64" y="186" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">scaffold</text>
+        </g>
+        <g class="dw" style="--dd:.52s">
+          <circle cx="180" cy="160" r="6.5" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="180" y="186" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">core engine</text>
+        </g>
+        <g class="dw" style="--dd:.64s">
+          <circle cx="296" cy="160" r="6.5" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="296" y="186" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">trial packs</text>
+        </g>
+        <g class="dw" style="--dd:.76s">
+          <circle cx="412" cy="160" r="6.5" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="412" y="186" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">data pipeline</text>
+        </g>
+        <g class="dw" style="--dd:.88s">
+          <circle cx="528" cy="160" r="6.5" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="528" y="186" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">workbench</text>
+        </g>
+        <g class="dw" style="--dd:1s">
+          <circle cx="644" cy="160" r="6.5" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="644" y="186" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">facts compiler</text>
+        </g>
+
+        <!-- the review branch, and what came back off it -->
+        <g class="dw" style="--dd:1.14s">
+          <path d="M644 160 C670 160 676 96 702 96 L788 96 C814 96 820 160 846 160" fill="none" stroke="#A6431E" stroke-width="1.5"/>
+        </g>
+        <g class="dw" style="--dd:1.34s">
+          <circle cx="702" cy="96" r="6" fill="#FAF8F4" stroke="#A6431E" stroke-width="1.5"/>
+          <text x="702" y="70" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">adversarial</text>
+          <text x="702" y="82" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">reviews</text>
+        </g>
+        <g class="dw" style="--dd:1.46s">
+          <circle cx="788" cy="96" r="6" fill="#FAF8F4" stroke="#A6431E" stroke-width="1.5"/>
+          <text x="788" y="70" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">fixes gated</text>
+          <text x="788" y="82" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10" fill="#6B655C">by tests</text>
+        </g>
+        <g class="dw" style="--dd:1.6s">
+          <circle class="fd" cx="846" cy="160" r="6.5" fill="#17150F"/>
+          <circle cx="846" cy="160" r="6.5" fill="none" stroke="#17150F" stroke-width="1.5"/>
+          <text x="846" y="186" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">docs</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption class="fig-cap">The whole history is in the repository, reviews and reversals included.</figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap">
+    <div class="prose" data-reveal>
+      <p>Where it wants to go next is more trial packs, written with the people who screen for those trials, and an honest written record of every criterion the language cannot hold. The third of criteria it cannot express is the interesting part, not the part to hide. So: if you run trials, or you sit close to the people who do, he would like to hear what this gets wrong.</p>
     </div>
   </div>
 </section>
@@ -1425,6 +1619,7 @@
 
     <div class="prose" data-reveal>
       <p>Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://claude.ai/code/artifact/f6f26ee6-5f16-457a-b01d-0aa4b1443ff3">technical thesis</a> (also <span class="mono">docs/thesis.html</span> in the repository), which is this same story told longer, for engineers, with the engine's real output in it.</p>
+      <p>The repository itself is at <a href="https://github.com/mannycygn/rulekit">github.com/mannycygn/rulekit</a>. There will also be <a class="link-soon" href="#" aria-disabled="true">the engineering read</a><span class="soon">link to follow</span>, a shorter account of the build decisions and the things that had to be reversed.</p>
     </div>
 
     <div class="closing" data-reveal>
@@ -1438,6 +1633,8 @@
       <p class="cm"><span class="kin-w" style="--kd:0s">agents propose</span><span class="kin-w sep" style="--kd:.4s">&#183;</span><span class="kin-w" style="--kd:.55s">humans confirm</span><span class="kin-w sep" style="--kd:.95s">&#183;</span><span class="kin-w" style="--kd:1.1s">the engine decides</span></p>
       <p class="small" style="margin-top:14px">In that order, every time, with no way around the middle step.</p>
     </div>
+
+    <p class="byline-close" data-reveal="fade">by Emmanuel Cuyugan</p>
 
     <p class="colophon" data-reveal="fade">rulekit &#183; Apache-2.0 &#183; set in Public Sans, Spline Sans Mono &amp; Martian Mono<br>amendment costs: Tufts CSDD &#183; criteria coverage: Chia corpus (CC-BY-4.0, Kury et al. 2020) &#183; trial criteria quoted from ClinicalTrials.gov</p>
   </div>
@@ -1497,8 +1694,13 @@
   }
 
   /* ---------- self-drawing diagrams: normalise stroke lengths ---------- */
-  document.querySelectorAll('#p-one-fig .pn line, #p-one-fig .pn rect, svg[data-selfdraw] [data-step] line, svg[data-selfdraw] [data-step] rect').forEach(function(el){
+  document.querySelectorAll('#p-one-fig .pn line, #p-one-fig .pn rect, svg[data-selfdraw] [data-step] line, svg[data-selfdraw] [data-step] rect, svg[data-drawin] .dw line, svg[data-drawin] .dw rect, svg[data-drawin] .dw path, svg[data-drawin] .dw circle').forEach(function(el){
     el.setAttribute('pathLength', '1');
+  });
+
+  /* ---------- the forthcoming write-up: marked, not navigable yet ---------- */
+  document.querySelectorAll('a.link-soon').forEach(function(a){
+    a.addEventListener('click', function(e){ e.preventDefault(); });
   });
 
   /* ---------- the compilation: measure each word's flight path ---------- */
