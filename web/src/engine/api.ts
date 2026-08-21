@@ -1,10 +1,14 @@
 /**
  * The locked contract of the rulekit core engine.
  *
- * The core (src/core/evaluator.ts, conflicts.ts, diff.ts) is being built in
- * parallel; the workbench codes against this interface only. At integration a
- * `realEngine` implementation lands next to `mockEngine` and the app's engine
- * selection (see ./index.ts) switches over — nothing else in web/ changes.
+ * Every view codes against this interface and never against an implementation.
+ * `./real.ts` satisfies it by wrapping src/core; it is the only implementation
+ * in the app, and the only file in web/ that imports core's evaluator, conflict
+ * or diff passes.
+ *
+ * The types below are structurally core's (src/core/evaluator.ts, lint.ts,
+ * diff.ts) with `code` and the trace's `observed` widened, so core's return
+ * values satisfy them without conversion.
  */
 export type Tri = "true" | "false" | "unknown";
 export type TraceNode = {

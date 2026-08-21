@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Finding } from "./api.js";
-import { mockEngine } from "./mock.js";
+import { realEngine } from "./real.js";
 import type { CheckRequest, CheckResponse } from "./check.worker.js";
 
 /**
@@ -9,7 +9,7 @@ import type { CheckRequest, CheckResponse } from "./check.worker.js";
  */
 export function useCheck(rulesetYaml: string, factModelYaml: string, delayMs = 250): Finding[] {
   const [findings, setFindings] = useState<Finding[]>(() =>
-    mockEngine.check(rulesetYaml, factModelYaml),
+    realEngine.check(rulesetYaml, factModelYaml),
   );
   const workerRef = useRef<Worker | null>(null);
   const seqRef = useRef(0);
@@ -39,7 +39,7 @@ export function useCheck(rulesetYaml: string, factModelYaml: string, delayMs = 2
       if (worker) {
         worker.postMessage({ seq, rulesetYaml, factModelYaml } satisfies CheckRequest);
       } else {
-        setFindings(mockEngine.check(rulesetYaml, factModelYaml));
+        setFindings(realEngine.check(rulesetYaml, factModelYaml));
       }
     }, delayMs);
     return () => clearTimeout(timer);

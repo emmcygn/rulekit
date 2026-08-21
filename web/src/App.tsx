@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { parseRuleSet, type RuleSet } from "../../src/core/schema.js";
 import { RuleEditor, type RevealRequest } from "./editor/RuleEditor.js";
-import { mockEngine } from "./engine/mock.js";
+import { realEngine } from "./engine/real.js";
 import { useCheck } from "./engine/useCheck.js";
 import { criterionSpans } from "./engine/lines.js";
 import { computeFunnel } from "./funnel/compute.js";
@@ -65,7 +65,7 @@ export function App() {
   }, [parsed]);
 
   const evaluations = useMemo(
-    () => DEMO_COHORT.map((p) => mockEngine.evalPatient(good.yaml, p)),
+    () => DEMO_COHORT.map((p) => realEngine.evalPatient(good.yaml, p)),
     [good.yaml],
   );
   const funnel = useMemo(() => computeFunnel(evaluations), [evaluations]);
@@ -190,7 +190,7 @@ export function App() {
             <ThresholdsView
               rulesetYaml={good.yaml}
               cohort={DEMO_COHORT}
-              engine={mockEngine}
+              engine={realEngine}
               onCopyBack={setRulesetYaml}
             />
           )}
@@ -200,7 +200,7 @@ export function App() {
               priorYaml={DEMO_RULESET_PRIOR}
               cohort={DEMO_COHORT}
               enrolled={DEMO_ENROLLED}
-              engine={mockEngine}
+              engine={realEngine}
               onInspectPatient={(p) => {
                 setSelected(p);
                 setTab("funnel");

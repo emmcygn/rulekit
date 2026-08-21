@@ -8,15 +8,28 @@ type Props = {
   onJump: (line: number) => void;
 };
 
+/**
+ * Human titles for the codes the engine emits. The first block is core's own
+ * (src/core/lint.ts, src/core/conflicts.ts); the second is the workbench's, for
+ * findings core has no place to produce — unparsed editor text, and the two
+ * cohort-level findings that need patients rather than a rule set.
+ */
 const TITLE: Record<string, string> = {
-  "contradictory-band": "contradictory band",
-  "unit-mismatch": "unit mismatch",
   "unknown-fact": "unknown fact",
-  unsatisfiable: "criterion can never fire",
-  unmodeled: "unmodeled criterion",
+  "type-mismatch": "type mismatch",
+  "unit-mismatch": "unit mismatch",
+  "unknown-code-system": "unknown code system",
+  "unmodeled-criterion": "unmodeled criterion",
+  "contradictory-band": "contradictory band",
+  "unsatisfiable-criterion": "criterion can never fire",
+
+  schema: "rule set does not parse",
+  "fact-model-schema": "fact model does not parse",
   "non-numeric-value": "non-numeric lab value",
-  schema: "schema error",
 };
+
+/** Findings about the cohort or an unparsed document point at no rule-set line. */
+const NO_LINE = new Set(["non-numeric-value", "schema", "fact-model-schema"]);
 
 const TOKEN: Record<Finding["level"], string> = {
   error: "✕ conflict",
@@ -46,7 +59,7 @@ export function ChecksView({ findings, spans, rulesetVersion, onJump }: Props) {
           .map((id) => spans.get(id)?.whenLine)
           .filter((n): n is number => n !== undefined);
         // Cohort findings point at data, not at a line of the rule set.
-        const jumpTo = f.code === "non-numeric-value" ? undefined : lines[0];
+        const jumpTo = NO_LINE.has(f.code) ? undefined : lines[0];
         return (
           <div key={`${f.code}-${i}`} className={`finding f-${f.level === "error" ? "error" : f.level === "warning" ? "warn" : "info"}`}>
             <div className="finding-head">
@@ -68,7 +81,11 @@ export function ChecksView({ findings, spans, rulesetVersion, onJump }: Props) {
                 </button>
               ) : (
                 <span className="finding-jump ink3">
-                  {f.code === "non-numeric-value" ? "cohort" : "ruleset.yaml"}
+                  {f.code === "non-numeric-value"
+                    ? "cohort"
+                    : f.code === "fact-model-schema"
+                      ? "patient-facts/v1"
+                      : "ruleset.yaml"}
                 </span>
               )}
             </div>

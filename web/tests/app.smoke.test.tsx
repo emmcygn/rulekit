@@ -20,9 +20,9 @@ describe("workbench shell", () => {
   it("opens on the funnel with the demo cohort counted", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "Screening funnel" })).toBeDefined();
-    expect(screen.getByText(/cohort n = 16/)).toBeDefined();
-    expect(screen.getAllByText(/2 potentially eligible/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/11 screen fail/)).toBeDefined();
+    expect(screen.getByText(/cohort n = 10/)).toBeDefined();
+    expect(screen.getAllByText(/3 potentially eligible/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/6 screen fail/)).toBeDefined();
   });
 
   it("drills from a criterion row into a patient trace", () => {
@@ -31,7 +31,7 @@ describe("workbench shell", () => {
     // from a criterion whose pool still contains them.
     fireEvent.click(screen.getByText("egfr-min"));
     fireEvent.click(screen.getByRole("button", { name: /SYN-042/ }));
-    expect(screen.getByText(/egfr = 41 < 45, exclusion fired/)).toBeDefined();
+    expect(screen.getByText(/egfr = 41, required < 45, exclusion fired/)).toBeDefined();
   });
 
   it("renders the thresholds tab with a live re-count", () => {
@@ -46,7 +46,7 @@ describe("workbench shell", () => {
     render(<App />);
     fireEvent.click(tab("Amendment"));
     expect(screen.getByRole("heading", { name: "Amendment impact" })).toBeDefined();
-    expect(screen.getByText(/renal-safety — 5 flips/)).toBeDefined();
+    expect(screen.getByText(/renal-safety — 4 flips/)).toBeDefined();
     expect(screen.getByText(/Already enrolled/)).toBeDefined();
     expect(screen.getByText(/002-0041/)).toBeDefined();
   });
@@ -55,8 +55,24 @@ describe("workbench shell", () => {
     render(<App />);
     fireEvent.click(tab("Checks"));
     expect(screen.getByText("contradictory band")).toBeDefined();
-    expect(screen.getByText(/contradictory band \[30, 45\)/)).toBeDefined();
+    // Core's evidence string, rendered verbatim — including U+2212 and ∞.
+    expect(
+      screen.getByText(
+        "egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)",
+      ),
+    ).toBeDefined();
     expect(screen.getByText(/1 conflict blocks release/)).toBeDefined();
+  });
+
+  it("titles every finding the real engine emits, and counts them in the status bar", () => {
+    render(<App />);
+    fireEvent.click(tab("Checks"));
+    expect(screen.getByText("unit mismatch")).toBeDefined();
+    expect(screen.getByText("unmodeled criterion")).toBeDefined();
+    // No raw code leaks through as a title.
+    expect(screen.queryByText("unmodeled-criterion")).toBeNull();
+    expect(screen.getByText(/✕ 1 conflict$/)).toBeDefined();
+    expect(screen.getByText(/! 1 warning$/)).toBeDefined();
   });
 
   it("renders the review tab as a phase-4 placeholder", () => {

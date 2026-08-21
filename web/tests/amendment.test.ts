@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseRuleSet } from "../../src/core/schema.js";
-import { mockEngine } from "../src/engine/mock.js";
+import { realEngine } from "../src/engine/real.js";
 import type { Evaluation, Flip } from "../src/engine/api.js";
 import { criterionOrder, enrolledImpact, groupFlips, structuralDiff } from "../src/amendment/compute.js";
 import {
@@ -52,17 +52,23 @@ describe("structuralDiff", () => {
 
 describe("groupFlips", () => {
   const order = criterionOrder(current);
-  const flips = mockEngine.behavioralDiff(DEMO_RULESET_PRIOR, DEMO_RULESET_CURRENT, DEMO_COHORT);
+  const flips = realEngine.behavioralDiff(DEMO_RULESET_PRIOR, DEMO_RULESET_CURRENT, DEMO_COHORT);
 
   it("finds the flips the amendment causes on the demo cohort", () => {
-    expect(flips.length).toBe(6);
+    expect(flips.map((f) => f.patient).sort()).toEqual([
+      "SYN-007",
+      "SYN-019",
+      "SYN-042",
+      "SYN-058",
+      "SYN-088",
+    ]);
     expect(flips.every((f) => f.to === "ineligible")).toBe(true);
   });
 
   it("puts every flip in exactly one group, biggest group first", () => {
     const groups = groupFlips(flips, order);
     expect(groups.map((g) => g.criterionId)).toEqual(["renal-safety", "anticoag-washout"]);
-    expect(groups.map((g) => g.flips.length)).toEqual([5, 1]);
+    expect(groups.map((g) => g.flips.length)).toEqual([4, 1]);
     expect(groups.reduce((n, g) => n + g.flips.length, 0)).toBe(flips.length);
   });
 
@@ -89,8 +95,8 @@ describe("enrolledImpact", () => {
     participant: e.participant,
     site: e.site,
     randomized: e.randomized,
-    before: mockEngine.evalPatient(DEMO_RULESET_PRIOR, e.patient),
-    after: mockEngine.evalPatient(DEMO_RULESET_CURRENT, e.patient),
+    before: realEngine.evalPatient(DEMO_RULESET_PRIOR, e.patient),
+    after: realEngine.evalPatient(DEMO_RULESET_CURRENT, e.patient),
   }));
 
   it("surfaces only participants the amendment would now exclude", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseRuleSet } from "../../src/core/schema.js";
-import { mockEngine } from "../src/engine/mock.js";
+import { realEngine } from "../src/engine/real.js";
 import { cohortCounts } from "../src/funnel/compute.js";
 import {
   factValues,
@@ -13,7 +13,7 @@ import {
 import { DEMO_COHORT, DEMO_RULESET_CURRENT } from "../src/data/index.js";
 
 const targets = numericTargets(DEMO_RULESET_CURRENT);
-const evalAll = (yaml: string) => DEMO_COHORT.map((p) => mockEngine.evalPatient(yaml, p));
+const evalAll = (yaml: string) => DEMO_COHORT.map((p) => realEngine.evalPatient(yaml, p));
 
 describe("numericTargets", () => {
   it("finds every draggable knob in the rule set", () => {
@@ -28,7 +28,7 @@ describe("numericTargets", () => {
 
   it("carries the path, unit and a human label", () => {
     const renal = targets.find((t) => t.criterionId === "renal-safety")!;
-    expect(renal.path).toEqual(["criteria", 5, "when", "value"]);
+    expect(renal.path).toEqual(["criteria", 4, "when", "value"]);
     expect(renal.label).toBe("eGFR < 45");
     expect(renal.fact).toBe("egfr");
     const egfrMin = targets.find((t) => t.criterionId === "egfr-min")!;
@@ -48,7 +48,7 @@ describe("setKnob", () => {
   it("leaves the rest of the document — comments included — alone", () => {
     const renal = targets.find((t) => t.criterionId === "renal-safety")!;
     const next = setKnob(DEMO_RULESET_CURRENT, renal.path, 40);
-    expect(next).toContain("# DEMO DATA");
+    expect(next).toContain('protocol: "DEMO-HF-001 v3.0 (Amendment 2)"');
     expect(next).toContain("verbatim: \"Age 18 years or older\"");
     expect(next.split("\n").length).toBe(DEMO_RULESET_CURRENT.split("\n").length);
   });
@@ -76,8 +76,8 @@ describe("live re-count", () => {
     const before = cohortCounts(evalAll(DEMO_RULESET_CURRENT));
     const renal = targets.find((t) => t.criterionId === "renal-safety")!;
     const after = cohortCounts(evalAll(setKnob(DEMO_RULESET_CURRENT, renal.path, 40)));
-    expect(before.potentiallyEligible).toBe(2);
-    expect(after.potentiallyEligible).toBe(3);
+    expect(before.potentiallyEligible).toBe(3);
+    expect(after.potentiallyEligible).toBe(4);
     expect(after.screenFail).toBe(before.screenFail - 1);
     expect(after.notEvaluable).toBe(before.notEvaluable);
   });
@@ -90,21 +90,27 @@ describe("live re-count", () => {
 });
 
 describe("topYield", () => {
-  const ranked = topYield(DEMO_RULESET_CURRENT, DEMO_COHORT, mockEngine);
+  const ranked = topYield(DEMO_RULESET_CURRENT, DEMO_COHORT, realEngine);
 
   it("ranks criteria by how many patients relaxing them returns", () => {
-    expect(ranked[0]!.criterionId).toBe("lvef-max");
-    expect(ranked[0]!.delta).toBe(2);
+    expect(ranked.map((r) => r.criterionId)).toEqual([
+      "age-min",
+      "lvef-max",
+      "anticoag-washout",
+      "renal-safety",
+    ]);
     expect(ranked.map((r) => r.delta)).toEqual([...ranked.map((r) => r.delta)].sort((a, b) => b - a));
   });
 
   it("describes the move it priced", () => {
-    expect(ranked[0]!.from).toBe(40);
-    expect(ranked[0]!.to).toBe(45);
+    const lvef = ranked.find((r) => r.criterionId === "lvef-max")!;
+    expect(lvef.from).toBe(40);
+    expect(lvef.to).toBe(45);
   });
 
   it("drops knobs that buy nothing", () => {
-    expect(ranked.map((r) => r.criterionId)).not.toContain("age-min");
+    // Every fixture clears eGFR >= 30, so loosening I3 returns nobody.
+    expect(ranked.map((r) => r.criterionId)).not.toContain("egfr-min");
   });
 });
 
@@ -123,7 +129,9 @@ describe("histogram", () => {
 
   it("separates numeric cohort values from unusable ones", () => {
     const { numeric, unusable } = factValues(DEMO_COHORT, "egfr");
-    expect(numeric).toHaveLength(15);
-    expect(unusable).toEqual([{ patient: "SYN-077", value: ">60" }]);
+    expect(numeric).toHaveLength(10);
+    expect(unusable).toEqual([]);
+    const messy = [...DEMO_COHORT, { patient: "SYN-999", facts: { egfr: ">60" } }];
+    expect(factValues(messy, "egfr").unusable).toEqual([{ patient: "SYN-999", value: ">60" }]);
   });
 });

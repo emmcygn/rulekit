@@ -7,7 +7,9 @@ export default defineConfig({
   base: "./",
   plugins: [react()],
   server: {
-    // web/ imports types + parsers from ../src/core, which lives outside the Vite root.
+    // web/ reads three things from outside the Vite root, all in the repo above
+    // it: the engine (../src/core), and the demo data it refuses to duplicate —
+    // ../rules/trials/demo-hf-001, ../packs/trials and ../fixtures/patients.
     fs: { allow: [".."] },
   },
   build: {
