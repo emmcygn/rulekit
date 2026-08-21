@@ -1,0 +1,19 @@
+# The wrong-chart error, which is the classic chart-review mistake: every field
+# here is well-formed and the quote really does appear verbatim in the note —
+# but echo-2026-03-12's front matter says `patient: SYN-042`, so this LVEF
+# belongs to somebody else. A provenance gate that lets this through is not a
+# provenance gate.
+patient: SYN-007
+asOf: 2026-03-12
+facts:
+  - fact: lvef
+    value: 32
+    unit: "%"
+    status: confirmed
+    confidence: 0.98
+    extractedBy: llm/claude-opus-5
+    source:
+      doc: echo-2026-03-12
+      quote: LVEF 32% by biplane Simpson's method
+    reviewedBy: e.cuyugan
+    reviewedAt: 2026-08-20T14:31:00Z

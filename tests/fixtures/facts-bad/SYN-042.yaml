@@ -1,9 +1,10 @@
-# Schema-valid but ungrounded. Four distinct problems `facts check` must find:
+# Schema-valid but ungrounded. The patient matches echo-2026-03-12's front
+# matter, so the wrong-chart gate is not what fires here — these four are:
 #   nyha_class   quote does not appear in echo-2026-03-12 (fabricated evidence)
 #   frailty_idx  not declared in the fact model
 #   lvef         unit "ml" is not the declared "%"
 #   egfr         measured 2025-01-04, 432 days before asOf, window is 90 days
-patient: SYN-901
+patient: SYN-042
 asOf: 2026-03-12
 facts:
   - fact: nyha_class

@@ -30,7 +30,7 @@ const NOTE = [
   "There has been no anticoagulant use since the GI bleed in March 2024.",
 ].join("\n");
 
-const ctx: GroundingContext = { factModel: MODEL, documents: { "echo-x": NOTE } };
+const ctx: GroundingContext = { factModel: MODEL, documents: { "echo-x": { text: NOTE } } };
 const OPTS = { doc: "echo-x", extractedBy: "llm/claude-opus-5", ctx };
 
 const p = (over: Partial<ProposedFact>): ProposedFact => ({

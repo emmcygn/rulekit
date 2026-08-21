@@ -46,16 +46,20 @@ function criterionIntervals(cond: Condition): Analysis | null {
   const neqs = new Map<string, number[]>();
   let nonInterval = 0;
   for (const leaf of leaves) {
-    if (isNumericIntervalLeaf(leaf)) {
-      const prev = intervals.get(leaf.fact) ?? FULL;
-      intervals.set(leaf.fact, intersect(prev, fromLeaf(leaf.op as "eq" | "gt" | "gte" | "lt" | "lte", leaf.value)));
-      continue;
-    }
-    nonInterval += 1;
     // `neq v` carries no interval of its own (it punches a hole, which is not an
     // interval), but it does decide the one case interval arithmetic can see: an
     // interval already narrowed to the single point `v`.
-    if (leaf.op === "neq") neqs.set(leaf.fact, [...(neqs.get(leaf.fact) ?? []), leaf.value]);
+    if (leaf.op === "neq") {
+      nonInterval += 1;
+      neqs.set(leaf.fact, [...(neqs.get(leaf.fact) ?? []), leaf.value]);
+      continue;
+    }
+    if (!isNumericIntervalLeaf(leaf)) {
+      nonInterval += 1;
+      continue;
+    }
+    const prev = intervals.get(leaf.fact) ?? FULL;
+    intervals.set(leaf.fact, intersect(prev, fromLeaf(leaf.op as "eq" | "gt" | "gte" | "lt" | "lte", leaf.value)));
   }
   return { intervals, neqs, singleFactComplete: intervals.size === 1 && nonInterval === 0 };
 }

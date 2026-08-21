@@ -7,7 +7,12 @@
  *
  *   1. the `quote` appears **verbatim** in the source document;
  *   2. the `value` parses to the fact model's declared type and unit;
- *   3. the fact name exists in the fact model.
+ *   3. the fact name exists in the fact model;
+ *   4. the cited document is about **this patient**.
+ *
+ * (4) is the wrong-chart error, and a provenance gate that does not catch it is
+ * not a provenance gate. A document with no patient in its front matter is
+ * exempt — a shared reference sheet is not a chart.
  *
  * Nothing is dropped silently. Every input comes back either in `grounded` or
  * in `rejected` with the reasons attached, because "the model proposed X and we
@@ -23,6 +28,7 @@ export type RejectionReason =
   | "unknown-fact"
   | "missing-source"
   | "doc-not-found"
+  | "wrong-patient"
   | "quote-not-found"
   | "type-mismatch"
   | "unit-mismatch"
@@ -51,11 +57,39 @@ export type ProposedFact = {
   quote: string;
 };
 
+/**
+ * One citable document: the groundable text plus whose chart it is.
+ *
+ * `patient` is optional because not every corpus document belongs to someone —
+ * a protocol appendix or a lab reference range is citable and patient-less.
+ * A document that *does* name a patient can only ground facts about them.
+ */
+export type GroundableDocument = { text: string; patient?: string };
+
 export type GroundingContext = {
   factModel: FactModel;
-  /** doc id -> groundable text (note bodies only — see notes.ts). */
-  documents: Record<string, string>;
+  /** doc id -> groundable document (note bodies only — see notes.ts). */
+  documents: Record<string, GroundableDocument>;
 };
+
+/**
+ * The wrong-chart check. `subject` is the patient the fact is being filed
+ * under; `undefined` means the caller has no patient in hand (e.g. an
+ * extraction run keyed by document), in which case there is nothing to compare.
+ */
+function checkPatient(
+  fact: string,
+  subject: string | undefined,
+  doc: string,
+  document: GroundableDocument | undefined,
+): { reason: RejectionReason; detail: string } | null {
+  if (subject === undefined || document?.patient === undefined) return null;
+  if (document.patient === subject) return null;
+  return {
+    reason: "wrong-patient",
+    detail: `${fact}: source document '${doc}' is ${document.patient}'s chart, not ${subject}'s`,
+  };
+}
 
 export type GroundingResult = { grounded: FactEntry[]; rejected: Rejection[] };
 
@@ -193,13 +227,15 @@ function reject(
  * Run the gate over one extraction call's output.
  *
  * `doc` is the document the call was made against — the model does not get to
- * choose which document its quote is checked against.
+ * choose which document its quote is checked against. `patient`, when given, is
+ * the chart these facts are being filed under; a quote from someone else's note
+ * is rejected as `wrong-patient`.
  */
 export function groundProposedFacts(
   proposed: readonly ProposedFact[],
-  opts: { doc: string; extractedBy: string; ctx: GroundingContext },
+  opts: { doc: string; extractedBy: string; ctx: GroundingContext; patient?: string },
 ): GroundingResult {
-  const { doc, extractedBy, ctx } = opts;
+  const { doc, extractedBy, ctx, patient } = opts;
   const grounded: FactEntry[] = [];
   const rejected: Rejection[] = [];
   const seen = new Set<string>();
@@ -224,12 +260,16 @@ export function groundProposedFacts(
       failures.push({ reason: "missing-source", detail: `${pf.fact}: no quote — a fact that cannot cite its source does not exist` });
     } else if (document === undefined) {
       failures.push({ reason: "doc-not-found", detail: `${pf.fact}: source document '${doc}' is not in the corpus` });
-    } else if (!quoteAppearsVerbatim(pf.quote, document)) {
+    } else if (!quoteAppearsVerbatim(pf.quote, document.text)) {
       failures.push({
         reason: "quote-not-found",
         detail: `${pf.fact}: quote ${JSON.stringify(pf.quote)} does not appear verbatim in '${doc}'`,
       });
     }
+
+    // (4) the cited document is about this patient
+    const wrongPatient = checkPatient(pf.fact, patient, doc, document);
+    if (wrongPatient) failures.push(wrongPatient);
 
     // (2) value parses to the declared type and unit
     let value: FactFileValue | undefined;
@@ -282,7 +322,7 @@ export function groundProposedFacts(
  * Rejected entries are tombstones — often rejected *because* the quote was
  * fabricated — so only their fact name is checked.
  */
-export function verifyFactEntry(entry: FactEntry, ctx: GroundingContext): Rejection[] {
+export function verifyFactEntry(entry: FactEntry, ctx: GroundingContext, patient?: string): Rejection[] {
   const failures: { reason: RejectionReason; detail: string }[] = [];
   const decl = ctx.factModel.facts[entry.fact];
 
@@ -303,12 +343,14 @@ export function verifyFactEntry(entry: FactEntry, ctx: GroundingContext): Reject
     const document = ctx.documents[entry.source.doc];
     if (document === undefined) {
       failures.push({ reason: "doc-not-found", detail: `${entry.fact}: source document '${entry.source.doc}' is not in the corpus` });
-    } else if (!quoteAppearsVerbatim(entry.source.quote, document)) {
+    } else if (!quoteAppearsVerbatim(entry.source.quote, document.text)) {
       failures.push({
         reason: "quote-not-found",
         detail: `${entry.fact}: quote ${JSON.stringify(entry.source.quote)} no longer appears verbatim in '${entry.source.doc}'`,
       });
     }
+    const wrongPatient = checkPatient(entry.fact, patient, entry.source.doc, document);
+    if (wrongPatient) failures.push(wrongPatient);
   }
 
   if (decl !== undefined) {

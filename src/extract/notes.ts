@@ -11,6 +11,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
+import type { GroundableDocument } from "./ground.js";
 
 export type Note = {
   doc: string;
@@ -79,7 +80,13 @@ export function loadNotesDir(dir: string = NOTES_DIR): NoteIndex {
   return index;
 }
 
-/** The `doc -> text` shape the grounding gate consumes. */
-export function toDocuments(notes: NoteIndex): Record<string, string> {
-  return Object.fromEntries(Object.entries(notes).map(([id, n]) => [id, n.body]));
+/**
+ * The `doc -> {patient, text}` shape the grounding gate consumes.
+ *
+ * The patient travels with the body deliberately: a quote is only evidence
+ * about the person the note is about, and the gate cannot check that if the
+ * loader throws the front matter away.
+ */
+export function toDocuments(notes: NoteIndex): Record<string, GroundableDocument> {
+  return Object.fromEntries(Object.entries(notes).map(([id, n]) => [id, { patient: n.patient, text: n.body }]));
 }

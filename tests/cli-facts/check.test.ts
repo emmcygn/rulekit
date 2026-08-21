@@ -36,23 +36,29 @@ describe("facts check", () => {
   });
 
   it("catches a fabricated quote", () => {
-    const r = facts("check", "tests/fixtures/facts-bad/SYN-901.yaml");
+    const r = facts("check", "tests/fixtures/facts-bad/SYN-042.yaml");
     expect(r.stdout).toMatch(/nyha_class.*no longer appears verbatim/);
   });
 
   it("catches a fact name that is not in the fact model", () => {
-    const r = facts("check", "tests/fixtures/facts-bad/SYN-901.yaml");
+    const r = facts("check", "tests/fixtures/facts-bad/SYN-042.yaml");
     expect(r.stdout).toMatch(/frailty_idx.*not declared in fact model/);
   });
 
   it("catches a unit that does not match the declaration", () => {
-    const r = facts("check", "tests/fixtures/facts-bad/SYN-901.yaml");
+    const r = facts("check", "tests/fixtures/facts-bad/SYN-042.yaml");
     expect(r.stdout).toMatch(/lvef.*"ml" does not match declared unit "%"/);
   });
 
   it("flags a measurement outside its declared window", () => {
-    const r = facts("check", "tests/fixtures/facts-bad/SYN-901.yaml");
+    const r = facts("check", "tests/fixtures/facts-bad/SYN-042.yaml");
     expect(r.stdout).toMatch(/egfr.*outside the declared 90d window/);
+  });
+
+  it("catches a quote taken from another patient's chart", () => {
+    const r = facts("check", "tests/fixtures/facts-bad/SYN-007.yaml");
+    expect(r.code).toBe(1);
+    expect(r.stdout).toMatch(/lvef.*'echo-2026-03-12' is SYN-042's chart, not SYN-007's/);
   });
 
   it("reports a schema error with the file it came from", () => {
@@ -63,11 +69,11 @@ describe("facts check", () => {
 
   it("reports every problem in one run rather than stopping at the first", () => {
     const r = facts("check", "tests/fixtures/facts-bad");
-    expect(r.stdout).toMatch(/5 problem\(s\) in 2 file\(s\)/);
+    expect(r.stdout).toMatch(/6 problem\(s\) in 3 file\(s\)/);
   });
 
   it("measures recency against the file's asOf, not today", () => {
-    // SYN-900's egfr is 43 days before its asOf of 2026-03-12 and inside its
+    // SYN-042's egfr is 43 days before its asOf of 2026-03-12 and inside its
     // 90-day window — but well over 90 days before the real today. If the check
     // used the wall clock this would fail.
     expect(facts("check", "tests/fixtures/facts-good").code).toBe(0);

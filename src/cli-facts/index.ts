@@ -87,7 +87,8 @@ function checkFile(path: string, ctx: GroundingContext, now: string): Finding[] 
 
   const findings: Finding[] = [];
   for (const entry of parsed.facts) {
-    for (const rejection of verifyFactEntry(entry, ctx)) {
+    // The file's own `patient` is the chart every entry in it must cite.
+    for (const rejection of verifyFactEntry(entry, ctx, parsed.patient)) {
       findings.push({ file, fact: entry.fact, message: rejection.detail });
     }
     findings.push(...checkRecency(entry, parsed.asOf, file, now));

@@ -41,6 +41,7 @@ for (const note of Object.values(notes)) {
     doc: note.doc,
     extractedBy: `llm/${recorded.model}`,
     ctx,
+    patient: note.patient,
   });
 
   const path = join(outDir, `${note.patient}.yaml`);

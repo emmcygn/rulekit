@@ -1,6 +1,7 @@
-# A clean facts file: every quote still matches its note, every value matches
-# the declared type and unit, every measurement is inside its declared window.
-patient: SYN-900
+# A clean facts file: every quote still matches its note, every quoted note is
+# THIS patient's chart (echo-2026-03-12 is SYN-042's), every value matches the
+# declared type and unit, every measurement is inside its declared window.
+patient: SYN-042
 asOf: 2026-03-12
 facts:
   - fact: age
