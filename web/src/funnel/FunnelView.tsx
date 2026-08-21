@@ -3,6 +3,7 @@ import type { PatientFacts, RuleSet } from "../../../src/core/schema.js";
 import type { Evaluation } from "../engine/api.js";
 import { demographics, DEMO_TRIAL } from "../data/index.js";
 import type { Funnel, FunnelRow } from "./compute.js";
+import { BAND_LABEL, BAND_MARK, DISPLAY_BANDS, displayBandOf } from "./bands.js";
 import { markFor, resultProse } from "./trace.js";
 
 type Props = {
@@ -12,11 +13,29 @@ type Props = {
   ruleSet: RuleSet;
   selected: string | null;
   onSelect: (patient: string | null) => void;
+  /** "as of N of M facts reviewed" — every count here moves with review state. */
+  asOf: string;
 };
 
 const pct = (part: number, whole: number) => (whole === 0 ? 0 : (part / whole) * 100);
 
-export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onSelect }: Props) {
+/** The one status vocabulary, shared by the bar legend, the totals and the marks. */
+const LEGEND: { mark: string; label: string }[] = [
+  { mark: "elig", label: "passes" },
+  { mark: "ne", label: "not evaluable" },
+  { mark: "cr", label: "pending chart review" },
+  { mark: "fail", label: "screen fail" },
+];
+
+export function FunnelView({
+  funnel,
+  evaluations,
+  cohort,
+  ruleSet,
+  selected,
+  onSelect,
+  asOf,
+}: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
   const verbatimOf = (id: string) => ruleSet.criteria.find((c) => c.id === id)?.verbatim ?? "";
   const demographicsOf = (id: string) => {
@@ -24,6 +43,8 @@ export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onS
     return p ? demographics(p) : "";
   };
   const selectedEval = evaluations.find((e) => e.patient === selected) ?? null;
+  const selectedBand = selectedEval ? displayBandOf(selectedEval) : null;
+  const eligible = funnel.bands["potentially-eligible"];
 
   return (
     <div className="view">
@@ -32,21 +53,20 @@ export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onS
         <span className="sub">
           cohort n = {funnel.n} · {DEMO_TRIAL.cohortNote}
         </span>
+        <span className="tok ink3" style={{ marginLeft: "auto" }}>
+          {asOf}
+        </span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column" }}>
         <div className="fgrid fhead">
           <span />
           <span className="legend">
-            <span>
-              <i style={{ background: "var(--fill)" }} /> pass
-            </span>
-            <span>
-              <i style={{ background: "var(--ink)" }} /> screen fail
-            </span>
-            <span>
-              <i className="hatchfill" /> not evaluable
-            </span>
+            {LEGEND.map((l) => (
+              <span key={l.mark}>
+                <span className={`mk mk-${l.mark}`} /> {l.label}
+              </span>
+            ))}
           </span>
           <span className="right-align">
             removed
@@ -60,7 +80,7 @@ export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onS
           </span>
           <span
             className="right-align"
-            title="Patients this criterion alone keeps out: it fails and every other modeled criterion passes. Patients with an unknown elsewhere are not counted — relaxing this criterion would leave them undetermined, not eligible."
+            title="Patients this criterion alone keeps out: it fails and every other criterion the engine can decide passes. Patients with an unknown elsewhere are not counted — relaxing this criterion would leave them undetermined, not eligible."
           >
             sole
             <br />
@@ -82,32 +102,44 @@ export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onS
         ))}
       </div>
 
-      <div className="totals">
-        <span>
-          <span className="mk mk-fail" />
-          <span className="ink2">{funnel.screenFail} screen fail</span>
-        </span>
-        <span>
-          <span className="mk mk-ne" />
-          <span className="ink2" style={{ fontStyle: "italic" }}>
-            {funnel.notEvaluable} not evaluable
+      <div className="totals" data-testid="funnel-totals">
+        {DISPLAY_BANDS.map((band) => (
+          <span key={band}>
+            <span className={`mk mk-${BAND_MARK[band]}`} />
+            <span className={band === "potentially-eligible" ? undefined : "ink2"}>
+              {band === "potentially-eligible" ? (
+                <b>
+                  {funnel.bands[band]} {BAND_LABEL[band]}
+                </b>
+              ) : (
+                `${funnel.bands[band]} ${BAND_LABEL[band]}`
+              )}
+            </span>
           </span>
-        </span>
-        <span>
-          <span className="mk mk-elig" />
-          <b>{funnel.remaining} potentially eligible</b>
-          <span className="ink2">— pending chart review (E4)</span>
+        ))}
+        <span className="ink3" style={{ fontSize: 11.5 }}>
+          every band is the engine's own verdict on the patient · {asOf}
         </span>
       </div>
 
-      <div className="note">
-        Demo projection · {funnel.remaining} potentially eligible → ~40% chart-confirm → ~25%
-        consent. The screen-failure distribution above is what a feasibility questionnaire argues
-        with; the cohort is synthetic, so the absolute numbers are illustrative.
-      </div>
+      {eligible > 0 ? (
+        <div className="note">
+          Demo projection · {eligible} potentially eligible → ~40% chart-confirm → ~25% consent. The
+          rates are illustrative, not measured. The screen-failure distribution above is what a
+          feasibility questionnaire argues with; the cohort is synthetic, so the absolute numbers
+          are illustrative too.
+        </div>
+      ) : (
+        <div className="note">
+          No patient clears every criterion yet ·{" "}
+          {funnel.bands["pending-chart-review"] > 0
+            ? `${funnel.bands["pending-chart-review"]} are waiting on a chart review that only a human can settle. Confirm the fact a chart-review criterion reads in the Review tab and they move.`
+            : "the projection is suppressed until at least one patient reaches the band."}
+        </div>
+      )}
 
       <div className="drill">
-        {selectedEval ? (
+        {selectedEval && selectedBand ? (
           <>
             <div className="drill-head">
               <span className="ink3" style={{ fontSize: 11 }}>
@@ -121,21 +153,10 @@ export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onS
               </span>
               <span
                 style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}
+                data-testid="drill-band"
               >
-                <span
-                  className={`mk mk-${
-                    selectedEval.overall === "ineligible"
-                      ? "fail"
-                      : selectedEval.overall === "eligible"
-                        ? "elig"
-                        : "ne"
-                  }`}
-                />
-                {selectedEval.overall === "ineligible"
-                  ? "screen fail"
-                  : selectedEval.overall === "eligible"
-                    ? "eligible"
-                    : "pending chart review"}
+                <span className={`mk mk-${BAND_MARK[selectedBand]}`} />
+                {BAND_LABEL[selectedBand]}
               </span>
               <button className="tbtn" onClick={() => onSelect(null)}>
                 Clear
@@ -144,7 +165,7 @@ export function FunnelView({ funnel, evaluations, cohort, ruleSet, selected, onS
             <div className="trace">
               {selectedEval.results.map((r) => (
                 <div className="trace-line" key={r.id}>
-                  <span className={`mk mk-${markFor(r.verdict)}`} />
+                  <span className={`mk mk-${markFor(r)}`} />
                   <span>
                     {r.ref ? `${r.ref} ` : ""}
                     {r.id} — {resultProse(r)}
@@ -181,6 +202,7 @@ function Row({
   onSelect: (p: string) => void;
 }) {
   const width = pct(row.entering, n);
+  const allParked = row.unmodeled && row.chartReview === row.entering;
   return (
     <>
       <button className={`fgrid frow${open ? " on" : ""}`} onClick={onToggle}>
@@ -193,18 +215,15 @@ function Row({
         </div>
         <div style={{ width: "100%" }}>
           <div className="bar" style={{ width: `${width}%` }}>
-            {row.unmodeled ? (
-              <div className="hatchfill" style={{ width: "100%" }} />
-            ) : (
-              <>
-                <div className="bar-pass" style={{ width: `${pct(row.pass, row.entering)}%` }} />
-                <div className="hatchfill" style={{ width: `${pct(row.unknown, row.entering)}%` }} />
-                <div className="bar-fail" style={{ width: `${pct(row.fail, row.entering)}%` }} />
-              </>
-            )}
+            <div className="bar-pass" style={{ width: `${pct(row.pass, row.entering)}%` }} />
+            <div
+              className={row.unmodeled ? "bar-cr" : "hatchfill"}
+              style={{ width: `${pct(row.unknown, row.entering)}%` }}
+            />
+            <div className="bar-fail" style={{ width: `${pct(row.fail, row.entering)}%` }} />
           </div>
         </div>
-        {row.unmodeled ? (
+        {allParked ? (
           <div
             style={{ gridColumn: "3 / span 3", fontSize: 11.5, fontStyle: "italic" }}
             className="ink2"
@@ -221,6 +240,12 @@ function Row({
           </>
         )}
       </button>
+      {row.unmodeled && !allParked && (
+        <div className="ink2" style={{ fontSize: 11.5, fontStyle: "italic", padding: "0 0 6px" }}>
+          chart review · {row.chartReviewResolved} of {row.entering} settled from a confirmed fact ·{" "}
+          {row.chartReview} still waiting
+        </div>
+      )}
       {open && (
         <div className="patient-chips">
           {(["fail", "unknown", "pass"] as const).flatMap((bucket) =>
@@ -231,7 +256,7 @@ function Row({
                 onClick={() => onSelect(p)}
               >
                 <span
-                  className={`mk mk-${bucket === "pass" ? "elig" : bucket === "fail" ? "fail" : "ne"}`}
+                  className={`mk mk-${bucket === "pass" ? "elig" : bucket === "fail" ? "fail" : row.unmodeled ? "cr" : "ne"}`}
                 />
                 {p}
               </button>

@@ -15,6 +15,13 @@ export type ProposedFactCard = {
   fact: string;
   value: string | number | boolean;
   unit?: string;
+  /**
+   * The value already on record for this fact, when there is one. Confirming
+   * over it is an override, not a fill-in, and the card shows both before the
+   * click — a 20-point eGFR difference from a different draw is exactly the
+   * thing a reviewer must see rather than discover afterwards.
+   */
+  structured?: string | number | boolean;
   /** The model's self-estimate, 0-1. Orders the queue and flags "unsure". Never auto-confirms. */
   confidence: number;
   /** Source document id. */
@@ -24,14 +31,23 @@ export type ProposedFactCard = {
   /** Surrounding note text the quote is highlighted within. */
   noteContext: string;
   /**
-   * Would deciding this fact flip the patient's overall verdict? Impact sorts
-   * ahead of confidence — a 0.99 fact that changes nothing can wait behind a
-   * 0.6 fact that decides enrollment.
+   * Would deciding this fact flip the patient's band? Impact sorts ahead of
+   * confidence — a 0.99 fact that changes nothing can wait behind a 0.6 fact
+   * that decides enrollment.
    */
   flipsVerdict: boolean;
-  /** Short human phrase for the impact badge, e.g. "undetermined → ineligible". */
+  /** Short human phrase for the impact badge, e.g. "not evaluable → screen fail". */
   impact?: string;
+  /**
+   * Does any criterion in the loaded rule set read this fact? When false the
+   * card is chart-review context: worth recording, but it will never move a
+   * number, and saying so is the difference between an honest queue and one
+   * that congratulates a reviewer for an entry the engine ignores.
+   */
+  usedByRules?: boolean;
 };
+
+export type EditCheck = { ok: true } | { ok: false; message: string };
 
 export type ReviewQueueProps = {
   items: ProposedFactCard[];
@@ -39,6 +55,14 @@ export type ReviewQueueProps = {
   /** The human supplies a value; provenance keeps the original quote. */
   onEdit: (item: ProposedFactCard, value: string) => void;
   onReject: (item: ProposedFactCard) => void;
+  /**
+   * Refuse a correction the engine could not use. Save stays blocked and the
+   * message is shown; there is no path where the card reports success and the
+   * engine silently keeps the model's value.
+   */
+  validate?: (item: ProposedFactCard, draft: string) => EditCheck;
+  /** Values to offer instead of a free-text box, for facts with a closed set. */
+  optionsFor?: (item: ProposedFactCard) => string[] | undefined;
   /** Below this, a card is flagged "unsure". Spec §11 sets it at 0.8. */
   unsureBelow?: number;
 };

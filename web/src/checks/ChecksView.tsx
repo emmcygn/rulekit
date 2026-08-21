@@ -5,6 +5,8 @@ type Props = {
   findings: Finding[];
   spans: Map<string, CriterionSpan>;
   rulesetVersion: string;
+  /** The editor's document does not parse: name no version, and say what these are. */
+  stale?: boolean;
   onJump: (line: number) => void;
 };
 
@@ -37,7 +39,7 @@ const TOKEN: Record<Finding["level"], string> = {
   info: "info",
 };
 
-export function ChecksView({ findings, spans, rulesetVersion, onJump }: Props) {
+export function ChecksView({ findings, spans, rulesetVersion, stale = false, onJump }: Props) {
   const blocking = findings.filter((f) => f.level === "error").length;
 
   return (
@@ -45,13 +47,25 @@ export function ChecksView({ findings, spans, rulesetVersion, onJump }: Props) {
       <div className="vhead" style={{ paddingBottom: 14 }}>
         <h2>Checks</h2>
         <span className="sub">
-          static analysis of ruleset v{rulesetVersion} · runs on every edit · gates CI via{" "}
-          <span className="mono">rules check</span>
+          {stale ? (
+            <>
+              the editor's document does not parse · the parse error is live, everything under it is
+              from the <b>last valid version</b>
+            </>
+          ) : (
+            <>
+              static analysis of ruleset v{rulesetVersion} · runs on every edit · gates CI via{" "}
+              <span className="mono">rules check</span>
+            </>
+          )}
         </span>
       </div>
 
       {findings.length === 0 && (
-        <div className="note">No findings. The rule set is schema-clean and free of overlaps.</div>
+        <div className="note">
+          0 conflicts found. Static analysis covers single-fact interval logic, the fact model and
+          the code systems — it does not prove the rule set correct.
+        </div>
       )}
 
       {findings.map((f, i) => {
@@ -91,7 +105,14 @@ export function ChecksView({ findings, spans, rulesetVersion, onJump }: Props) {
             </div>
             <div
               className="finding-body"
-              style={{ color: f.level === "info" ? "var(--ink-2)" : "var(--ink)" }}
+              style={{
+                color: f.level === "info" ? "var(--ink-2)" : "var(--ink)",
+                // A parser dump carries its own line breaks and caret; collapsing
+                // them leaves the ^^ pointing at nothing (uiux M8).
+                ...(f.code === "schema" || f.code === "fact-model-schema"
+                  ? { whiteSpace: "pre-wrap", fontFamily: "var(--mono)", fontSize: 12 }
+                  : {}),
+              }}
             >
               {f.message}
             </div>

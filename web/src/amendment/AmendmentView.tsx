@@ -1,9 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { parseRuleSet, type PatientFacts } from "../../../src/core/schema.js";
 import type { Engine } from "../engine/api.js";
-import { cohortCounts } from "../funnel/compute.js";
+import { BAND_LABEL, BAND_MARK } from "../funnel/bands.js";
 import { demographics, DEMO_TRIAL, type EnrolledParticipant } from "../data/index.js";
-import { criterionOrder, enrolledImpact, groupFlips, structuralDiff } from "./compute.js";
+import { copyText } from "../util/io.js";
+import {
+  amendmentImpact,
+  criterionOrder,
+  deltaLine,
+  enrolledImpact,
+  groupFlips,
+  structuralDiff,
+  type BandFlip,
+} from "./compute.js";
 
 type Props = {
   rulesetYaml: string;
@@ -12,6 +21,8 @@ type Props = {
   enrolled: EnrolledParticipant[];
   engine: Engine;
   onInspectPatient: (patient: string) => void;
+  /** "as of N of M facts reviewed" — the review state these numbers stand on. */
+  asOf: string;
 };
 
 export function AmendmentView({
@@ -21,36 +32,36 @@ export function AmendmentView({
   enrolled,
   engine,
   onInspectPatient,
+  asOf,
 }: Props) {
   const prior = useMemo(() => parseRuleSet(priorYaml), [priorYaml]);
   const current = useMemo(() => parseRuleSet(rulesetYaml), [rulesetYaml]);
   const changes = useMemo(() => structuralDiff(prior, current), [prior, current]);
+  const [copied, setCopied] = useState(false);
 
-  const flips = useMemo(
-    () => engine.behavioralDiff(priorYaml, rulesetYaml, cohort),
-    [engine, priorYaml, rulesetYaml, cohort],
-  );
-  const groups = useMemo(() => groupFlips(flips, criterionOrder(current)), [flips, current]);
-
-  const before = useMemo(
-    () => cohortCounts(cohort.map((p) => engine.evalPatient(priorYaml, p))),
+  const beforeEvals = useMemo(
+    () => cohort.map((p) => engine.evalPatient(priorYaml, p)),
     [cohort, engine, priorYaml],
   );
-  const after = useMemo(
-    () => cohortCounts(cohort.map((p) => engine.evalPatient(rulesetYaml, p))),
+  const afterEvals = useMemo(
+    () => cohort.map((p) => engine.evalPatient(rulesetYaml, p)),
     [cohort, engine, rulesetYaml],
   );
 
-  const afterEvals = useMemo(
-    () => new Map(cohort.map((p) => [p.patient, engine.evalPatient(rulesetYaml, p)])),
-    [cohort, engine, rulesetYaml],
+  // One source: the flip list, the headline count and the deltas are all this.
+  const impact = useMemo(() => amendmentImpact(beforeEvals, afterEvals), [beforeEvals, afterEvals]);
+  const groups = useMemo(
+    () => groupFlips(impact.flips, criterionOrder(current)),
+    [impact.flips, current],
   );
+
+  const afterBy = useMemo(() => new Map(afterEvals.map((e) => [e.patient, e])), [afterEvals]);
   const demographicsOf = (id: string) => {
     const p = cohort.find((c) => c.patient === id);
     return p ? demographics(p) : "";
   };
   const evidenceFor = (patient: string, criterionId: string) =>
-    afterEvals.get(patient)?.results.find((r) => r.id === criterionId)?.trace?.detail ?? "";
+    afterBy.get(patient)?.results.find((r) => r.id === criterionId)?.trace?.detail ?? "";
 
   const impacted = useMemo(
     () =>
@@ -68,11 +79,60 @@ export function AmendmentView({
 
   const refOf = (id: string) => current.criteria.find((c) => c.id === id)?.ref ?? "";
 
+  const summary = (): string =>
+    [
+      `${DEMO_TRIAL.id} — amendment impact (${DEMO_TRIAL.amendment.fromLabel} → ${DEMO_TRIAL.amendment.toLabel})`,
+      `ruleset v${prior.rulesetVersion} → v${current.rulesetVersion} · cohort n = ${cohort.length} · ${asOf}`,
+      "",
+      "Rule changes:",
+      ...changes.map(
+        (c) =>
+          `  ${c.kind === "added" ? "+" : c.kind === "removed" ? "-" : "~"} ${c.id} [${c.ref ?? "—"}] ${
+            c.kind === "changed" ? c.summary : `"${c.verbatim}"`
+          }`,
+      ),
+      "",
+      `In the future screening pool, ${impact.flips.length} of ${cohort.length} change outcome (${deltaLine(impact)}).`,
+      "",
+      ...groups.flatMap((g) => [
+        `${refOf(g.criterionId)} ${g.criterionId} — ${g.flips.length} flip${g.flips.length === 1 ? "" : "s"}`,
+        ...g.flips.map(
+          (f) =>
+            `  ${f.patient}  ${demographicsOf(f.patient)}  ${BAND_LABEL[f.from]} → ${BAND_LABEL[f.to]}  ${evidenceFor(f.patient, g.criterionId)}`.trimEnd(),
+        ),
+      ]),
+      ...(impacted.length === 0
+        ? []
+        : [
+            "",
+            "Already enrolled — requires PI / IRB review:",
+            ...impacted.map(
+              (p) =>
+                `  ${p.participant} randomized ${p.randomized} · ${p.reasons.map((r) => r.detail).join("; ")} — now meets ${p.reasons.map((r) => r.ref ?? r.id).join(", ")}`,
+            ),
+            `  continuation / re-consent decision per protocol §5.4 · ${impacted.length} participant${impacted.length === 1 ? "" : "s"}`,
+          ]),
+      "",
+      "Synthetic protocol and synthetic patients — not for clinical, feasibility or research screening use.",
+    ].join("\n");
+
   return (
     <div className="view">
       <div className="vhead">
         <h2>Amendment impact</h2>
         <span className="sub">behavioral diff across the cohort · n = {cohort.length}</span>
+        <button
+          className="tbtn"
+          style={{ marginLeft: "auto" }}
+          onClick={() => {
+            void copyText(summary()).then((ok) => {
+              setCopied(ok);
+              setTimeout(() => setCopied(false), 2000);
+            });
+          }}
+        >
+          {copied ? "Copied" : "Copy summary"}
+        </button>
       </div>
 
       <div className="versionbar">
@@ -117,13 +177,15 @@ export function AmendmentView({
         ))}
       </div>
 
-      <div style={{ fontSize: 13 }}>
-        In the future screening pool, <b>{flips.length} of {cohort.length}</b> change outcome{" "}
-        <span className="ink2">
-          (potentially eligible {before.potentiallyEligible} → {after.potentiallyEligible}, screen
-          fail {before.screenFail} → {after.screenFail})
-        </span>
-        .
+      <div style={{ fontSize: 13 }} data-testid="amendment-headline">
+        In the future screening pool,{" "}
+        <b>
+          {impact.flips.length} of {cohort.length}
+        </b>{" "}
+        change outcome <span className="ink2">({deltaLine(impact)})</span>.
+        <div className="ink3" style={{ fontSize: 11.5, marginTop: 2 }}>
+          every patient named below is one of those {impact.flips.length} · {asOf}
+        </div>
       </div>
 
       <div style={{ minHeight: 0 }}>
@@ -139,7 +201,7 @@ export function AmendmentView({
                 ? `${refOf(g.criterionId)} ${g.criterionId} — ${g.flips.length} flip${g.flips.length === 1 ? "" : "s"}`
                 : `unattributed — ${g.flips.length}`}
             </div>
-            {g.flips.map((f) => (
+            {g.flips.map((f: BandFlip) => (
               <button
                 key={f.patient}
                 className="flip-row"
@@ -149,8 +211,13 @@ export function AmendmentView({
                   {f.patient}
                 </span>
                 <span className="ink2">{demographicsOf(f.patient)}</span>
-                <span className="mono" style={{ fontSize: 11.5 }}>
-                  {evidenceFor(f.patient, g.criterionId) || `${f.from} → ${f.to}`}
+                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5 }}>
+                  <span className={`mk mk-${BAND_MARK[f.from]}`} />
+                  <span className="ink2">{BAND_LABEL[f.from]}</span>
+                  <span className="ink3">→</span>
+                  <span className={`mk mk-${BAND_MARK[f.to]}`} />
+                  <span>{BAND_LABEL[f.to]}</span>
+                  <span className="mono ink2">{evidenceFor(f.patient, g.criterionId)}</span>
                 </span>
               </button>
             ))}

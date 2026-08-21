@@ -58,6 +58,18 @@ monaco.editor.defineTheme(RULEKIT_THEME, {
     "editorInfo.foreground": "#B3AB9B",
     "scrollbarSlider.background": "#D6D0C450",
     "scrollbarSlider.hoverBackground": "#D6D0C4A0",
+    // Bracket colorization is switched off in the editor options, but a theme
+    // that leaves these undefined still falls back to Monaco's blue/green/gold
+    // if anything re-enables it. Six ink tones, no hue.
+    "editorBracketHighlight.foreground1": "#7E776A",
+    "editorBracketHighlight.foreground2": "#7E776A",
+    "editorBracketHighlight.foreground3": "#7E776A",
+    "editorBracketHighlight.foreground4": "#7E776A",
+    "editorBracketHighlight.foreground5": "#7E776A",
+    "editorBracketHighlight.foreground6": "#7E776A",
+    "editorBracketHighlight.unexpectedBracket.foreground": "#A6431E",
+    "editorBracketPairGuide.background1": "#EDE9E1",
+    "editorBracketPairGuide.activeBackground1": "#C9C2B4",
   },
 });
 

@@ -157,10 +157,81 @@
   margin-bottom: calc(var(--step) * 2);
 }
 
-.rk-card__quote mark {
-  background: #f3e4c8;
+/*
+ * The grounded quote. Not a highlighter: a rule under the words, in the accent,
+ * because this is the one span on the card the reviewer is being asked to check.
+ * (The shipped build used a yellow wash, #F3E4C8 — a sixth hue in a four-hue
+ * system, and the loudest thing on a page whose accent is reserved for actions.)
+ */
+.rk-card__quote mark,
+.quote-hl {
+  background: none;
   color: var(--ink);
-  padding: 0 2px;
+  box-shadow: inset 0 -2px 0 var(--accent);
+  padding: 0 1px;
+}
+
+.rk-card__elide {
+  color: var(--ink-2);
+}
+
+.rk-card__expand {
+  display: block;
+  margin-top: calc(var(--step) * 2);
+  font: inherit;
+  font-size: 12px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Chart-review context: recordable, but no criterion reads it, so it never
+   claims impact and never counts as a decision the funnel reflects. */
+.rk-card__unused {
+  font-size: 11px;
+  color: var(--ink-2);
+  border: 1px dashed var(--ink-2);
+  border-radius: var(--radius);
+  padding: 1px calc(var(--step) * 1.5);
+}
+
+/* The value already on record, beside the one being proposed. Confirming over a
+   different number is an override and the card says the word. */
+.rk-card__override {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 2);
+  margin-top: calc(var(--step) * 2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.rk-card__override .rk-card__doc {
+  display: inline;
+  margin: 0;
+}
+
+.rk-card__structured {
+  text-decoration: line-through;
+  color: var(--ink-2);
+}
+
+.rk-card__proposed {
+  font-weight: 600;
+}
+
+.rk-card__override-note {
+  font-family: var(--font-sans);
+  color: var(--ink-2);
+}
+
+.rk-card__override--conflict .rk-card__override-note {
+  color: var(--ink);
+  font-weight: 500;
 }
 
 .rk-card__ungrounded {
@@ -175,6 +246,11 @@
   margin-top: calc(var(--step) * 3);
 }
 
+/*
+ * One accent object per card. Confirm is the primary action and wears the
+ * accent; Edit and Reject are neutral, because three accent-coloured buttons in
+ * a row make "reject" look as recommended as "confirm".
+ */
 .rk-btn {
   font-family: inherit;
   font-size: 13px;
@@ -191,6 +267,17 @@
   color: var(--paper);
 }
 
+.rk-btn--quiet {
+  border-color: var(--hairline);
+  color: var(--ink-2);
+  background: var(--paper);
+}
+
+.rk-btn--quiet:hover {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+
 .rk-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -198,6 +285,8 @@
 
 .rk-edit {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: calc(var(--step) * 2);
   margin-top: calc(var(--step) * 3);
 }
@@ -210,4 +299,20 @@
   border-radius: var(--radius);
   background: #fff;
   color: var(--ink);
+}
+
+.rk-edit__input--bad {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.rk-edit__error {
+  flex-basis: 100%;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.rk-review :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

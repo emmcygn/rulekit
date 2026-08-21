@@ -25,6 +25,13 @@ export type CriterionResult = {
   verdict: "pass" | "fail" | "unknown";
   unmodeled: boolean;
   trace?: TraceNode;
+  /**
+   * Set by the workbench's chart-review pass (`./chart-review.ts`) when a human
+   * has confirmed the fact that settles an unmodeled criterion. Core never
+   * produces this; it records a reviewer's decision, not an engine verdict, and
+   * every surface that shows the verdict must show this alongside it.
+   */
+  chartReview?: { fact: string; value: string; detail: string };
 };
 export type Evaluation = {
   patient: string;

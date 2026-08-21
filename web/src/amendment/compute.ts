@@ -6,6 +6,14 @@
  */
 import type { Condition, Criterion, RuleSet } from "../../../src/core/schema.js";
 import type { Evaluation, Flip } from "../engine/api.js";
+import {
+  BAND_LABEL,
+  DISPLAY_BANDS,
+  displayBandCounts,
+  displayBandOf,
+  type DisplayBand,
+  type DisplayBandCounts,
+} from "../funnel/bands.js";
 
 export type StructuralChange = {
   kind: "added" | "removed" | "changed";
@@ -100,15 +108,18 @@ export function structuralDiff(from: RuleSet, to: RuleSet): StructuralChange[] {
   return out;
 }
 
-export type FlipGroup = { criterionId: string; flips: Flip[] };
+export type FlipGroup<F = Flip> = { criterionId: string; flips: F[] };
 
 /**
  * One group per flip: a flip with several responsible criteria is filed under
  * the earliest one in rule-set order, so the group sizes sum to the flip count.
  */
-export function groupFlips(flips: Flip[], order: string[]): FlipGroup[] {
+export function groupFlips<F extends { responsible: string[] }>(
+  flips: readonly F[],
+  order: string[],
+): FlipGroup<F>[] {
   const rank = new Map(order.map((id, i) => [id, i]));
-  const groups = new Map<string, Flip[]>();
+  const groups = new Map<string, F[]>();
   for (const flip of flips) {
     const primary =
       [...flip.responsible].sort(
@@ -122,6 +133,72 @@ export function groupFlips(flips: Flip[], order: string[]): FlipGroup[] {
     .map(([criterionId, f]) => ({ criterionId, flips: f }))
     .sort((a, b) => b.flips.length - a.flips.length || (rank.get(a.criterionId) ?? Infinity) - (rank.get(b.criterionId) ?? Infinity));
 }
+
+/* ------------------------------------------------------- band transitions */
+
+/**
+ * One patient whose band moved between the two versions.
+ *
+ * The shipped headline read "3 of 10 change outcome (potentially eligible 5 → 3,
+ * screen fail 2 → 4)" — deltas of −2 and +2 with not-evaluable flat, i.e. two
+ * patients, not three (uiux B5). It disagreed with itself because the count came
+ * from the engine's flip list and the deltas came from a differently-banded
+ * waterfall. Both now come from `displayBandOf`, so the headline is the length
+ * of the list underneath it by construction.
+ */
+export type BandFlip = {
+  patient: string;
+  from: DisplayBand;
+  to: DisplayBand;
+  /** Criteria whose verdict changed between the versions. */
+  responsible: string[];
+};
+
+export type AmendmentImpact = {
+  before: DisplayBandCounts;
+  after: DisplayBandCounts;
+  flips: BandFlip[];
+  /** Every band that moved, for the delta line. */
+  moved: DisplayBand[];
+};
+
+export function amendmentImpact(
+  beforeEvals: readonly Evaluation[],
+  afterEvals: readonly Evaluation[],
+): AmendmentImpact {
+  const afterBy = new Map(afterEvals.map((e) => [e.patient, e]));
+  const flips: BandFlip[] = [];
+
+  for (const b of beforeEvals) {
+    const a = afterBy.get(b.patient);
+    if (a === undefined) continue;
+    const from = displayBandOf(b);
+    const to = displayBandOf(a);
+    if (from === to) continue;
+    const beforeVerdicts = new Map(b.results.map((r) => [r.id, r.verdict]));
+    const responsible = a.results
+      .filter((r) => beforeVerdicts.get(r.id) !== r.verdict)
+      .map((r) => r.id);
+    flips.push({ patient: b.patient, from, to, responsible });
+  }
+
+  const before = displayBandCounts(beforeEvals);
+  const after = displayBandCounts(afterEvals);
+  return {
+    before,
+    after,
+    flips,
+    moved: DISPLAY_BANDS.filter((band) => before[band] !== after[band]),
+  };
+}
+
+/** "potentially eligible 0 → 1, screen fail 7 → 6" — only the bands that moved. */
+export const deltaLine = (impact: AmendmentImpact): string =>
+  impact.moved.length === 0
+    ? "no band changes size"
+    : impact.moved
+        .map((b) => `${BAND_LABEL[b]} ${impact.before[b]} → ${impact.after[b]}`)
+        .join(", ");
 
 export type EnrolledRow = {
   participant: string;

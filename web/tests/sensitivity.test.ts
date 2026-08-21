@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { parseRuleSet } from "../../src/core/schema.js";
 import { realEngine } from "../src/engine/real.js";
 import { cohortCounts } from "../src/funnel/compute.js";
+import { displayBandCounts } from "../src/funnel/bands.js";
+import { resolveChartReview } from "../src/engine/chart-review.js";
 import {
   factValues,
   histogram,
@@ -9,11 +11,14 @@ import {
   relaxedValue,
   setKnob,
   topYield,
+  yieldsAreRanked,
 } from "../src/sensitivity/compute.js";
 import { DEMO_COHORT, DEMO_RULESET_CURRENT } from "../src/data/index.js";
 
 const targets = numericTargets(DEMO_RULESET_CURRENT);
 const evalAll = (yaml: string) => DEMO_COHORT.map((p) => realEngine.evalPatient(yaml, p));
+const evalResolved = (yaml: string) =>
+  DEMO_COHORT.map((p) => resolveChartReview(realEngine.evalPatient(yaml, p), p));
 
 describe("numericTargets", () => {
   it("finds every draggable knob in the rule set", () => {
@@ -72,34 +77,61 @@ describe("relaxedValue", () => {
 });
 
 describe("live re-count", () => {
+  const renal = targets.find((t) => t.criterionId === "renal-safety")!;
+
   it("returns the 40–45 band to the pool when the renal exclusion is relaxed", () => {
-    const before = cohortCounts(evalAll(DEMO_RULESET_CURRENT));
-    const renal = targets.find((t) => t.criterionId === "renal-safety")!;
-    const after = cohortCounts(evalAll(setKnob(DEMO_RULESET_CURRENT, renal.path, 40)));
-    expect(before.potentiallyEligible).toBe(3);
-    expect(after.potentiallyEligible).toBe(4);
-    expect(after.screenFail).toBe(before.screenFail - 1);
-    expect(after.notEvaluable).toBe(before.notEvaluable);
+    // SYN-019 (42) and SYN-042 (41) come back — the same two patients the CLI's
+    // `diff` reports, in the same direction (operator M1).
+    const before = displayBandCounts(evalResolved(DEMO_RULESET_CURRENT));
+    const after = displayBandCounts(evalResolved(setKnob(DEMO_RULESET_CURRENT, renal.path, 40)));
+    expect(before["screen-fail"]).toBe(7);
+    expect(after["screen-fail"]).toBe(5);
+    expect(after["pending-chart-review"]).toBe(before["pending-chart-review"] + 1);
+    expect(after["not-evaluable"]).toBe(before["not-evaluable"] + 1);
   });
 
   it("tightening a threshold moves patients the other way", () => {
-    const renal = targets.find((t) => t.criterionId === "renal-safety")!;
-    const after = cohortCounts(evalAll(setKnob(DEMO_RULESET_CURRENT, renal.path, 60)));
-    expect(after.potentiallyEligible).toBe(1);
+    const after = displayBandCounts(evalResolved(setKnob(DEMO_RULESET_CURRENT, renal.path, 60)));
+    expect(after["screen-fail"]).toBe(9);
+  });
+
+  it("keeps the shared three-band vocabulary identical to the CLI's", () => {
+    const counts = cohortCounts(evalAll(DEMO_RULESET_CURRENT));
+    expect(counts).toEqual({ potentiallyEligible: 0, screenFail: 7, notEvaluable: 3 });
   });
 });
 
 describe("topYield", () => {
   const ranked = topYield(DEMO_RULESET_CURRENT, DEMO_COHORT, realEngine);
 
-  it("ranks criteria by how many patients relaxing them returns", () => {
-    expect(ranked.map((r) => r.criterionId)).toEqual([
+  it("ranks criteria by how many patients relaxing them returns from screen fail", () => {
+    // The criterion the coordinator came to ask about is now first, because it
+    // is the one that costs the most patients (operator M4: E3 was missing
+    // entirely, and a +1 age relaxation to 13 was ranked #1 — uiux M7).
+    expect(ranked[0]!.criterionId).toBe("renal-safety");
+    expect(ranked[0]!.delta).toBe(2);
+    expect(ranked.map((r) => r.delta)).toEqual([...ranked.map((r) => r.delta)].sort((a, b) => b - a));
+  });
+
+  it("lists every numeric knob, including the ones that buy nothing", () => {
+    expect(ranked.map((r) => r.criterionId).sort()).toEqual([
       "age-min",
-      "lvef-max",
       "anticoag-washout",
+      "egfr-min",
+      "lvef-max",
       "renal-safety",
     ]);
-    expect(ranked.map((r) => r.delta)).toEqual([...ranked.map((r) => r.delta)].sort((a, b) => b - a));
+    expect(ranked.find((r) => r.criterionId === "egfr-min")!.delta).toBe(0);
+  });
+
+  it("suppresses the ranking when the top yields tie", () => {
+    expect(yieldsAreRanked(ranked)).toBe(true);
+    expect(yieldsAreRanked([])).toBe(false);
+    const tied = [
+      { delta: 1 },
+      { delta: 1 },
+    ] as unknown as Parameters<typeof yieldsAreRanked>[0];
+    expect(yieldsAreRanked(tied)).toBe(false);
   });
 
   it("describes the move it priced", () => {
@@ -108,10 +140,7 @@ describe("topYield", () => {
     expect(lvef.to).toBe(45);
   });
 
-  it("drops knobs that buy nothing", () => {
-    // Every fixture clears eGFR >= 30, so loosening I3 returns nobody.
-    expect(ranked.map((r) => r.criterionId)).not.toContain("egfr-min");
-  });
+
 });
 
 describe("histogram", () => {
