@@ -225,6 +225,13 @@ Zero eligible is the correct answer, not a bug: COMMANDER HF's real criteria
 against 100 synthetic primary-care patients should find approximately nobody.
 `screen.json` carries the full per-criterion trace for every patient.
 
+Add `--report screen.md` for the feasibility write-up: band counts, a
+per-criterion attrition table (sequential / fails-alone / sole-reason), and the
+sole-disqualifier section — the list of patients a site would gain by relaxing
+one criterion, which is the argument you attach to a sponsor's feasibility
+questionnaire. Every number derives from the engine's per-patient verdict, so
+the report and the workbench can never tell different stories.
+
 ### 5. Check the patient-side facts
 
 ```console
