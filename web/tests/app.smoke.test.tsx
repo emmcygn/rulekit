@@ -55,8 +55,24 @@ describe("workbench shell", () => {
     render(<App />);
     fireEvent.click(tab("Checks"));
     expect(screen.getByText("contradictory band")).toBeDefined();
-    expect(screen.getByText(/contradictory band \[30, 45\)/)).toBeDefined();
+    // Core's evidence string, rendered verbatim — including U+2212 and ∞.
+    expect(
+      screen.getByText(
+        "egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)",
+      ),
+    ).toBeDefined();
     expect(screen.getByText(/1 conflict blocks release/)).toBeDefined();
+  });
+
+  it("titles every finding the real engine emits, and counts them in the status bar", () => {
+    render(<App />);
+    fireEvent.click(tab("Checks"));
+    expect(screen.getByText("unit mismatch")).toBeDefined();
+    expect(screen.getByText("unmodeled criterion")).toBeDefined();
+    // No raw code leaks through as a title.
+    expect(screen.queryByText("unmodeled-criterion")).toBeNull();
+    expect(screen.getByText(/✕ 1 conflict$/)).toBeDefined();
+    expect(screen.getByText(/! 1 warning$/)).toBeDefined();
   });
 
   it("renders the review tab as a phase-4 placeholder", () => {
