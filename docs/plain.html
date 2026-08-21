@@ -288,6 +288,133 @@
   .buildlist{display:flex;flex-direction:column;gap:12px;margin:22px 0}
   .buildlist .note{border-left-color:var(--ink)}
 
+  /* ================================================================ */
+  /* ============ ADDED: motion pass ================================ */
+  /* ================================================================ */
+
+  /* ---- full-bleed scaffolding (no 100vw, no negative margins) ---- */
+  .bsec{position:relative;background:var(--chrome)}
+  .bstage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;padding:24px 20px;background:var(--chrome)}
+  .bstage-inner{position:relative;z-index:3;width:100%;max-width:640px;margin:0 auto;text-align:center}
+  .bcap{font-family:var(--mono);font-size:12.5px;line-height:1.65;color:var(--ink2);
+    margin:10px auto 0;max-width:48ch;text-wrap:pretty}
+  .bstage-inner .kicker{margin-bottom:6px}
+
+  /* ---- 1a · hero full-bleed interval motif ---- */
+  #hero{position:relative;overflow:hidden}
+  #hero > .wrap-wide{position:relative;z-index:1}
+  .hero-bleed{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+    display:flex;align-items:center;justify-content:center}
+  .hero-bleed svg{width:100%;height:100%;display:block}
+  .hb-base{transform-box:fill-box;transform-origin:center center;animation:hbGrow 1s cubic-bezier(.22,.7,.3,1) .25s both}
+  .hb-r1{transform-box:fill-box;transform-origin:left center;animation:hbGrow 1.25s cubic-bezier(.22,.7,.3,1) .6s both}
+  .hb-r2{transform-box:fill-box;transform-origin:right center;animation:hbGrow 1.25s cubic-bezier(.22,.7,.3,1) .95s both}
+  .hb-ov{animation:hIn 1s ease 1.85s both}
+  @keyframes hbGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @keyframes hbPull{from{transform:translate3d(0,-3%,0) scale(1.08)}to{transform:translate3d(0,12%,0) scale(1)}}
+  @keyframes thRun{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,calc(100vh - 64px),0)}}
+  @keyframes thCap{from{transform:translate3d(0,24px,0)}to{transform:translate3d(0,calc(100vh - 40px),0)}}
+  @supports (animation-timeline: view()){
+    .hero-bleed{animation:hbPull linear both;animation-timeline:view();animation-range:cover 0% cover 100%}
+  }
+  @supports (animation-timeline: scroll(root block)){
+    .th-run{animation:thRun linear both;animation-timeline:scroll(root block)}
+    .th-cap{animation:thCap linear both;animation-timeline:scroll(root block)}
+  }
+
+  /* ---- 1b · chapter sweep: paper leaves, chrome arrives ---- */
+  .sw-sheet{position:absolute;left:0;right:0;top:0;bottom:0;z-index:1;background:var(--paper);
+    transform:translate3d(0,calc(var(--p,0) * -100%),0)}
+  .sw-sheet::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--rule)}
+  .sw-sheet::before{content:'';position:absolute;left:0;bottom:-1px;width:22%;height:2px;background:var(--accent)}
+  .sweep-in .sw-sheet{transform:translate3d(0,calc((1 - var(--p,0)) * 100%),0)}
+  .sweep-in .sw-sheet::after{top:0;bottom:auto}
+  .sweep-in .sw-sheet::before{top:-1px;bottom:auto;left:auto;right:0}
+  .sw-num{position:absolute;z-index:2;top:50%;left:50%;font-family:var(--disp);font-weight:600;
+    font-size:clamp(96px,26vw,300px);line-height:1;letter-spacing:-.05em;color:var(--ink);
+    opacity:calc(var(--f,0) * .18);
+    transform:translate3d(-50%,-50%,0) scale(calc(.58 + var(--p,0) * .72))}
+  .sw-rules{position:absolute;z-index:2;left:0;right:0;top:50%;height:2px;pointer-events:none}
+  .sw-rules i{position:absolute;left:0;right:0;height:1px;background:var(--rule);
+    transform:translate3d(0,calc(var(--p,0) * var(--k,40px)),0)}
+
+  /* ---- 2a · the thread: one rule travelling the whole page ---- */
+  .thread{position:fixed;top:0;bottom:0;right:clamp(16px,calc(50vw - 522px),240px);
+    width:22px;z-index:55;pointer-events:none;display:none}
+  @media (min-width:1120px){.thread{display:block}}
+  .th-l{position:absolute;top:0;bottom:0;left:10px;width:1px;transition:opacity .6s ease}
+  .th-dash{background:repeating-linear-gradient(180deg,var(--rule) 0 7px,transparent 7px 16px)}
+  .th-solid{background:var(--rule);opacity:0}
+  .thread[data-mode="code"] .th-dash,
+  .thread[data-mode="tri"] .th-dash,
+  .thread[data-mode="decide"] .th-dash{opacity:0}
+  .thread[data-mode="code"] .th-solid{opacity:1}
+  .thread[data-mode="decide"] .th-solid{opacity:1;background:var(--ink2)}
+  .th-tri{position:absolute;top:0;bottom:0;left:10px;width:1px;opacity:0;transition:opacity .6s ease}
+  .thread[data-mode="tri"] .th-tri{opacity:1}
+  .th-s{position:absolute;top:0;bottom:0;left:0;width:1px;
+    transition:transform .7s cubic-bezier(.22,.7,.3,1)}
+  .th-s1{background:var(--ink2)}
+  .th-s2{background:repeating-linear-gradient(180deg,var(--rule) 0 3px,transparent 3px 7px)}
+  .th-s3{background:repeating-linear-gradient(180deg,var(--hatch) 0 1.5px,transparent 1.5px 4px)}
+  .thread[data-mode="tri"] .th-s1{transform:translate3d(-7px,0,0)}
+  .thread[data-mode="tri"] .th-s3{transform:translate3d(7px,0,0)}
+  .th-run{position:absolute;left:8px;top:0;width:5px;height:64px;background:var(--accent);
+    border-radius:1px;transform:translate3d(0,calc(var(--thp,0) * (100vh - 64px)),0)}
+  .th-cap{position:absolute;left:22px;top:0;font-family:var(--disp);font-weight:600;font-size:9px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);white-space:nowrap;
+    opacity:0;transition:opacity .6s ease;
+    transform:translate3d(0,calc(var(--thp,0) * (100vh - 64px) + 24px),0)}
+  .thread[data-mode="tri"] .th-cap{opacity:1}
+
+  /* ---- 2b · patient dots drifting into the funnel ---- */
+  .drop-box{position:relative;z-index:2;width:min(660px,88vw);height:300px;flex:none}
+  /* lands at about 70% of the scene, then holds its place in the row */
+  .drop{position:absolute;top:0;left:calc(var(--lx,0) * 1%);display:block;
+    transform:translate3d(
+      calc(1px * (var(--x0,0) + min(1, var(--p,0) * 1.42) * (var(--x1,0) - var(--x0,0)))),
+      calc(1px * (var(--y0,0) + min(1, var(--p,0) * 1.42) * (var(--y1,0) - var(--y0,0)))),0)}
+  .drop .mk{width:14px;height:14px;position:relative;z-index:1}
+  .drop::before{content:'';position:absolute;left:6px;top:-64px;width:1px;height:64px;
+    background:linear-gradient(180deg,transparent,var(--rule));
+    opacity:calc(1 - min(1, var(--p,0) * 1.42))}
+  .drop-rule{position:absolute;left:0;right:0;top:274px;height:1px;
+    background:var(--hairline);opacity:calc(var(--p,0) * var(--p,0))}
+
+  /* ---- 3a · zoom-in scrub for sparse blocks ---- */
+  .js [data-zoomin]{opacity:0;transform:scale(.87) translate3d(0,26px,0);
+    transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .95s cubic-bezier(.22,.7,.3,1)}
+  .js [data-zoomin].zoom-on{opacity:1;transform:none}
+  @keyframes zoomSettle{from{opacity:0;transform:scale(.87) translate3d(0,26px,0)}
+    to{opacity:1;transform:none}}
+  @supports (animation-timeline: view()){
+    .js [data-zoomin]{opacity:1;transform:none;transition:none;
+      animation:zoomSettle linear both;animation-timeline:view();animation-range:entry 4% cover 38%}
+  }
+
+  /* ---- 3b · the interval scene closes in ---- */
+  #p-clash .cf-col{transform:scale(calc(.9 + .1 * min(1, var(--p,0) * 4)));
+    transform-origin:center 42%}
+
+  /* ---- 3c · the deliberate zoom out ---- */
+  .zoom-map{position:relative;z-index:2;width:min(1100px,94vw);flex:none;
+    transform:scale(calc(1.5 - var(--p,0) * .72));transform-origin:center center}
+  .zoom-map svg{display:block;width:100%;height:auto}
+  .zm-scroll{width:100%}
+  @media (max-width:900px){
+    .zoom-map{transform:none;width:100%}
+    .zm-scroll{overflow-x:auto;border-radius:var(--r)}
+    .zm-scroll svg{min-width:720px}
+  }
+  .js .zoom-map [data-step]{opacity:0;transition:opacity .55s ease}
+  .js .zoom-map [data-step].step-on{opacity:1}
+
+  /* ---- will-change only while the scene is live ---- */
+  .bsec.live .sw-sheet,.bsec.live .sw-num,.bsec.live .zoom-map,.bsec.live .drop{will-change:transform}
+  .thread.live .th-run{will-change:transform}
+
   /* ============ reduced motion: opacity-only or nothing ============ */
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
@@ -298,6 +425,17 @@
     .p-chip{left:14% !important}
     .p-fab{transform:translateX(24%) !important}
     .p-q,.p-confbar i,.p-btn-act,.p-fabcard{transition:none !important}
+
+    /* everything added above collapses to opacity or nothing */
+    .hero-bleed,.thread,.drop-box,.sw-sheet,.sw-num,.sw-rules{display:none !important}
+    .js [data-zoomin]{opacity:1 !important;transform:none !important;transition:none !important}
+    .zoom-map,#p-clash .cf-col,.bstage-inner{transform:none !important}
+    .js .zoom-map [data-step]{opacity:1 !important;transition:none !important}
+    .bstage [data-step]{opacity:1 !important}
+    .bsec{height:auto !important;min-height:0}
+    .bstage{position:static;height:auto;min-height:0;padding:clamp(48px,9vh,96px) 20px;overflow:visible}
+    .bsec.live .sw-sheet,.bsec.live .sw-num,.bsec.live .zoom-map,.bsec.live .drop,
+    .thread.live .th-run{will-change:auto !important}
   }
 </style>
 <script>document.documentElement.classList.add('js');</script>
@@ -307,14 +445,45 @@
   <div class="rail-fill" id="rail-fill"></div>
 </div>
 
+<!-- the rule itself, travelling: dashed while prose, solid once code,
+     three strands at the three-answers chapter -->
+<div class="thread" id="thread" data-mode="prose" aria-hidden="true">
+  <span class="th-l th-dash"></span>
+  <span class="th-l th-solid"></span>
+  <span class="th-tri">
+    <span class="th-s th-s1"></span>
+    <span class="th-s th-s2"></span>
+    <span class="th-s th-s3"></span>
+  </span>
+  <span class="th-run"></span>
+  <span class="th-cap">yes &#183; no &#183; don't know</span>
+</div>
+
 <!-- ================================================================ -->
 <!-- 00 · HERO                                                        -->
 <!-- ================================================================ -->
-<section class="sec" id="hero" data-section data-title="Start">
+<section class="sec" id="hero" data-section data-title="Start" data-thread="prose">
+  <div class="hero-bleed" aria-hidden="true">
+    <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <g class="hb-ov">
+        <rect x="620" y="392" width="262" height="326" fill="#A6431E" fill-opacity=".04"/>
+        <line x1="620" y1="392" x2="620" y2="718" stroke="#A6431E" stroke-opacity=".18" stroke-width="1.5"/>
+        <line x1="882" y1="392" x2="882" y2="718" stroke="#A6431E" stroke-opacity=".18" stroke-width="1.5" stroke-dasharray="6 6"/>
+      </g>
+      <line class="hb-base" x1="0" y1="596" x2="1600" y2="596" stroke="#E3DED4" stroke-width="1.5"/>
+      <g stroke="#E3DED4" stroke-width="1.5">
+        <line x1="180" y1="588" x2="180" y2="604"/><line x1="400" y1="588" x2="400" y2="604"/>
+        <line x1="620" y1="584" x2="620" y2="608"/><line x1="882" y1="584" x2="882" y2="608"/>
+        <line x1="1100" y1="588" x2="1100" y2="604"/><line x1="1320" y1="588" x2="1320" y2="604"/>
+      </g>
+      <rect class="hb-r1" x="620" y="452" width="980" height="24" fill="none" stroke="#C9C2B4" stroke-width="1.5"/>
+      <rect class="hb-r2" x="0" y="668" width="882" height="24" fill="none" stroke="#C9C2B4" stroke-width="1.5"/>
+    </svg>
+  </div>
   <div class="wrap-wide">
     <p class="hero-mark"><i></i>rulekit</p>
-    <h1>Trials lose money because their entry rules live in a PDF. This project turns the rules into software that can be tested.</h1>
-    <p class="hero-kicker">The plain-language tour. No code knowledge needed, about six minutes of scrolling, best read in order. A technical edition of this page exists for engineers; the closing section points to it.</p>
+    <h1>A trial's entry rules live in a PDF. You cannot run a PDF, so the mistakes turn up after the money is spent. rulekit rewrites the rules as code you can test.</h1>
+    <p class="hero-kicker">The plain-language tour. No code needed, about six minutes, and it builds as it goes, so read it in order. There is an engineers' edition of the same story; the last section links to it.</p>
 
     <figure class="fig hero-fig" role="group" aria-label="A paragraph of prose becoming a runnable checklist with three possible answers">
       <div class="fig-scroll">
@@ -356,7 +525,7 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">The whole project in one picture: a paragraph nobody can run becomes a checklist a machine can run, and the machine is allowed to answer "I don't know" instead of guessing.</figcaption>
+      <figcaption class="fig-cap">The whole thing in one picture. A paragraph nobody can run becomes a checklist a machine can run, and the machine is allowed to say "I don't know" instead of guessing.</figcaption>
     </figure>
 
     <div class="hero-cue"><span class="bar"></span><span>scroll, about six minutes, best in order</span></div>
@@ -366,14 +535,14 @@
 <!-- ================================================================ -->
 <!-- 01 · THE CLINICAL SIDE                                           -->
 <!-- ================================================================ -->
-<section class="sec sec-band" id="clinical" data-section data-title="The clinical side">
+<section class="sec sec-band" id="clinical" data-section data-title="The clinical side" data-thread="prose">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">01</span>the clinical side</p>
     <h2 data-reveal>A bouncer's checklist, written as an essay</h2>
-    <p class="lede" data-reveal>A clinical trial tests a new medicine on volunteers. Its <span class="gloss">eligibility criteria<span class="gloss-note">the rules for who may join</span></span> decide who gets the experimental drug, and who is kept safely away from it.</p>
+    <p class="lede" data-reveal>A clinical trial tests a new medicine on volunteers. Its <span class="gloss">eligibility criteria<span class="gloss-note">the rules for who may join</span></span> decide who gets the experimental drug and who is turned away for their own safety.</p>
     <div class="prose" data-reveal>
-      <p>Picture a bouncer outside a club with a checklist: old enough, has a ticket, nothing banned in the bag. A trial's front door works the same way, except the stakes are people's safety, and the checklist is written as paragraphs of prose inside the <span class="gloss">protocol<span class="gloss-note">the trial's rulebook document</span></span>. You cannot run an essay. You can only read it and hope everyone reads it the same way.</p>
-      <p>They do not. Every team that needs the rules retypes them into whatever tool they actually use, and each copy drifts a little. The example below is one rule about <span class="gloss">eGFR<span class="gloss-note">a standard kidney score</span></span>: the trial wants a score of 30 or better. Watch that one number make the trip:</p>
+      <p>Picture a bouncer outside a club with a checklist: old enough, has a ticket, nothing banned in the bag. A trial's front door works the same way, except a wrong call can hurt somebody, and the checklist is buried in paragraphs of prose inside the <span class="gloss">protocol<span class="gloss-note">the trial's rulebook document</span></span>. You cannot run an essay. You can only read it and hope everyone reads it the same way.</p>
+      <p>They do not. Every team that needs the rules retypes them into whatever tool they happen to use, and each copy drifts a little. Below is one rule about <span class="gloss">eGFR<span class="gloss-note">a standard kidney score</span></span>: the trial wants a score of 30 or better. Watch what happens to that number.</p>
     </div>
   </div>
 
@@ -405,15 +574,15 @@
           <span class="dc-body">requirement raised to <span class="drift-mark">at least 40</span></span>
         </div>
       </div>
-      <figcaption class="fig-cap">Invented documents, real failure modes. "At least 30" quietly becomes "over 30", so a patient whose score is exactly 30 is allowed by the rulebook and rejected by the database query. Five copies exist, none of them is official, and nobody can say which one is current.</figcaption>
+      <figcaption class="fig-cap">The documents here are made up. The failure is not. "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 gets in by the rulebook and gets thrown out by the database query. Five copies now exist, none of them official, and nobody can say which one is current.</figcaption>
     </figure>
   </div>
 
   <div class="wrap">
     <div class="prose" data-reveal>
-      <p>Sooner or later the drift, or a flaw in the rules themselves, forces an <span class="gloss">amendment<span class="gloss-note">a formal mid-trial rule change</span></span>. That sounds like editing a document. In practice it means re-printing, re-training, regulator re-approval, and sometimes re-consenting every volunteer, at every hospital in the trial. Researchers at Tufts University put a price on it:</p>
+      <p>Sooner or later the drift, or a flaw in the rules themselves, forces an <span class="gloss">amendment<span class="gloss-note">a formal mid-trial rule change</span></span>. Sounds like editing a document. It is not. It is re-printing, re-training, regulator re-approval, and sometimes re-consenting every volunteer at every hospital in the trial. Researchers at Tufts University priced it out.</p>
     </div>
-    <div class="stat-row" data-reveal-children data-stagger="140">
+    <div class="stat-row" data-zoomin data-reveal-children data-stagger="140">
       <div class="stat">
         <span class="big-num">$<span data-count-to="141">0</span>K</span>
         <p class="lbl">median direct cost of one substantial amendment in <span class="gloss">Phase II<span class="gloss-note">the mid-stage test</span></span></p>
@@ -432,7 +601,23 @@
     </div>
     <p class="small" data-reveal>Source: Tufts Center for the Study of Drug Development, on the cost of protocol amendments.</p>
     <div class="prose" data-reveal style="margin-top:18px">
-      <p>Half a million dollars is a house, spent on changing a paragraph. Nearly half of those changes were avoidable, so the industry keeps buying houses it did not need. Rules you can test are rules you can fix before they ship. That is the pitch.</p>
+      <p>Half a million dollars is a house, spent on changing a paragraph. Nearly half of those changes were avoidable, so the industry keeps buying houses it never needed. If you can test the rules, you find the flaw while it is still cheap to fix.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ---- full-bleed chapter sweep: paper leaves, chrome arrives ---- -->
+<section class="bsec sweep" id="sw-engine" data-scrub data-vars data-steps="1"
+         style="height:150vh" data-section data-title="02 the engine" data-thread="code">
+  <div class="bstage">
+    <div class="sw-sheet" aria-hidden="true"></div>
+    <div class="sw-num" aria-hidden="true">02</div>
+    <div class="sw-rules" aria-hidden="true">
+      <i style="--k:-190px"></i><i style="--k:-96px"></i><i style="--k:104px"></i><i style="--k:206px"></i>
+    </div>
+    <div class="bstage-inner">
+      <p class="kicker">chapter 02 &#183; the engine</p>
+      <p class="bcap">the essay stops here. what follows is a file you can run.</p>
     </div>
   </div>
 </section>
@@ -440,12 +625,13 @@
 <!-- ================================================================ -->
 <!-- 02 · THE ENGINE                                                  -->
 <!-- ================================================================ -->
-<section class="sec" id="engine" data-section data-title="The engine">
+<section class="sec" id="engine" data-section data-title="The engine" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine</p>
     <h2 data-reveal>Write the rule once, in a form a machine can run</h2>
-    <p class="lede" data-reveal>rulekit stores each entry rule as a few lines of structured text. The protocol's original sentence stays physically attached to the logic, so anyone can compare the two, forever.</p>
+    <p class="lede" data-reveal>rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other.</p>
 
+    <div data-zoomin>
     <figure class="fig" role="group" aria-label="A four-line rule: an id, the protocol's exact sentence, and the runnable condition" data-reveal>
       <div class="code" aria-label="one rule from the rule file">
         <div class="cl"><span class="n">1</span><span><span class="dim">-</span> <span class="k">id</span>: egfr-min</span></div>
@@ -454,24 +640,25 @@
         <div class="cl"><span class="n">4</span><span>  <span class="k">when</span>: { <span class="k">fact</span>: egfr, <span class="k">op</span>: gte, <span class="k">value</span>: 30 }</span></div>
       </div>
     </figure>
+    </div>
     <div style="display:flex;flex-direction:column;gap:12px" data-reveal-children data-stagger="140">
-      <div class="note"><span class="nt">line 3 &#183; the original words</span><span class="mono">verbatim</span> is the protocol's exact sentence, copied in and never edited. The words travel with the logic, so the file can always be audited against the source document.</div>
-      <div class="note"><span class="nt">line 4 &#183; the runnable meaning</span><span class="mono">when</span> is the same sentence as logic: the value of <span class="mono">egfr</span> must be <span class="mono">gte</span> (greater than or equal to) 30. Machines can run this line. Humans can still read it.</div>
-      <div class="note"><span class="nt">who writes it</span>A person writes this file and a person reviews it. No AI translates the protocol on its own. When a rule cannot be expressed in the language, it is kept as plain text and marked as such, never silently dropped.</div>
+      <div class="note"><span class="nt">line 3 &#183; the original words</span><span class="mono">verbatim</span> is the protocol's exact sentence, copied in and never touched again. Ask whether the logic matches the rulebook and the rulebook's own words are right there, one line up.</div>
+      <div class="note"><span class="nt">line 4 &#183; the runnable meaning</span><span class="mono">when</span> is that same sentence turned into logic: <span class="mono">egfr</span> must be <span class="mono">gte</span> (greater than or equal to) 30. A machine can run this line. A person can still read it.</div>
+      <div class="note"><span class="nt">who writes it</span>A person writes this file and a person reviews it. No AI translates the protocol on its own. When a rule will not fit the language, it stays as plain text and gets labelled that way, rather than quietly disappearing.</div>
     </div>
     <div class="prose" data-reveal style="margin-top:22px">
-      <p>One file holds every rule, and every change to it is tracked, the way software changes are tracked. That alone kills the drifting copies. The next three ideas are what the file makes possible, and each one is something a document could never do.</p>
+      <p>One file holds every rule, and every edit to it is tracked the way code changes are tracked. That alone kills the five drifting copies. The three ideas that follow are what you get once the rules are a file instead of an essay.</p>
     </div>
   </div>
 </section>
 
 <!-- ---- 02a · three answers scrub ---- -->
-<section class="scrub" id="p-three" data-scrub data-steps="4" style="height:500vh" data-section data-title="Three answers">
+<section class="scrub" id="p-three" data-scrub data-steps="4" style="height:500vh" data-section data-title="Three answers" data-thread="tri">
   <div class="scrub-stage">
     <div class="stage-inner">
       <p class="kicker">the engine &#183; idea one</p>
       <h3>Three answers, not two</h3>
-      <p class="stage-sub">yes, no, and "I don't know", and the third one is sacred</p>
+      <p class="stage-sub">yes, no, and "I don't know", and the third one is the whole point</p>
 
       <div class="facts-card" data-step="0+">
         <span class="fc-t">one synthetic patient &#183; what the chart contains</span>
@@ -480,16 +667,16 @@
 
       <div class="p-notes">
         <div data-step="0">
-          <div class="note"><span class="nt">step 1 &#183; a normal chart</span>Real patient charts are full of holes. This one has an age and a heart measurement, but no kidney score, and the trial has a kidney-safety rule with nothing to check it against. Scroll on.</div>
+          <div class="note"><span class="nt">step 1 &#183; a normal chart</span>Real patient charts are full of holes. This one has an age and a heart measurement but no kidney score, and the trial has a kidney-safety rule with nothing to check it against. Scroll.</div>
         </div>
         <div data-step="1">
           <div class="versus">
-            <div class="v-card bad"><span class="v-tag">most screening software</span>A yes-or-no program has no way to store "we don't know". The missing kidney score gets treated as "no problem", and the patient sails past a safety rule that was never actually checked. Nobody notices, because silence looks like success.</div>
+            <div class="v-card bad"><span class="v-tag">most screening software</span>A yes-or-no program has nowhere to put "we don't know". The missing kidney score gets read as "no problem", and the patient sails past a safety rule that nobody ever checked. Nobody notices either, because a rule that was skipped looks exactly like a rule that passed.</div>
           </div>
         </div>
         <div data-step="2">
           <div class="versus">
-            <div class="v-card"><span class="v-tag">rulekit</span>The missing score evaluates to <strong>don't know</strong>, a real third answer, not an error. The don't-know flows up through the whole checklist, the patient's overall result becomes "undetermined", and they land in the pile that means <em>a human must look at this chart</em>.</div>
+            <div class="v-card"><span class="v-tag">rulekit</span>The missing score comes back as <strong>don't know</strong>, a real answer rather than an error. That don't-know travels up the checklist, so the patient's overall result reads "undetermined" and the chart lands in the pile that means <em>a human has to read this one</em>.</div>
           </div>
         </div>
         <div data-step="3">
@@ -502,7 +689,7 @@
                 <span class="p-verdict"><span class="p-stamp">refused</span></span>
               </div>
             </div>
-            <div class="note"><span class="nt">the rule that never bends</span>The system never converts a don't-know into a yes. There is no code path that does it. A patient is declared eligible only when every rule affirmatively passes on confirmed information, and a single confirmed "no" settles the case on its own.</div>
+            <div class="note"><span class="nt">the rule that never bends</span>The system never turns a don't-know into a yes. There is no code path that does it. A patient counts as eligible only when every rule actually passes on confirmed facts, and one confirmed "no" settles the case on its own.</div>
           </div>
         </div>
       </div>
@@ -512,15 +699,15 @@
 </section>
 
 <!-- ---- 02b · contradiction intro + scrub ---- -->
-<section class="sec sec-band" id="clash-intro">
+<section class="sec sec-band" id="clash-intro" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine &#183; idea two</p>
     <h2 data-reveal>It finds contradictions before anyone enrolls</h2>
-    <p class="lede" data-reveal>Because the rules are logic, a checker can read them as shapes on a number line and prove when two of them collide. Here is the collision seeded into the project's teaching example, drawn slowly.</p>
+    <p class="lede" data-reveal>Once the rules are logic, a checker can lay them out on a number line and prove when two of them collide. Here is the collision planted in the project's teaching example, drawn slowly.</p>
   </div>
 </section>
 
-<section class="scrub" id="p-clash" data-scrub data-steps="4" style="height:500vh" data-section data-title="The contradiction">
+<section class="scrub" id="p-clash" data-scrub data-vars data-steps="4" style="height:500vh" data-section data-title="The contradiction" data-thread="code">
   <div class="scrub-stage">
     <div class="cf-col">
       <div class="cf-cards" data-step="0+">
@@ -568,7 +755,7 @@
 
       <div class="cf-notes">
         <div data-step="0">
-          <div class="note"><span class="nt">two sentences, pages apart</span>Each rule is sensible on its own: admit decent kidney function, protect people with fragile kidneys. They were written by different people in different sections of the same document, and no human read them side by side. Scroll.</div>
+          <div class="note"><span class="nt">two sentences, pages apart</span>Each rule makes sense on its own. One admits decent kidney function, the other protects people with fragile kidneys. Different authors, different sections of the same document, and nobody ever read the two side by side. Scroll.</div>
         </div>
         <div data-step="1">
           <div class="note"><span class="nt">rule 1, drawn</span>"At least 30" becomes a bar on the number line: everything from 30 upward. Only patients inside the bar can join.</div>
@@ -577,7 +764,7 @@
           <div class="note"><span class="nt">rule 2, drawn</span>"Below 45" becomes a second bar: everything under 45 gets turned away. Now look at where the two bars sit on top of each other.</div>
         </div>
         <div data-step="3">
-          <div class="note"><span class="nt">the collision</span>One rule requires kidney function of at least 30. Another rejects anything under 45. So everyone between 30 and 45 is let in by one sentence and thrown out by another. The checker proves this holds for <em>every possible patient</em>, and it fails the build the way a broken test fails software: before a single volunteer is screened. One honest limit: when the checker cannot prove a clash, it says nothing. Silence, never guesses.</div>
+          <div class="note"><span class="nt">the collision</span>One rule needs a kidney score of at least 30. The other rejects anything under 45. So everyone between 30 and 45 is waved in by one sentence and thrown out by another. The checker proves that for <em>every possible patient</em>, then fails the build the way a broken test fails software, before a single volunteer is screened. The honest limit: when the checker cannot prove a clash, it says nothing rather than guessing.</div>
         </div>
       </div>
     </div>
@@ -586,13 +773,14 @@
 </section>
 
 <!-- ---- 02c · one calculation ---- -->
-<section class="sec" id="onecalc" data-section data-title="One calculation">
+<section class="sec" id="onecalc" data-section data-title="One calculation" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine &#183; idea three</p>
     <h2 data-reveal>Every number comes from one calculation</h2>
     <p class="lede" data-reveal>A patient's verdict is computed exactly once. The printed report and the visual app both read that one result, so two screens can never show different counts.</p>
   </div>
   <div class="wrap-wide">
+    <div data-zoomin>
     <figure class="fig" id="p-one-fig" data-reveal="fade" role="group" aria-label="One patient's facts flow into one calculation, whose single verdict feeds both the printed report and the visual app">
       <div class="fig-scroll">
       <svg viewBox="0 0 900 300" style="min-width:620px" role="img" aria-label="A patient box connects to an engine box labeled one calculation. The engine's verdict, screen fail, flows to two boxes: the printed report and the visual app, both showing the same count of seven.">
@@ -634,29 +822,46 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">The dot next to a patient's name and the totals on every screen come from the same single verdict. There is no second copy of the math to drift out of sync. This sounds obvious; the build story near the end shows what happened before it was true.</figcaption>
+      <figcaption class="fig-cap">The dot next to a patient's name and the totals on every screen come from that one verdict. There is no second copy of the math to drift. It sounds obvious. The build story near the end shows what it looked like back when it was not true.</figcaption>
     </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ---- full-bleed chapter sweep: chrome leaves, paper arrives ---- -->
+<section class="bsec sweep sweep-in" id="sw-ai" data-scrub data-vars data-steps="1"
+         style="height:150vh" data-section data-title="03 the AI part" data-thread="code">
+  <div class="bstage">
+    <div class="sw-sheet" aria-hidden="true"></div>
+    <div class="sw-num" aria-hidden="true">03</div>
+    <div class="sw-rules" aria-hidden="true">
+      <i style="--k:200px"></i><i style="--k:98px"></i><i style="--k:-102px"></i><i style="--k:-196px"></i>
+    </div>
+    <div class="bstage-inner">
+      <p class="kicker">chapter 03 &#183; the AI part</p>
+      <p class="bcap">a machine starts reading the notes. it still does not decide.</p>
+    </div>
   </div>
 </section>
 
 <!-- ================================================================ -->
 <!-- 03 · THE AI PART                                                 -->
 <!-- ================================================================ -->
-<section class="sec sec-band" id="ai-intro" data-section data-title="The AI part">
+<section class="sec sec-band" id="ai-intro" data-section data-title="The AI part" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">03</span>the AI part</p>
     <h2 data-reveal>The AI reads. It never decides.</h2>
-    <p class="lede" data-reveal>The hard half of screening is that the facts live inside doctors' notes, written for other humans. rulekit lets an AI read a note and suggest facts, but every suggestion carries the exact quote it came from, and a person approves or rejects it.</p>
+    <p class="lede" data-reveal>The hard part of screening is that the facts are buried in doctors' notes, written for other doctors. rulekit lets an AI read a note and suggest facts. Every suggestion has to carry the exact quote it came from, and a person approves it or throws it out.</p>
     <div class="prose" data-reveal>
-      <p>The scene below runs on a hand-written, fully invented note. The suggested fact is an <span class="gloss">NYHA class<span class="gloss-note">a heart-failure severity grade</span></span>, and the number beside it is a <span class="gloss">confidence<span class="gloss-note">the AI's own certainty guess</span></span>, used only to sort the review queue.</p>
+      <p>The scene below runs on a note somebody wrote by hand for this page. The suggested fact is an <span class="gloss">NYHA class<span class="gloss-note">a heart-failure severity grade</span></span>, and the number beside it is a <span class="gloss">confidence<span class="gloss-note">the AI's own certainty guess</span></span>, which only decides what gets reviewed first.</p>
     </div>
   </div>
 </section>
 
-<section class="scrub" id="p-ai" data-scrub data-steps="5" style="height:600vh">
+<section class="scrub" id="p-ai" data-scrub data-steps="5" style="height:600vh" data-thread="code">
   <div class="scrub-stage">
     <div class="stage-inner" style="max-width:780px">
-      <h3>One note, one suggestion, one gate</h3>
+      <h3>How one fact gets from a note into the engine</h3>
       <p class="stage-sub">every document, patient and clinician here is synthetic</p>
 
       <div class="p-note-doc" data-step="0+">
@@ -701,16 +906,16 @@
 
       <div class="p-ai-notes">
         <div data-step="0">
-          <div class="note"><span class="nt">step 1 &#183; the raw material</span>This is what screening data actually looks like: a paragraph written by one clinician for another. The fact a trial needs (the severity grade) is buried mid-sentence. Scroll, and watch the AI find it.</div>
+          <div class="note"><span class="nt">step 1 &#183; the raw material</span>This is what screening data actually looks like: a paragraph one clinician wrote for another. The fact the trial needs, the severity grade, is sitting in the middle of a sentence. Scroll, and watch the AI dig it out.</div>
         </div>
         <div data-step="1-2">
-          <div class="note"><span class="nt">a suggestion, with its receipt</span>The AI proposes a typed fact and highlights the exact sentence it read. The quote is the receipt: a person can check the suggestion against the source in seconds, without trusting the AI at all.</div>
+          <div class="note"><span class="nt">a suggestion, with its receipt</span>The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can check the suggestion against the note in a few seconds, without having to trust the AI at all.</div>
         </div>
         <div data-step="3">
           <div class="note"><span class="nt">approved, and only now visible</span>The click writes the reviewer's name and a timestamp next to the fact. Until that click, the engine cannot see the suggestion at all. The AI has no wire to the decision.</div>
         </div>
         <div data-step="4">
-          <div class="note"><span class="nt">and when the AI makes something up</span>A suggestion whose quote is not found word-for-word in the source document is rejected by the software itself, before any human sees it. A fact that cannot cite its source does not exist here. This shape, where the clinician can see and independently check the evidence behind every suggestion, is exactly what the FDA rewards in assistive tools.</div>
+          <div class="note"><span class="nt">and when the AI makes something up</span>If the quote is not in the source document word for word, the software throws the suggestion out before any person lays eyes on it. A fact that cannot show its receipt does not exist here. That setup, where the clinician can see the evidence and check it themselves, is what the FDA looks for in a tool that assists rather than decides.</div>
         </div>
       </div>
     </div>
@@ -718,23 +923,47 @@
   </div>
 </section>
 
+<!-- ---- full-bleed intake: the ten charts drift down into the funnel ---- -->
+<section class="bsec intake" id="intake" data-scrub data-vars data-steps="1"
+         style="height:220vh" data-section data-title="Ten charts" data-thread="decide">
+  <div class="bstage">
+    <div class="bstage-inner">
+      <p class="kicker">chapter 04 &#183; what exists</p>
+      <p class="bcap">ten synthetic charts arriving. seven fail a rule, three need a human, none get in. the funnel below counts the same ten.</p>
+    </div>
+    <div class="drop-box" aria-hidden="true">
+      <span class="drop-rule"></span>
+      <span class="drop" style="--lx:3;--y0:-300;--y1:250;--x0:-22;--x1:0"><i class="mk mk-fail"></i></span>
+      <span class="drop" style="--lx:13;--y0:-860;--y1:250;--x0:16;--x1:0"><i class="mk mk-fail"></i></span>
+      <span class="drop" style="--lx:23;--y0:-410;--y1:250;--x0:-13;--x1:0"><i class="mk mk-fail"></i></span>
+      <span class="drop" style="--lx:33;--y0:-1000;--y1:250;--x0:20;--x1:0"><i class="mk mk-fail"></i></span>
+      <span class="drop" style="--lx:43;--y0:-255;--y1:250;--x0:-9;--x1:0"><i class="mk mk-fail"></i></span>
+      <span class="drop" style="--lx:53;--y0:-640;--y1:250;--x0:14;--x1:0"><i class="mk mk-fail"></i></span>
+      <span class="drop" style="--lx:63;--y0:-740;--y1:250;--x0:-17;--x1:0"><i class="mk mk-fail"></i></span>
+      <span class="drop" style="--lx:73;--y0:-480;--y1:250;--x0:11;--x1:0"><i class="mk mk-unknown"></i></span>
+      <span class="drop" style="--lx:83;--y0:-210;--y1:250;--x0:-19;--x1:0"><i class="mk mk-unknown"></i></span>
+      <span class="drop" style="--lx:93;--y0:-560;--y1:250;--x0:8;--x1:0"><i class="mk mk-unknown"></i></span>
+    </div>
+  </div>
+</section>
+
 <!-- ================================================================ -->
 <!-- 04 · WHAT EXISTS                                                 -->
 <!-- ================================================================ -->
-<section class="sec" id="exists" data-section data-title="What exists">
+<section class="sec" id="exists" data-section data-title="What exists" data-thread="decide">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">04</span>what exists</p>
     <h2 data-reveal>It runs today</h2>
-    <p class="lede" data-reveal>Not a slide deck: a public code repository that runs on a laptop, with no accounts, no cloud, and no data leaving the machine.</p>
+    <p class="lede" data-reveal>Not a slide deck. It is a public code repository that runs on a laptop: no account, no cloud, nothing leaves the machine.</p>
 
-    <div class="coda-grid" data-reveal-children data-stagger="110">
+    <div class="coda-grid" data-zoomin data-reveal-children data-stagger="110">
       <div class="coda-cell">
         <span class="cv"><span data-count-to="470">0</span></span>
         <p class="cl2">automated tests, all passing, re-run on every change (green <span class="gloss">CI<span class="gloss-note">checks that run on every change</span></span>)</p>
       </div>
       <div class="coda-cell">
         <span class="cv">2</span>
-        <p class="cl2">trial rule packs. One was built from the published entry criteria of COMMANDER HF, a real heart-failure trial (registry id NCT01877915): 12 criteria, 8 turned into runnable rules, 4 kept honestly as plain text because the language cannot express them.</p>
+        <p class="cl2">trial rule packs. One was built from the published entry criteria of COMMANDER HF, a real heart-failure trial (registry id NCT01877915): 12 criteria, 8 of them turned into runnable rules, the other 4 left as plain text because the language cannot say what they mean.</p>
       </div>
       <div class="coda-cell">
         <span class="cv"><span data-count-to="110">0</span></span>
@@ -749,6 +978,7 @@
 
   <div class="wrap-wide">
     <h3 data-reveal>What a trial coordinator would see</h3>
+    <div data-zoomin>
     <figure class="fig" role="group" aria-label="Mockup of the workbench funnel screen over ten synthetic patients" data-reveal>
       <div class="fig-scroll">
         <div class="p-ui">
@@ -791,15 +1021,18 @@
           </div>
         </div>
       </div>
-      <figcaption class="fig-cap">A trimmed mockup of the real workbench, counting the ten hand-written synthetic patients. Click any bar in the real thing and it shows the per-patient reasoning, line by line.</figcaption>
+      <figcaption class="fig-cap">A trimmed-down mockup of the real workbench, counting the ten hand-written synthetic patients. In the real thing, clicking a bar opens the reasoning for each patient, line by line.</figcaption>
     </figure>
+    </div>
   </div>
 
   <div class="wrap">
+    <div data-zoomin>
     <div class="panel" data-reveal style="margin-top:26px">
       <h3>The honest coverage number</h3>
       <p style="font-size:14.5px;line-height:1.6;margin-bottom:10px"><span class="big-num" style="font-size:clamp(28px,4vw,44px)"><span data-count-to="56.7" data-count-format="dec1">0</span>%</span></p>
-      <p style="font-size:14px;line-height:1.6;color:var(--ink2)">Of 12,060 entry criteria taken from 996 real trials, 56.7% look expressible in the rule language as written, 12.2% partially, and 31.1% not at all. This is a <strong>heuristic estimate</strong>: pattern matching over the text, not validated against human judges. It cuts both ways. The language covers over half of what real trials ask, and it cannot cover a third of it. Both halves are the finding.</p>
+      <p style="font-size:14px;line-height:1.6;color:var(--ink2)">Of 12,060 entry criteria pulled from 996 real trials, 56.7% look like the rule language could express them as written, 12.2% partially, and 31.1% not at all. That is a <strong>heuristic estimate</strong>: pattern matching over the text, never checked against human judges. It reads two ways at once. The language handles more than half of what real trials ask, and a third of it is beyond what the language can say. Both numbers are the result.</p>
+    </div>
     </div>
   </div>
 </section>
@@ -807,18 +1040,94 @@
 <!-- ================================================================ -->
 <!-- 05 · HOW IT WAS BUILT                                            -->
 <!-- ================================================================ -->
-<section class="sec sec-band" id="build" data-section data-title="The build">
+<section class="sec sec-band" id="build" data-section data-title="The build" data-thread="decide">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">05</span>the build</p>
     <h2 data-reveal>How it was built</h2>
-    <p class="lede" data-reveal>For readers who hire engineers: specification first, then parallel implementation, with hostile review in between.</p>
+    <p class="lede" data-reveal>For readers who hire engineers: write the spec, build against it in parallel, and put hostile review in between.</p>
     <div class="prose" data-reveal>
-      <p>The rule format was written down as a document before the engine existed, so the code could be wrong against something fixed. Reviewers were then assigned to attack the work, and a claimed flaw only counted when it came with runnable proof. Every proven flaw became a permanent <span class="gloss">regression test<span class="gloss-note">keeps fixed bugs fixed</span></span> before the fix went in. Three of those scars:</p>
+      <p>The rule format was written down before the engine existed, so the code had something fixed to be wrong against. Reviewers were then told to attack it, and a claimed flaw only counted if it came with code that proved it. Every proven flaw became a permanent <span class="gloss">regression test<span class="gloss-note">keeps fixed bugs fixed</span></span> before anyone was allowed to fix it. Three of the scars:</p>
     </div>
-    <div class="buildlist" data-reveal-children data-stagger="130">
-      <div class="note"><span class="nt">the over-eager checker</span>The conflict checker once announced a contradiction that could not actually occur; a reviewer proved it, the checker learned to stay silent in that situation, and the false claim is pinned forever as a test in <span class="mono">tests/adversarial/conflicts.test.ts</span>.</div>
-      <div class="note"><span class="nt">the two screens that disagreed</span>The report and the visual app each did their own arithmetic and disagreed on every headline count (0 versus 2 potentially eligible over the same 100 patients); the arithmetic moved into one shared module, <span class="mono">src/core/attrition.ts</span>, and a test now forces the two to agree.</div>
+    <div class="buildlist" data-zoomin data-reveal-children data-stagger="130">
+      <div class="note"><span class="nt">the over-eager checker</span>The conflict checker once announced a clash that could not actually happen. A reviewer proved it, the checker learned to keep quiet in that case, and the false alarm is pinned down as a test in <span class="mono">tests/adversarial/conflicts.test.ts</span>.</div>
+      <div class="note"><span class="nt">the two screens that disagreed</span>The report and the visual app each did their own arithmetic, and they disagreed on every headline count: 0 potentially eligible on one screen, 2 on the other, over the same 100 patients. The arithmetic moved into one shared module, <span class="mono">src/core/attrition.ts</span>, and a test now forces the two to agree.</div>
       <div class="note"><span class="nt">the sentence with its own bodyguard</span>The format's most important sentence, "an absent value is unknown, never false", has a test suite of its own (<span class="mono">tests/adversarial/kleene.test.ts</span>), so no future change can quietly weaken it.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ---- full-bleed zoom out: the whole system, assembled small ---- -->
+<section class="bsec" id="assembly" data-scrub data-vars data-steps="4"
+         style="height:280vh" data-section data-title="The whole thing" data-thread="decide">
+  <div class="bstage">
+    <div class="zoom-map"><div class="zm-scroll">
+      <svg viewBox="0 0 1200 320" role="img" aria-label="The whole system drawn small: the protocol page becomes a rule file, the rule file feeds one engine, the engine gives three answers, and the answers feed the report and the app.">
+        <defs>
+          <marker id="a-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" fill="#17150F"/>
+          </marker>
+          <pattern id="a-hx" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <rect width="5" height="5" fill="#FAF8F4"/>
+            <line x1="0" y1="0" x2="0" y2="5" stroke="#B3AB9B" stroke-width="1.6"/>
+          </pattern>
+        </defs>
+
+        <!-- centre: the engine. you start here, close up. -->
+        <g data-step="0+">
+          <rect x="505" y="100" width="190" height="120" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
+          <text x="600" y="150" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="13" fill="#17150F">one engine</text>
+          <text x="600" y="172" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">same input, same answer</text>
+        </g>
+
+        <!-- one step back: the rule file in, the three answers out -->
+        <g data-step="1+">
+          <rect x="270" y="80" width="170" height="160" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.25"/>
+          <g stroke="#17150F" stroke-width="3" stroke-linecap="round">
+            <line x1="290" y1="108" x2="392" y2="108"/><line x1="290" y1="128" x2="368" y2="128"/>
+            <line x1="290" y1="148" x2="410" y2="148"/><line x1="290" y1="168" x2="352" y2="168"/>
+            <line x1="290" y1="188" x2="400" y2="188"/><line x1="290" y1="208" x2="330" y2="208"/>
+          </g>
+          <text x="355" y="266" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">the rule file</text>
+          <line x1="440" y1="160" x2="500" y2="160" stroke="#17150F" stroke-width="1.5" marker-end="url(#a-arr)"/>
+
+          <line x1="695" y1="160" x2="752" y2="160" stroke="#17150F" stroke-width="1.5" marker-end="url(#a-arr)"/>
+          <rect x="758" y="104" width="14" height="14" fill="#17150F"/>
+          <text x="782" y="116" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">pass</text>
+          <rect x="758" y="146" width="14" height="14" fill="none" stroke="#6B655C" stroke-width="1.5"/>
+          <text x="782" y="158" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">fail</text>
+          <rect x="758" y="188" width="14" height="14" fill="url(#a-hx)" stroke="#B3AB9B"/>
+          <text x="782" y="200" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">don't know</text>
+          <text x="758" y="266" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">three answers</text>
+        </g>
+
+        <!-- further back: the paper it came from, the screens it ends on -->
+        <g data-step="2+">
+          <rect x="30" y="70" width="150" height="180" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.25"/>
+          <g stroke="#D6D0C4" stroke-width="4" stroke-linecap="round">
+            <line x1="48" y1="96" x2="162" y2="96"/><line x1="48" y1="116" x2="150" y2="116"/>
+            <line x1="48" y1="136" x2="162" y2="136"/><line x1="48" y1="156" x2="128" y2="156"/>
+            <line x1="48" y1="176" x2="162" y2="176"/><line x1="48" y1="196" x2="144" y2="196"/>
+            <line x1="48" y1="216" x2="104" y2="216"/>
+          </g>
+          <text x="105" y="272" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="11.5" fill="#17150F">the protocol</text>
+          <line x1="180" y1="160" x2="265" y2="160" stroke="#17150F" stroke-width="1.5" marker-end="url(#a-arr)"/>
+        </g>
+
+        <g data-step="3+">
+          <line x1="900" y1="148" x2="978" y2="112" stroke="#17150F" stroke-width="1.5" marker-end="url(#a-arr)"/>
+          <line x1="900" y1="172" x2="978" y2="208" stroke="#17150F" stroke-width="1.5" marker-end="url(#a-arr)"/>
+          <rect x="982" y="76" width="188" height="66" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.25"/>
+          <text x="1076" y="105" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" font-weight="600" fill="#17150F">printed report</text>
+          <text x="1076" y="124" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">7 screen fail of 10</text>
+          <rect x="982" y="178" width="188" height="66" rx="2" fill="#FAF8F4" stroke="#C9C2B4" stroke-width="1.25"/>
+          <text x="1076" y="207" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="12" font-weight="600" fill="#17150F">visual app</text>
+          <text x="1076" y="226" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">7 screen fail of 10</text>
+        </g>
+      </svg>
+    </div></div>
+    <div class="bstage-inner">
+      <p class="kicker">chapter 06 &#183; close</p>
+      <p class="bcap">pull back and the parts are small. a page, a file, one check, one answer, printed twice.</p>
     </div>
   </div>
 </section>
@@ -826,29 +1135,31 @@
 <!-- ================================================================ -->
 <!-- 06 · CLOSE                                                       -->
 <!-- ================================================================ -->
-<section class="sec" id="close" data-section data-title="Close">
+<section class="sec" id="close" data-section data-title="Close" data-thread="decide">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">06</span>close</p>
-    <h2 data-reveal>What this is, and what it is not</h2>
+    <h2 data-reveal>The limits, up front</h2>
 
     <div class="warnpanel" data-reveal>
       <span class="wt">&#9888; not medical software</span>
-      This is a demonstration of rule-governance tooling. It is not validated, not cleared by any regulator, and not for clinical, feasibility, or research screening use. Every patient, note, clinician and institution in the project is invented; the trial criteria are copied from real public registry text, but the numbers this tool produces are about invented people.
+      This is a demonstration of rule-governance tooling. It is not validated, not cleared by any regulator, and not for clinical, feasibility, or research screening use. Every patient, note, clinician and institution here is invented. The trial criteria are copied from real public registry text, but every number this tool produces is about people who do not exist.
     </div>
 
+    <div data-zoomin>
     <blockquote class="claim" data-reveal>
-      The narrow claim: there is <strong>no open implementation</strong> of this whole shape in one place. AI suggestions that carry their quotes, human approval as the only door, a <span class="gloss">deterministic<span class="gloss-note">same input, same answer, always</span></span> engine as the only decider, and the rule format specified separately, so anyone can build a second engine.
+      The narrow claim: there is <strong>no open implementation</strong> of this whole shape in one place. AI suggestions that carry their quotes. Human approval as the only way in. A <span class="gloss">deterministic<span class="gloss-note">same input, same answer, always</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.
       <span class="who">from the project README, stated with its own caveats attached</span>
     </blockquote>
+    </div>
 
     <div class="prose" data-reveal>
-      <p>Where to look next: the repository's <span class="mono">README.md</span> for the runnable version of everything above, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://claude.ai/code/artifact/f6f26ee6-5f16-457a-b01d-0aa4b1443ff3">technical thesis</a> (also <span class="mono">docs/thesis.html</span> in the repository), a longer scroll of this story for engineers, with the engine's real output throughout.</p>
+      <p>Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://claude.ai/code/artifact/f6f26ee6-5f16-457a-b01d-0aa4b1443ff3">technical thesis</a> (also <span class="mono">docs/thesis.html</span> in the repository), which is this same story told longer, for engineers, with the engine's real output in it.</p>
     </div>
 
     <div class="closing" data-reveal>
       <i></i>
       <p class="cm">agents propose<span class="sep">&#183;</span>humans confirm<span class="sep">&#183;</span>the engine decides</p>
-      <p class="small" style="margin-top:14px">The AI suggests. A person approves. Only the tested rules decide.</p>
+      <p class="small" style="margin-top:14px">In that order, every time, with no way around the middle step.</p>
     </div>
 
     <p class="colophon" data-reveal="fade">rulekit &#183; Apache-2.0 &#183; set in Public Sans, Spline Sans Mono &amp; Martian Mono<br>amendment costs: Tufts CSDD &#183; criteria coverage: Chia corpus (CC-BY-4.0, Kury et al. 2020) &#183; trial criteria quoted from ClinicalTrials.gov</p>
@@ -859,6 +1170,9 @@
 (function(){
   'use strict';
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var sup = (window.CSS && CSS.supports) ? CSS.supports.bind(CSS) : function(){ return false; };
+  var hasView = sup('animation-timeline', 'view()');
+  var hasScrollTL = sup('animation-timeline', 'scroll(root block)');
 
   /* ---------- stagger parents: promote children to reveal targets ---------- */
   document.querySelectorAll('[data-reveal-children]').forEach(function(p){
@@ -886,6 +1200,24 @@
     if (el.getBoundingClientRect().bottom < 0) { el.classList.add('on'); return; }
     io.observe(el);
   });
+
+  /* ---------- zoom-in scrub: CSS scroll timeline, IO fallback ---------- */
+  var zEls = Array.prototype.slice.call(document.querySelectorAll('[data-zoomin]'));
+  if (reduced) {
+    zEls.forEach(function(el){ el.classList.add('zoom-on'); });
+  } else if (!hasView) {
+    var zio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        zio.unobserve(e.target);
+        e.target.classList.add('zoom-on');
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    zEls.forEach(function(el){
+      if (el.getBoundingClientRect().bottom < 0) { el.classList.add('zoom-on'); return; }
+      zio.observe(el);
+    });
+  }
 
   /* ---------- counters ---------- */
   function fmtCount(n, f){
@@ -941,12 +1273,49 @@
     var max = document.documentElement.scrollHeight - window.innerHeight;
     var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
     if (railFill) railFill.style.height = (p * 100) + '%';
+    threadUpdate(p);
     /* end-of-page sweep: elements too close to the document end can never
        reach the observer's threshold, so reveal whatever remains */
-    if (p > 0.985) document.querySelectorAll('[data-reveal]:not(.on)').forEach(function(el){
-      el.classList.add('on');
-      io.unobserve(el);
+    if (p > 0.985) {
+      document.querySelectorAll('[data-reveal]:not(.on)').forEach(function(el){
+        el.classList.add('on');
+        io.unobserve(el);
+      });
+      zEls.forEach(function(el){ el.classList.add('zoom-on'); });
+    }
+  }
+
+  /* ---------- the thread: one rule travelling the whole document ---------- */
+  var thread = document.getElementById('thread');
+  var threadSecs = [];
+  var threadMode = null;
+  var threadIdle = 0;
+  function layoutThread(){
+    threadSecs = Array.prototype.map.call(document.querySelectorAll('[data-thread]'), function(el){
+      return { top: el.getBoundingClientRect().top + window.scrollY, mode: el.getAttribute('data-thread') };
     });
+    threadSecs.sort(function(a, b){ return a.top - b.top; });
+  }
+  function threadUpdate(p){
+    if (!thread || reduced) return;
+    if (!hasScrollTL) {
+      thread.style.setProperty('--thp', p.toFixed(4));
+      thread.classList.add('live');
+      clearTimeout(threadIdle);
+      threadIdle = setTimeout(function(){ thread.classList.remove('live'); }, 420);
+    }
+    var mark = window.scrollY + window.innerHeight * 0.45;
+    var m = threadSecs.length ? threadSecs[0].mode : 'prose';
+    for (var i = 0; i < threadSecs.length; i++) if (threadSecs[i].top <= mark) m = threadSecs[i].mode;
+    if (m !== threadMode) { threadMode = m; thread.setAttribute('data-mode', m); }
+  }
+
+  /* ---------- will-change only while a full-bleed scene is on screen ---------- */
+  if (!reduced && 'IntersectionObserver' in window) {
+    var liveIO = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ e.target.classList.toggle('live', e.isIntersecting); });
+    }, { rootMargin: '20% 0px 20% 0px' });
+    document.querySelectorAll('.bsec').forEach(function(el){ liveIO.observe(el); });
   }
 
   /* ---------- scrub scenes ---------- */
@@ -960,12 +1329,13 @@
     });
   }
   var scrubs = Array.prototype.map.call(document.querySelectorAll('[data-scrub]'), function(w){
-    var stage = w.querySelector('.scrub-stage');
+    var stage = w.querySelector('.scrub-stage, .bstage');
     var steps = parseInt(w.getAttribute('data-steps'), 10) || 1;
     var els = Array.prototype.slice.call(stage.querySelectorAll('[data-step]'));
     var dots = stage.querySelector('.scrub-dots');
     if (dots) for (var i = 0; i < steps; i++) dots.appendChild(document.createElement('i'));
-    return { w: w, stage: stage, steps: steps, els: els, dots: dots, cur: -1 };
+    return { w: w, stage: stage, steps: steps, els: els, dots: dots, cur: -1,
+             vars: w.hasAttribute('data-vars'), lastP: -1 };
   });
   function setStep(sc, s){
     sc.cur = s;
@@ -984,6 +1354,15 @@
       var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : (r.top <= 0 ? 1 : 0);
       var s = Math.min(sc.steps - 1, Math.floor(p * sc.steps));
       if (s !== sc.cur) setStep(sc, s);
+      /* continuous progress, for scenes that scrub a transform rather than a step */
+      if (sc.vars && !reduced) {
+        var q = Math.round(p * 1000) / 1000;
+        if (q !== sc.lastP) {
+          sc.lastP = q;
+          sc.stage.style.setProperty('--p', String(q));
+          sc.stage.style.setProperty('--f', Math.sin(q * Math.PI).toFixed(3));
+        }
+      }
     });
   }
 
@@ -999,10 +1378,11 @@
     });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', function(){ layoutTicks(); railUpdate(); updateScrubs(); });
-  window.addEventListener('load', function(){ layoutTicks(); railUpdate(); updateScrubs(); });
+  window.addEventListener('resize', function(){ layoutTicks(); layoutThread(); railUpdate(); updateScrubs(); });
+  window.addEventListener('load', function(){ layoutTicks(); layoutThread(); railUpdate(); updateScrubs(); });
 
   layoutTicks();
+  layoutThread();
   railUpdate();
   scrubs.forEach(function(sc){ setStep(sc, 0); });
   updateScrubs();
