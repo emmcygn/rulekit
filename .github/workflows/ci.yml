@@ -45,6 +45,10 @@ jobs:
       # engine (src/core) and the demo data it bundles rather than copies
       # (rules/trials/demo-hf-001, packs/trials, fixtures/patients). Renaming or
       # deleting any of those breaks this job — that is the intended guard.
+      # src/core's own deps (zod, yaml) live in the ROOT node_modules, so the
+      # root install comes first.
+      - run: npm ci
+        working-directory: .
       - run: npm ci
       - run: npm test
       - run: npm run build
