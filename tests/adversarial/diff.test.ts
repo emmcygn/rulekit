@@ -2,7 +2,7 @@
  * Adversarial probes — behavioral diff / amendment view (attack surface 6).
  */
 import { describe, it, expect } from "vitest";
-import { behavioralDiff, structuralDiff } from "../../src/core/diff.js";
+import { behavioralDiff, structuralDiff, versionWarning } from "../../src/core/diff.js";
 import { checkRuleSet } from "../../src/core/conflicts.js";
 import { groupFlips, criterionOrder } from "../../web/src/amendment/compute.js";
 import type { Criterion, FactModel, PatientFacts, RuleSet } from "../../src/core/schema.js";
@@ -21,30 +21,42 @@ const rs = (version: string, ...criteria: Criterion[]): RuleSet => ({
 
 const adult: Criterion = { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18, unit: "years" } };
 
-describe("F1 — undetermined → eligible flips carry NO responsible criterion", () => {
+describe("F1 — undetermined ↔ eligible flips are attributed (REGRESSION: used to be unattributed)", () => {
   // v1 requires an eGFR nobody in the cohort has → everyone undetermined.
-  // v2 drops it → everyone eligible. A 100% outcome change, unattributed.
-  const v1 = rs("1.0.0", adult, { id: "renal", kind: "inclusion", verbatim: "eGFR >= 30", when: { fact: "egfr", op: "gte", value: 30 } });
+  // v2 drops it → everyone eligible. A 100% outcome change, and `renal` owns it.
+  const v1 = rs("1.0.0", adult, { id: "renal", kind: "inclusion", verbatim: "eGFR >= 30", when: { fact: "egfr", op: "gte", value: 30, unit: "mL/min/1.73m2" } });
   const v2 = rs("2.0.0", adult);
   const corpus: PatientFacts[] = [{ patient: "SYN-1", facts: { age: 70 } }, { patient: "SYN-2", facts: { age: 55 } }];
 
-  it("`responsible` is empty because attribution only tracks fail-ness", () => {
+  it("attribution tracks any verdict change, so the dropped criterion is named", () => {
     const flips = behavioralDiff(v1, v2, corpus);
     expect(flips).toHaveLength(2);
-    expect(flips[0]).toMatchObject({ from: "undetermined", to: "eligible", responsible: [] });
-    // The CLI (src/cli/index.ts:67) prints: "  SYN-1: undetermined → eligible  ()"
+    // `renal` has no result in v2 at all; a criterion that no longer exists
+    // reads as `pass`, so its unknown → pass move is the attributable one.
+    expect(flips[0]).toEqual({ patient: "SYN-1", from: "undetermined", to: "eligible", responsible: ["renal"] });
+    expect(flips[1]!.responsible).toEqual(["renal"]);
   });
 
-  it("the workbench files them all under an 'unattributed' group", () => {
-    const groups = groupFlips(behavioralDiff(v1, v2, corpus), criterionOrder(v2));
-    expect(groups).toHaveLength(1);
-    expect(groups[0]!.criterionId).toBe(""); // rendered as "unattributed — 2"
-  });
-
-  it("the same holds for eligible → undetermined, the direction that matters for safety", () => {
+  it("the safety-relevant direction — eligible → undetermined — names `renal`", () => {
     const flips = behavioralDiff(v2, v1, corpus);
-    expect(flips.every((f) => f.responsible.length === 0)).toBe(true);
+    expect(flips).toHaveLength(2);
     expect(flips[0]!.to).toBe("undetermined");
+    expect(flips.every((f) => f.responsible.includes("renal"))).toBe(true);
+  });
+
+  it("the workbench groups them under the criterion, not under 'unattributed'", () => {
+    const groups = groupFlips(behavioralDiff(v2, v1, corpus), criterionOrder(v1));
+    expect(groups.map((g) => g.criterionId)).toEqual(["renal"]);
+  });
+
+  it("an unknown → pass flip inside a surviving criterion is attributed too", () => {
+    // Same criterion in both versions; the threshold moves so a patient who
+    // was `fail` becomes `pass`. No fail-ness → pass-ness subtlety here, but
+    // the unknown case is the one that used to vanish:
+    const strict = rs("1.0.0", adult, { id: "renal", kind: "inclusion", verbatim: "eGFR >= 30", when: { fact: "egfr", op: "gte", value: 30, unit: "mL/min/1.73m2" } });
+    const relaxed = rs("1.1.0", adult, { id: "renal", kind: "inclusion", verbatim: "eGFR >= 10", when: { fact: "egfr", op: "gte", value: 10, unit: "mL/min/1.73m2" } });
+    const p: PatientFacts[] = [{ patient: "EGFR-20", facts: { age: 70, egfr: 20 } }];
+    expect(behavioralDiff(strict, relaxed, p)[0]!.responsible).toEqual(["renal"]);
   });
 });
 
@@ -68,12 +80,14 @@ describe("F2 — a renamed criterion looks like an unrelated add + remove", () =
     const p: PatientFacts[] = [{ patient: "EGFR-40", facts: { age: 70, egfr: 40 } }];
     const flips = behavioralDiff(v1, v3, p);
     expect(flips[0]!.responsible).toEqual(["e3-renal-safety"]);
-    // Correct here by luck. Reverse the direction and the removed criterion —
-    // the one that actually changed the outcome — cannot be named at all,
-    // because `responsible` is built only from the NEW version's results.
+    // Reversing the direction used to produce an empty attribution, because
+    // `responsible` was built only from the NEW version's results. A criterion
+    // dropped between versions is now named too (REGRESSION for that half).
     const back = behavioralDiff(v3, v1, p);
     expect(back[0]).toMatchObject({ from: "ineligible", to: "eligible" });
-    expect(back[0]!.responsible).toEqual([]);
+    expect(back[0]!.responsible).toEqual(["e3-renal-safety"]);
+    // Still open (see triage: rename detection is deferred): the rename means
+    // the id named here is the one that vanished, not the one that replaced it.
   });
 });
 
@@ -81,16 +95,24 @@ describe("F3 — rule content can change with the version string standing still"
   const v1 = rs("1.0.0", adult, { id: "renal", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 30, unit: "mL/min/1.73m2" } });
   const v2 = rs("1.0.0", adult, { id: "renal", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 45, unit: "mL/min/1.73m2" } });
 
-  it("nothing in the toolchain notices the un-bumped rulesetVersion", () => {
+  it("`rules diff` warns about the un-bumped rulesetVersion (REGRESSION: was silent)", () => {
     expect(v1.rulesetVersion).toBe(v2.rulesetVersion);
-    expect(structuralDiff(v1, v2).changed).toEqual(["renal"]);
+    const s = structuralDiff(v1, v2);
+    expect(s.changed).toEqual(["renal"]);
     const corpus: PatientFacts[] = [{ patient: "EGFR-40", facts: { age: 70, egfr: 40 } }];
     expect(behavioralDiff(v1, v2, corpus)).toHaveLength(1); // the cohort moves
-    // ...and `rules check` on the amended file is clean, so CI passes a rule
-    // change that is invisible to anyone tracking versions.
+    // `rules check` on the amended file is still clean — it is a lint, not a
+    // governance tool — so the warning has to come from `rules diff`.
     expect(checkRuleSet(v2, FM).filter((f) => f.level !== "info")).toEqual([]);
-    // Neither diff output mentions the version at all.
-    expect(JSON.stringify(structuralDiff(v1, v2))).not.toContain("1.0.0");
+    const warning = versionWarning(v1, v2, s)!;
+    expect(warning).toContain("both files declare rulesetVersion 1.0.0");
+    expect(warning).toContain("bump the version");
+  });
+
+  it("a real version bump, or no structural change at all, warns about nothing", () => {
+    const bumped = rs("1.1.0", adult, { id: "renal", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 45, unit: "mL/min/1.73m2" } });
+    expect(versionWarning(v1, bumped, structuralDiff(v1, bumped))).toBeUndefined();
+    expect(versionWarning(v1, v1, structuralDiff(v1, v1))).toBeUndefined();
   });
 
   it("`verbatim` drift is invisible to the diff — the audit trail can lie", () => {

@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   parseRuleSet, parseFactModel, parsePatient, parseTestSuite,
-  checkRuleSet, runSuite, deadRules, structuralDiff, behavioralDiff, evalPatient,
+  checkRuleSet, runSuite, deadRules, structuralDiff, behavioralDiff, versionWarning, evalPatient,
   type Evaluation, type Finding, type Overall, type PatientFacts,
 } from "../core/index.js";
 
@@ -29,7 +29,16 @@ program.command("check")
     const findings = checkRuleSet(parseRuleSet(read(rulesetPath)), parseFactModel(read(opts.factModel)));
     printFindings(findings);
     const errors = findings.filter((f) => f.level === "error").length;
-    console.log(`${errors} conflict(s), ${findings.filter((f) => f.level === "warning").length} warning(s)`);
+    const warnings = findings.filter((f) => f.level === "warning").length;
+    // A clean run is not a proof. The analysis is interval arithmetic over
+    // single-fact `all` chains: `any`/`not`/code ops and multi-fact exclusions
+    // are not analyzed at all, so "0 conflict(s)" and "verified consistent" are
+    // very different statements and the output has to say which one this is.
+    console.log(
+      errors === 0 && warnings === 0
+        ? "0 conflict(s), 0 warning(s) — static analysis covers single-fact interval logic; it is not a proof of consistency."
+        : `${errors} conflict(s), ${warnings} warning(s)`,
+    );
     if (errors > 0) process.exitCode = 1;
   });
 
@@ -59,9 +68,12 @@ program.command("diff")
     const a = parseRuleSet(read(aPath));
     const b = parseRuleSet(read(bPath));
     const s = structuralDiff(a, b);
+    console.log(`rulesetVersion ${a.rulesetVersion} → ${b.rulesetVersion}`);
     for (const id of s.added) console.log(`+ added ${id}`);
     for (const id of s.removed) console.log(`- removed ${id}`);
     for (const id of s.changed) console.log(`~ changed ${id}`);
+    const stale = versionWarning(a, b, s);
+    if (stale !== undefined) console.log(`! WARNING unbumped-version ${stale}`);
     const flips = behavioralDiff(a, b, loadCorpus(opts.corpus));
     console.log(`${flips.length} patient(s) flip:`);
     for (const f of flips) console.log(`  ${f.patient}: ${f.from} → ${f.to}  (${f.responsible.join(", ")})`);
