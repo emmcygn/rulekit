@@ -234,9 +234,19 @@ reproduce the clean one exactly.
 ### Chia coverage — done
 
 `npm run chia:coverage` classifies all 12,060 criterion lines in the Chia
-corpus against the closed condition language. Result and full method in
-[docs/chia-coverage.md](chia-coverage.md). The classification is heuristic and
-the report says so above the fold.
+corpus against the closed condition language. Headline: **56.7% expressible,
+12.2% partially, 31.1% unmodeled.** Result and full method in
+[docs/chia-coverage.md](chia-coverage.md).
+
+> **This classification is heuristic.** It matches surface patterns in the
+> criterion text — it does not parse the criteria, does not attempt to write
+> the rules, and has not been validated against human labels. Read the
+> percentages as an order-of-magnitude sanity check on whether the condition
+> language is sized right, and nothing stronger.
+
+That paragraph is copied verbatim from `docs/chia-coverage.md`, which carries it
+above the fold, and the README repeats it every time it quotes the number. Any
+surface that shows 56.7% without it is a bug.
 
 ### CONSORT sanity check — not run, and why
 
