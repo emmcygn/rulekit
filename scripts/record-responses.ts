@@ -16,16 +16,15 @@
  * to need revisiting, since they describe specific mistakes in the old
  * recording.
  */
-import { readFileSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { loadNotesDir, NOTES_DIR } from "../src/extract/notes.js";
 import { buildRequest, liveCall, parseResponse, EXTRACTION_MODEL, PROMPT_ID } from "../src/extract/pipeline.js";
 import { RECORDED_DIR } from "../src/extract/recorded.js";
+import { readFactModelYaml } from "../src/extract/fact-model.js";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const factModelYaml = readFileSync(join(repoRoot, "corpus", "fact-model.yaml"), "utf8");
+const factModelYaml = readFactModelYaml();
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith("-"));
 const notes = Object.values(loadNotesDir(NOTES_DIR)).filter((n) => only.length === 0 || only.includes(n.doc));

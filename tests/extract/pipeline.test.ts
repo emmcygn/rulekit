@@ -1,6 +1,4 @@
 import { describe, it, expect, vi } from "vitest";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { parseFactModel } from "../../src/core/schema.js";
 import {
   PROMPT_ID,
@@ -17,8 +15,9 @@ import {
 } from "../../src/extract/pipeline.js";
 import { loadNotesDir, toDocuments, NOTES_DIR } from "../../src/extract/notes.js";
 import { RECORDED_DIR, loadRecorded } from "../../src/extract/recorded.js";
+import { readFactModelYaml } from "../../src/extract/fact-model.js";
 
-const FACT_MODEL_YAML = readFileSync(join(NOTES_DIR, "..", "fact-model.yaml"), "utf8");
+const FACT_MODEL_YAML = readFactModelYaml();
 const FACT_MODEL = parseFactModel(FACT_MODEL_YAML);
 const NOTES = loadNotesDir(NOTES_DIR);
 const NOTE = NOTES["echo-2026-03-12"]!;

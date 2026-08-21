@@ -1,13 +1,58 @@
+# The canonical `patient-facts/v1` — the one fact model in this repo.
+#
+# There used to be two files declaring this name (this one and corpus/fact-model.yaml)
+# with contradictory declarations: lvef was "percent" here and "%" there, nyha_class
+# and nt_probnp existed only there. `rules check` therefore gave a different answer
+# depending on which path you passed. This file is the union of both, and the only
+# fact model anything loads: the CLIs, the extraction pipeline, the promptfoo evals
+# and the workbench all point here.
+#
+# It declares two vocabularies on purpose, and they mean different things:
+#
+#   bare names (lvef, egfr, nt_probnp, nyha_class, ...)
+#       what a human or the extraction pipeline states about a patient — one
+#       current value, hand-entered or quoted out of a clinical note. This is
+#       the vocabulary the extraction prompt is shown and the review pane
+#       queues; it is what rules/trials/demo-hf-001 evaluates against.
+#
+#   lab_<slug> names (lab_lvef, lab_egfr, lab_bnp, lab_nt_probnp, ...)
+#       one flattened observation out of a structured record, following
+#       scripts/flatten-synthea.ts's lab_<slug> convention, with its own
+#       recency companion where the protocol cares (lab_lvef_days_ago).
+#       This is what rules/trials/commander-hf evaluates against.
+#
+# A fact that exists under both names (lvef / lab_lvef, egfr / lab_egfr,
+# nt_probnp / lab_nt_probnp) is the same clinical quantity arriving by two
+# different routes, and a rule set picks the route its data actually has.
+#
+# The grounding gate (src/extract/ground.ts) rejects any proposed fact whose
+# name is absent here, or whose value does not parse to the declared type and
+# unit. Parsed with parseFactModel() from src/core/schema.ts.
 name: patient-facts/v1
 facts:
+  # --- demographics -------------------------------------------------------
   age: { type: number, unit: years }
-  sex: { type: enum, values: [male, female] }
-  lvef: { type: number, unit: percent }
+  sex: { type: enum, values: [male, female, other] }
+
+  # --- stated clinical facts (extraction + hand entry) --------------------
+  nyha_class: { type: enum, values: [I, II, III, IV] }
+  lvef: { type: number, unit: "%" }
   egfr: { type: number, unit: mL/min/1.73m2 }
+  nt_probnp: { type: number, unit: pg/mL }
+  systolic_bp: { type: number, unit: mmHg }
+  potassium: { type: number, unit: mmol/L }
+  hf_symptom_duration_months: { type: number, unit: months }
+  on_anticoagulant: { type: boolean }
+  on_beta_blocker: { type: boolean }
+  on_sglt2_inhibitor: { type: boolean }
+  on_arni: { type: boolean }
+  hospitalized_for_hf_last_12mo: { type: boolean }
+
+  # --- structured record --------------------------------------------------
   medications: { type: code, systems: [rxnorm, rxnorm-class] }
   conditions: { type: code, systems: [snomed] }
-  # phase-3 corpus vocabulary (scripts/flatten-synthea.ts lab_<slug> convention)
-  hf_symptom_duration_months: { type: number, unit: months }
+
+  # --- flattened observations (scripts/flatten-synthea.ts lab_<slug>) ------
   lab_lvef: { type: number, unit: "%" }
   lab_lvef_days_ago: { type: number, unit: days }
   lab_bnp: { type: number, unit: pg/mL }

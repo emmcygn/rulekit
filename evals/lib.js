@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 
 export const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-export const factModelYaml = () => readFileSync(join(REPO_ROOT, "corpus", "fact-model.yaml"), "utf8");
+export const factModelYaml = () => readFileSync(join(REPO_ROOT, "packs", "trials", "fact-model.yaml"), "utf8");
 export const expectedFactsYaml = () => readFileSync(join(REPO_ROOT, "evals", "expected-facts.yaml"), "utf8");
 
 let cached = null;

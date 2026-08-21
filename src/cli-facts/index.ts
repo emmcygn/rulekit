@@ -20,13 +20,14 @@ import { verifyFactEntry, type GroundingContext } from "../extract/ground.js";
 import { loadNotesDir, toDocuments } from "../extract/notes.js";
 import { loadRecorded } from "../extract/recorded.js";
 import { parseResponse } from "../extract/pipeline.js";
+import { FACT_MODEL_PATH } from "../extract/fact-model.js";
 import { groundProposedFacts } from "../extract/ground.js";
 import { parseExpectedFacts, scoreExtraction, formatEvalReport, type ScoredCase } from "../extract/eval.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..");
 const DEFAULT_NOTES = join(repoRoot, "corpus", "notes");
-const DEFAULT_FACT_MODEL = join(repoRoot, "corpus", "fact-model.yaml");
+const DEFAULT_FACT_MODEL = FACT_MODEL_PATH;
 const DEFAULT_EXPECTED = join(repoRoot, "evals", "expected-facts.yaml");
 
 type Finding = { file: string; fact?: string; message: string };

@@ -1,15 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseFactModel } from "../../src/core/schema.js";
 import { scoreExtraction, parseExpectedFacts, formatEvalReport, type ScoredCase } from "../../src/extract/eval.js";
 import { groundProposedFacts, type GroundingContext, type GroundingResult } from "../../src/extract/ground.js";
 import { loadNotesDir, toDocuments, NOTES_DIR } from "../../src/extract/notes.js";
 import { loadRecorded, RECORDED_DIR } from "../../src/extract/recorded.js";
 import { parseResponse } from "../../src/extract/pipeline.js";
+import { loadFactModel } from "../../src/extract/fact-model.js";
 
-const CORPUS = join(NOTES_DIR, "..");
-const FACT_MODEL = parseFactModel(readFileSync(join(CORPUS, "fact-model.yaml"), "utf8"));
+const FACT_MODEL = loadFactModel();
 const NOTES = loadNotesDir(NOTES_DIR);
 const CTX: GroundingContext = { factModel: FACT_MODEL, documents: toDocuments(NOTES) };
 const EXPECTED = parseExpectedFacts(readFileSync(join(RECORDED_DIR, "..", "expected-facts.yaml"), "utf8"));

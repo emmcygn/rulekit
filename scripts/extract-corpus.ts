@@ -18,7 +18,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stringify } from "yaml";
-import { parseFactModel } from "../src/core/schema.js";
+import { loadFactModel } from "../src/extract/fact-model.js";
 import { parseFactsFile } from "../src/extract/schema.js";
 import { loadNotesDir, toDocuments, NOTES_DIR } from "../src/extract/notes.js";
 import { loadRecorded } from "../src/extract/recorded.js";
@@ -29,7 +29,7 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(repoRoot, "corpus", "facts");
 const force = process.argv.includes("--force");
 
-const factModel = parseFactModel(readFileSync(join(repoRoot, "corpus", "fact-model.yaml"), "utf8"));
+const factModel = loadFactModel();
 const notes = loadNotesDir(NOTES_DIR);
 const ctx = { factModel, documents: toDocuments(notes) };
 
