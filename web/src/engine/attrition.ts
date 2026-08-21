@@ -16,11 +16,11 @@ export {
   isParked,
 } from "../../../src/core/attrition.js";
 
-import type { PatientBand, CriterionAttrition, Attrition as CoreAttrition } from "../../../src/core/attrition.js";
+import type { PatientBand, CriterionAttrition, AttritionOf } from "../../../src/core/attrition.js";
 
 export type Band = PatientBand;
 export type AttritionRow = CriterionAttrition;
 export type BandedPatient = { patient: string; band: Band; evaluation: import("./api.js").Evaluation };
-export type Attrition = CoreAttrition;
+export type Attrition = AttritionOf<import("./api.js").Evaluation>;
 
 export const BANDS: Band[] = ["potentially-eligible", "screen-fail", "not-evaluable"];
