@@ -6,4 +6,5 @@ export * from "./lint.js";
 export * from "./evaluator.js";
 export * from "./conflicts.js";
 export * from "./testing.js";
+export * from "./attrition.js";
 export * from "./diff.js";

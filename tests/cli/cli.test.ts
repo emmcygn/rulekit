@@ -71,4 +71,36 @@ describe("rules CLI", () => {
     expect(out.counts.eligible + out.counts.ineligible + out.counts.undetermined).toBe(10);
     rmSync("/tmp/rulekit-screen.json");
   });
+
+  it("screen --report writes bands, the per-criterion table and the sole-disqualifier section", () => {
+    const path = "/tmp/rulekit-screen-report.md";
+    const r = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--report", path]);
+    expect(r.status).toBe(0);
+    const md = readFileSync(path, "utf8");
+    expect(md).toContain("# Screening report — demo-hf-001-eligibility 1.1.0");
+    expect(md).toContain("| Band | Patients | Share |");
+    expect(md).toContain("| Criterion | Kind | Sequential | Fails alone | Sole reason |");
+    expect(md).toContain("## Sole-disqualifier argument");
+    expect(md).toContain("E4 · nyha-class-iv | exclusion (unmodeled) | — | — | — |");
+    // The three band counts must add up to the cohort.
+    const bands = [...md.matchAll(/^\| (?:potentially eligible|screen fail|not evaluable) \| (\d+) \|/gm)].map((m) => Number(m[1]));
+    expect(bands).toHaveLength(3);
+    expect(bands.reduce((a, b) => a + b, 0)).toBe(10);
+    rmSync(path);
+  });
+
+  it("screen refuses to run with neither --out nor --report", () => {
+    expect(run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients"]).status).toBe(1);
+  });
+
+  it("screen --out JSON is unchanged when --report is also given", () => {
+    const json = "/tmp/rulekit-screen-both.json";
+    const md = "/tmp/rulekit-screen-both.md";
+    const only = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--out", "/tmp/rulekit-screen-only.json"]);
+    expect(only.status).toBe(0);
+    const both = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--out", json, "--report", md]);
+    expect(both.status).toBe(0);
+    expect(readFileSync(json, "utf8")).toBe(readFileSync("/tmp/rulekit-screen-only.json", "utf8"));
+    for (const f of [json, md, "/tmp/rulekit-screen-only.json"]) rmSync(f);
+  });
 });
