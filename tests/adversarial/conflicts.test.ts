@@ -29,7 +29,7 @@ const rs = (...criteria: Criterion[]): RuleSet => ({
   criteria,
 });
 
-describe("B1 — contradictory-band is per-fact, so a multi-fact exclusion produces a FALSE claim", () => {
+describe("B1 — a multi-fact exclusion is skipped from band analysis (REGRESSION: was a FALSE claim)", () => {
   const set = rs(
     { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18 } },
     {
@@ -40,30 +40,45 @@ describe("B1 — contradictory-band is per-fact, so a multi-fact exclusion produ
     },
   );
 
-  it("reports an error claiming every patient over 80 is excluded", () => {
-    const found = detectConflicts(set);
-    expect(found).toHaveLength(1);
-    expect(found[0]!.code).toBe("contradictory-band");
-    expect(found[0]!.message).toContain("every patient with age in (80, ∞) passes inclusion and is then excluded");
-    expect(found[0]!.message).toContain("for all inputs, not just a test corpus");
+  it("makes no band claim: firing needs every conjunct, so 'for all inputs' cannot be shown", () => {
+    expect(detectConflicts(set)).toEqual([]);
   });
 
-  it("...and the evaluator disproves it on the first patient you try", () => {
-    // 85 years old, in the reported band, three-day index stay.
+  it("the counterexample the old claim could not survive is now consistent with the analysis", () => {
+    // 85 years old, in the interval the old message named, three-day index stay.
     const p = { patient: "COUNTEREXAMPLE", facts: { age: 85, index_hospital_days: 3 } };
     const ev = evalPatient(set, p);
     expect(ev.results.find((r) => r.id === "frail-long-stay")!.verdict).toBe("pass");
-    // BUG: the static analysis said this is impossible "for all inputs".
     expect(ev.overall).toBe("eligible");
   });
 
-  it("`rules check` would exit non-zero on a rule set with no defect", () => {
-    expect(checkRuleSet(set, FM).filter((f) => f.level === "error")).toHaveLength(1);
+  it("`rules check` exits 0 on this rule set — it has no defect", () => {
+    expect(checkRuleSet(set, FM).filter((f) => f.level === "error")).toEqual([]);
+  });
+
+  it("a non-interval conjunct disables the band claim for the same reason", () => {
+    const withCode = rs(
+      { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18 } },
+      {
+        id: "frail-with-afib",
+        kind: "exclusion",
+        verbatim: "Age over 80 AND atrial fibrillation",
+        when: {
+          all: [
+            { fact: "age", op: "gt", value: 80 },
+            { fact: "conditions", op: "in", codes: { system: "snomed", values: ["49436004"] } },
+          ],
+        },
+      },
+    );
+    expect(detectConflicts(withCode).filter((f) => f.code === "contradictory-band")).toEqual([]);
+    // ...and the evaluator agrees: an 85-year-old with no afib passes.
+    expect(evalPatient(withCode, { patient: "NO-AFIB", facts: { age: 85, conditions: [] } }).overall).toBe("eligible");
   });
 });
 
-describe("B2 — neq leaves are dropped from interval analysis, hiding real contradictions", () => {
-  it("a criterion that can never fire is reported as clean", () => {
+describe("B2 — neq leaves close a degenerate interval (REGRESSION: were dropped from analysis)", () => {
+  it("a criterion that can never fire is reported as unsatisfiable", () => {
     const set = rs({
       id: "impossible-lvef",
       kind: "inclusion",
@@ -76,21 +91,33 @@ describe("B2 — neq leaves are dropped from interval analysis, hiding real cont
         ],
       },
     });
-    // BUG: interval analysis sees [40, 40] and stops; `neq` is not in INTERVAL_OPS.
-    expect(detectConflicts(set)).toEqual([]);
+    const f = detectConflicts(set).find((x) => x.code === "unsatisfiable-criterion")!;
+    expect(f.level).toBe("error");
+    expect(f.criteria).toEqual(["impossible-lvef"]);
+    expect(f.evidence).toContain("lvef");
     expect(evalPatient(set, { patient: "P", facts: { lvef: 40 } }).overall).toBe("ineligible");
   });
 
-  it("two inclusions that admit nobody are reported as clean when one uses neq", () => {
+  it("two inclusions that admit nobody are reported as contradictory-inclusions", () => {
     const set = rs(
       { id: "lvef-exactly-40", kind: "inclusion", verbatim: "LVEF = 40", when: { fact: "lvef", op: "eq", value: 40 } },
       { id: "lvef-not-40", kind: "inclusion", verbatim: "LVEF != 40", when: { fact: "lvef", op: "neq", value: 40 } },
     );
-    // BUG: this rule set admits literally nobody and `check` says so nowhere.
-    expect(checkRuleSet(set, FM).filter((f) => f.level === "error")).toEqual([]);
+    const errors = checkRuleSet(set, FM).filter((f) => f.level === "error");
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.code).toBe("contradictory-inclusions");
+    expect(errors[0]!.criteria.sort()).toEqual(["lvef-exactly-40", "lvef-not-40"]);
     for (const v of [39, 40, 41]) {
       expect(evalPatient(set, { patient: `P${v}`, facts: { lvef: v } }).overall).toBe("ineligible");
     }
+  });
+
+  it("a neq that does not close the admitted interval stays quiet", () => {
+    const set = rs(
+      { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18 } },
+      { id: "not-fifty", kind: "inclusion", verbatim: "Age != 50", when: { fact: "age", op: "neq", value: 50 } },
+    );
+    expect(detectConflicts(set)).toEqual([]);
   });
 });
 
