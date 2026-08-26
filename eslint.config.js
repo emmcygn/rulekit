@@ -12,6 +12,7 @@ export default tseslint.config(
       }],
     },
   },
-  // web/ and web-components/ are self-contained packages with their own toolchains.
-  { ignores: ["dist/**", "web/**", "web-components/**"] },
+  // web/ and web-components/ are self-contained packages with their own
+  // toolchains; deploy/assets holds vendored minified libraries (three.js).
+  { ignores: ["dist/**", "web/**", "web-components/**", "deploy/assets/**"] },
 );
