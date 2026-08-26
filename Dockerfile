@@ -37,6 +37,8 @@ RUN npm install -g serve@14
 # Assemble the served tree: landing page at the root, workbench under /app.
 COPY --from=build /app/web/dist ./site/app
 COPY deploy/landing.html ./site/index.html
+# Landing-page vendor assets (self-hosted three.js for the intro scene).
+COPY deploy/assets ./site/assets
 
 ENV PORT=8080
 EXPOSE 8080

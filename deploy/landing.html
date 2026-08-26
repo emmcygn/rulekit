@@ -1,5 +1,6 @@
-<title>rulekit, Plainly</title>
+<title>medirulekit, Plainly</title>
 <meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' rx='1' fill='%23A6431E'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600&family=Martian+Mono:wght@600&display=swap">
 <style>
@@ -577,6 +578,51 @@
   .byline{font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:20px;letter-spacing:.01em}
   .byline-close{text-align:center;font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:36px}
 
+  /* ---- primary call to action: open the live workbench ---- */
+  .cta-wrap{text-align:center;margin:38px 0 6px}
+  .cta-run{display:inline-flex;align-items:center;gap:.55em;padding:12px 24px;
+    font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.01em;
+    color:var(--paper);background:var(--accent);border:1px solid var(--accent-deep);
+    border-radius:var(--r);text-decoration:none;
+    transition:background .15s ease,box-shadow .15s ease}
+  .cta-run:hover{background:var(--accent-deep);box-shadow:0 2px 10px rgba(166,67,30,.28)}
+  .cta-run .arrow{transition:transform .15s ease}
+  .cta-run:hover .arrow{transform:translateX(3px)}
+  .cta-sub{font-size:12.5px;color:var(--ink2);margin-top:11px}
+  @media (prefers-reduced-motion: reduce){
+    .cta-run,.cta-run .arrow{transition:none}
+    .cta-run:hover .arrow{transform:none}}
+
+  /* ---- Eroom intro: pinned 3D problem-framing scene ---- */
+  #p-eroom .scrub-stage{padding:0;overflow:hidden}
+  .er-canvas{position:absolute;inset:0}
+  .er-canvas canvas{width:100%;height:100%;display:block}
+  .er-mark{position:absolute;top:28px;left:0;right:0;text-align:center;
+    font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink2)}
+  .er-mark i{display:inline-block;width:9px;height:9px;background:var(--accent);
+    border-radius:1px;margin-right:9px}
+  .er-beats{position:absolute;left:0;right:0;bottom:72px;pointer-events:none}
+  .er-beat{position:absolute;left:0;right:0;bottom:0;margin:0 auto;
+    width:min(580px,calc(100% - 40px));background:var(--paper);
+    border:1px solid var(--rule);border-radius:var(--r);padding:16px 20px;
+    box-shadow:0 8px 26px rgba(23,21,15,.07)}
+  .er-beat .nt{display:block;font-family:var(--disp);font-size:10.5px;font-weight:600;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .er-beat p{font-size:14.5px;line-height:1.6}
+  .er-beat .src{display:block;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--ink3)}
+  .er-hint{position:absolute;bottom:20px;left:0;right:0;text-align:center;
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink3);
+    opacity:calc(1 - min(1, var(--p,0) * 8))}
+  /* fallback: no WebGL or reduced motion -> the same three beats, in static flow */
+  .er-flat{height:auto !important}
+  .er-flat .er-canvas,.er-flat .er-hint{display:none}
+  .er-flat .scrub-stage{position:static;height:auto;overflow:visible;padding:72px 20px}
+  .er-flat .er-beats{position:static;pointer-events:auto}
+  .er-flat .er-beat{position:static;margin:14px auto}
+  .er-flat .er-mark{position:static;margin-bottom:22px}
+  .er-flat [data-step]{opacity:1 !important;transform:none !important}
+
   /* ---- a link that is not live yet, marked as such ---- */
   .link-soon{color:var(--ink2);border-bottom:1px dotted var(--ink3);text-decoration:none}
   .link-soon:hover{color:var(--ink2)}
@@ -835,6 +881,34 @@
 <!-- ================================================================ -->
 <!-- 00 · HERO                                                        -->
 <!-- ================================================================ -->
+<!-- The problem, before the product: Eroom's law scrolled through a 3D scene.
+     Beats crossfade via the shared scrub system; the scene itself is driven by
+     the module script at the end of the file. No WebGL, or reduced motion,
+     collapses it to the same three paragraphs in static flow. -->
+<section class="scrub" id="p-eroom" data-scrub data-vars data-steps="3" style="height:420vh" data-section data-title="The problem" data-thread="prose">
+  <div class="scrub-stage">
+    <div class="er-canvas" aria-hidden="true"><canvas id="er-gl"></canvas></div>
+    <p class="er-mark"><i></i>medirulekit</p>
+    <div class="er-beats">
+      <div class="er-beat" data-step="0">
+        <span class="nt">the problem &#183; Eroom's law</span>
+        <p>Moore's law, spelled backwards. Since the 1950s, the number of new medicines a billion research dollars buys has <strong>halved roughly every nine years</strong> &mdash; a hundredfold fall, over the same decades in which everything else in technology got cheaper.</p>
+        <span class="src">Scannell et al., Nature Reviews Drug Discovery, 2012</span>
+      </div>
+      <div class="er-beat" data-step="1">
+        <span class="nt">where the money goes</span>
+        <p>The most expensive part is the clinical trial &mdash; the slow, human years where an idea meets real patients. And every trial is governed by a single document: the <strong>protocol</strong>, hundreds of pages of prose deciding who may enter, what gets measured, and what counts as an answer.</p>
+      </div>
+      <div class="er-beat" data-step="2">
+        <span class="nt">the page that decides</span>
+        <p>Buried in that stack are the <strong>entry rules</strong>. Get them wrong and the trial screens the wrong people, amendments follow at half a million dollars each, and the mistake surfaces only after the money is spent.</p>
+        <span class="src">keep scrolling &mdash; this is where the story starts</span>
+      </div>
+    </div>
+    <p class="er-hint">scroll</p>
+  </div>
+</section>
+
 <section class="sec" id="hero" data-section data-title="Start" data-thread="prose">
   <div class="hero-bleed" aria-hidden="true">
     <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" focusable="false">
@@ -854,7 +928,7 @@
     </svg>
   </div>
   <div class="wrap-wide">
-    <p class="hero-mark"><i></i>rulekit</p>
+    <p class="hero-mark"><i></i>medirulekit</p>
     <h1>A trial's entry rules live in a PDF. You cannot run a PDF, so the mistakes turn up after the money is spent. rulekit rewrites the rules as code you can test.</h1>
     <p class="byline">by Emmanuel Cuyugan</p>
     <p class="hero-kicker">The plain-language tour. No code needed, about six minutes, and it builds as it goes, so read it in order. There is an engineers' edition of the same story; the last section links to it.</p>
@@ -1796,7 +1870,12 @@
 
     <div class="prose" data-reveal>
       <p>Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://claude.ai/code/artifact/f6f26ee6-5f16-457a-b01d-0aa4b1443ff3">technical thesis</a> (also <span class="mono">docs/thesis.html</span> in the repository), which is this same story told longer, for engineers, with the engine's real output in it.</p>
-      <p>The repository itself is at <a href="https://github.com/mannycygn/rulekit">github.com/mannycygn/rulekit</a>. There will also be <a class="link-soon" href="#" aria-disabled="true">the engineering read</a><span class="soon">link to follow</span>, a shorter account of the build decisions and the things that had to be reversed.</p>
+      <p>The repository itself is at <a href="https://github.com/emmcygn/rulekit">github.com/emmcygn/rulekit</a>. There will also be <a class="link-soon" href="#" aria-disabled="true">the engineering read</a><span class="soon">link to follow</span>, a shorter account of the build decisions and the things that had to be reversed.</p>
+    </div>
+
+    <div class="cta-wrap" data-reveal>
+      <a class="cta-run" href="/app">Open the live workbench <span class="arrow" aria-hidden="true">&rarr;</span></a>
+      <p class="cta-sub">The real engine, running on ten synthetic patients in your browser. No sign-up.</p>
     </div>
 
     <div class="closing" data-reveal>
@@ -1813,7 +1892,7 @@
 
     <p class="byline-close" data-reveal="fade">by Emmanuel Cuyugan</p>
 
-    <p class="colophon" data-reveal="fade">rulekit &#183; Apache-2.0 &#183; set in Public Sans, Spline Sans Mono &amp; Martian Mono<br>amendment costs: Tufts CSDD &#183; criteria coverage: Chia corpus (CC-BY-4.0, Kury et al. 2020) &#183; trial criteria quoted from ClinicalTrials.gov</p>
+    <p class="colophon" data-reveal="fade">medirulekit &#183; the home of rulekit &#183; Apache-2.0 &#183; set in Public Sans, Spline Sans Mono &amp; Martian Mono<br>R&amp;D efficiency decline: Scannell et al., Nat. Rev. Drug Discovery 2012 &#183; amendment costs: Tufts CSDD &#183; criteria coverage: Chia corpus (CC-BY-4.0, Kury et al. 2020) &#183; trial criteria quoted from ClinicalTrials.gov</p>
   </div>
 </section>
 
@@ -2119,6 +2198,163 @@
   railUpdate();
   scrubs.forEach(function(sc){ setStep(sc, 0); });
   updateScrubs();
+})();
+</script>
+
+<script type="module">
+/* ---------- the Eroom intro scene ----------
+   One WebGL canvas, scrubbed by scroll like every other pinned scene on this
+   page. Three movements: the cost bars climb, the bars give way to a protocol
+   stack, the stack fans open to the one page that decides. Everything is drawn
+   in the page's own inks; if WebGL or motion is unavailable the section
+   collapses to plain paragraphs (.er-flat) and nothing is lost but the light. */
+(async function(){
+  var sec = document.getElementById('p-eroom');
+  if (!sec) return;
+  var flat = function(){ sec.classList.add('er-flat'); };
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return flat();
+
+  var THREE, renderer;
+  try { THREE = await import('./assets/three.module.min.js'); } catch (e) { return flat(); }
+  var canvas = document.getElementById('er-gl');
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  } catch (e) { return flat(); }
+
+  var INK = 0x17150F, PAPER = 0xFAF8F4, RULE = 0xC9C2B4, ACCENT = 0xA6431E, FILL = 0xD6D0C4;
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xEDE9E1, 13, 26);
+  scene.add(new THREE.HemisphereLight(0xffffff, FILL, 1.15));
+  var sun = new THREE.DirectionalLight(0xffffff, 1.1);
+  sun.position.set(4, 8, 6);
+  scene.add(sun);
+  var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 60);
+
+  function paperBox(w, h, d, faceColor, edgeColor){
+    var g = new THREE.BoxGeometry(w, h, d);
+    var mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: faceColor }));
+    var edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(g),
+      new THREE.LineBasicMaterial({ color: edgeColor }));
+    mesh.add(edges);
+    return mesh;
+  }
+
+  /* movement 1: eight decades of cost per approved medicine, doubling as it goes */
+  var bars = new THREE.Group();
+  var BAR_N = 8;
+  for (var i = 0; i < BAR_N; i++){
+    var h = 0.28 * Math.pow(1.55, i);
+    var last = i === BAR_N - 1;
+    var bar = paperBox(0.52, h, 0.52, last ? ACCENT : PAPER, last ? ACCENT : INK);
+    bar.position.set((i - (BAR_N - 1) / 2) * 0.92, h / 2, 0);
+    bar.userData.h = h;
+    bars.add(bar);
+  }
+  scene.add(bars);
+
+  /* movements 2 and 3: the protocol stack, and the entry-rules page on top */
+  var sheets = new THREE.Group();
+  var SHEET_N = 15;
+  var jitter = function(i){ return Math.sin(i * 12.9898) * 0.06; };
+  for (var s = 0; s < SHEET_N; s++){
+    var top = s === SHEET_N - 1;
+    var sheet = paperBox(2.5, 0.05, 3.3, PAPER, top ? ACCENT : RULE);
+    sheet.position.y = s * 0.085;
+    sheet.rotation.y = jitter(s);
+    sheets.add(sheet);
+    if (top){
+      /* the entry rules: three accent lines ruled onto the top page */
+      for (var l = 0; l < 3; l++){
+        var line = paperBox(1.7, 0.012, 0.09, ACCENT, ACCENT);
+        line.position.set(-0.1, 0.032, -0.7 + l * 0.55);
+        sheet.add(line);
+      }
+      sheet.userData.top = true;
+    }
+    sheet.userData.i = s;
+  }
+  sheets.position.y = -5; /* below the floor until movement 2 raises it */
+  scene.add(sheets);
+
+  var clamp01 = function(v){ return Math.min(1, Math.max(0, v)); };
+  var smooth = function(v){ v = clamp01(v); return v * v * (3 - 2 * v); };
+  var lerp = function(a, b, t){ return a + (b - a) * t; };
+  var V3 = THREE.Vector3;
+  /* camera poses bracketing the three movements */
+  var poses = [
+    { pos: new V3(6.2, 3.2, 8.4), look: new V3(0, 1.6, 0) },
+    { pos: new V3(2.2, 4.4, 9.2), look: new V3(0, 1.4, 0) },
+    { pos: new V3(0, 3.4, 7.4),  look: new V3(0, 0.7, 0) },
+    { pos: new V3(0, 2.9, 5.2),  look: new V3(0, 1.25, 0) }
+  ];
+  var camPos = new V3(), camLook = new V3();
+
+  function apply(p){
+    /* segment weights: A bars climb, B stack replaces bars, C the fan.
+       B finishes early so the stack is standing while its caption is read */
+    var a = smooth(p / 0.36), b = smooth((p - 0.30) / 0.26), c = smooth((p - 0.62) / 0.38);
+
+    /* bars grow in staggered during A, sink away during B; a stub floor keeps
+       the first screen from being empty before any scrolling happens */
+    bars.children.forEach(function(bar, i){
+      var grow = Math.max(0.18, smooth((a - i * 0.055) / 0.6));
+      var sy = Math.max(0.001, grow * (1 - b));
+      bar.scale.y = sy;
+      bar.position.y = bar.userData.h * sy / 2 - b * 3.2;
+    });
+    bars.rotation.y = a * 0.35;
+
+    /* the stack rises through B, fans through C */
+    sheets.position.y = lerp(-5, 0, b);
+    sheets.children.forEach(function(sheet){
+      var i = sheet.userData.i, n = SHEET_N - 1;
+      if (sheet.userData.top){
+        /* lift and tip TOWARD the camera, so the ruled face reads */
+        sheet.position.y = i * 0.085 + c * 0.75;
+        sheet.rotation.x = c * 0.55;
+        sheet.rotation.y = jitter(i) * (1 - c);
+        sheet.position.z = c * 0.9;
+      } else {
+        /* the rest of the deck slides and splays, like a dropped ream */
+        var k = (i / n) - 0.5;
+        sheet.position.x = c * k * 0.8;
+        sheet.rotation.y = jitter(i) + c * k * 0.35;
+      }
+    });
+
+    /* camera: constant-speed tour through the four poses */
+    var t = p * 3, seg = Math.min(2, Math.floor(t)), f = smooth(t - seg);
+    camPos.lerpVectors(poses[seg].pos, poses[seg + 1].pos, f);
+    camLook.lerpVectors(poses[seg].look, poses[seg + 1].look, f);
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
+  }
+
+  var stage = sec.querySelector('.scrub-stage');
+  function resize(){
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  var lastP = -1;
+  (function frame(){
+    requestAnimationFrame(frame);
+    var r = sec.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) return; /* offscreen: skip */
+    var total = sec.offsetHeight - stage.offsetHeight;
+    var p = total > 0 ? clamp01(-r.top / total) : 0;
+    if (p === lastP) return;
+    lastP = p;
+    apply(p);
+    renderer.render(scene, camera);
+  })();
 })();
 </script>
 
