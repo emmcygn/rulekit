@@ -909,3 +909,85 @@ button {
   font-size: 11px;
   color: var(--ink-3);
 }
+
+/* ------------------------------------------------------------------- phone */
+
+/* Desktop always shows both panes; the toggle only exists on narrow screens. */
+.editor-toggle {
+  display: none;
+}
+
+@media (max-width: 880px) {
+  /* Results first, full width; the editor collapses behind its toggle bar. */
+  .body {
+    flex-direction: column;
+  }
+  .editor-toggle {
+    display: block;
+    flex: none;
+    order: 1;
+    padding: 9px 16px;
+    text-align: left;
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--paper);
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+  }
+  .editor-toggle::before {
+    content: "▸ ";
+  }
+  .body.editor-open .editor-toggle::before {
+    content: "▾ ";
+  }
+  .editor {
+    display: none;
+    order: 2;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+  .body.editor-open .editor {
+    display: flex;
+    height: 46vh;
+    flex: none;
+  }
+  .right {
+    order: 3;
+  }
+  /* Tab strips scroll sideways instead of squeezing. */
+  .tabs,
+  .etabs {
+    overflow-x: auto;
+    gap: 14px;
+  }
+  .tabs::-webkit-scrollbar,
+  .etabs::-webkit-scrollbar {
+    display: none;
+  }
+  /* Topbar: keep the identity, drop the lecture. */
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 8px 12px;
+  }
+  .topbar > .ink3 {
+    display: none;
+  }
+  .psel .ink2 {
+    display: none;
+  }
+  .tspacer {
+    display: none;
+  }
+  .disclaimer {
+    height: auto;
+    padding: 6px 12px;
+  }
+}

@@ -2323,10 +2323,16 @@
       }
     });
 
-    /* camera: constant-speed tour through the four poses */
+    /* camera: constant-speed tour through the four poses. Portrait screens
+       get a proportional dolly-out, or the wide compositions overflow the
+       narrow frame */
     var t = p * 3, seg = Math.min(2, Math.floor(t)), f = smooth(t - seg);
     camPos.lerpVectors(poses[seg].pos, poses[seg + 1].pos, f);
     camLook.lerpVectors(poses[seg].look, poses[seg + 1].look, f);
+    if (camera.aspect < 1){
+      var k = 1 + (1 / camera.aspect - 1) * 0.95;
+      camPos.sub(camLook).multiplyScalar(k).add(camLook);
+    }
     camera.position.copy(camPos);
     camera.lookAt(camLook);
   }
@@ -2339,6 +2345,7 @@
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    lastP = -1; /* aspect feeds the camera dolly: force a re-render */
   }
   new ResizeObserver(resize).observe(stage);
   resize();
