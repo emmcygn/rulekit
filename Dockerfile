@@ -1,13 +1,16 @@
-# Railway deploy for the rulekit workbench (web/), a static Vite SPA.
+# Railway deploy: the plain-language landing page at /, the workbench app at /app.
+#
+# Two static things, one service, no backend:
+#   /       -> deploy/landing.html   (self-contained explainer page)
+#   /app    -> web/dist              (the Vite workbench SPA)
 #
 # The web app is NOT self-contained: at build time it pulls the engine
 # (../src/core) and the demo data (../rules, ../packs, ../fixtures, ../corpus)
 # from the repo above it. Its `tsc` typecheck also reads ../src/core, which
 # imports `zod`/`yaml` from the ROOT package — so the root deps must be
 # installed before the web build runs. That two-step install is why this is a
-# Dockerfile and not Railway's autodetect.
-#
-# Result is pure static files in web/dist, served by `serve`. No backend.
+# Dockerfile and not Railway's autodetect. The workbench's `base: "./"` (relative
+# asset paths) is what lets it run unchanged under the /app/ sub-path.
 
 # ---- build stage ----
 FROM node:22-alpine AS build
@@ -30,9 +33,14 @@ RUN npm --prefix web run build
 FROM node:22-alpine AS serve
 WORKDIR /app
 RUN npm install -g serve@14
-COPY --from=build /app/web/dist ./dist
+
+# Assemble the served tree: landing page at the root, workbench under /app.
+COPY --from=build /app/web/dist ./site/app
+COPY deploy/landing.html ./site/index.html
 
 ENV PORT=8080
 EXPOSE 8080
-# -s = single-page fallback: unknown routes serve index.html.
-CMD ["sh", "-c", "serve -s dist -l ${PORT:-8080}"]
+# No -s (single-page rewrite): that would send /app to the landing page. The
+# workbench switches tabs via state, not URL routes, so it needs no deep-link
+# fallback — plain directory serving gives /app -> site/app/index.html.
+CMD ["sh", "-c", "serve site -l ${PORT:-8080}"]
