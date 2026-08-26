@@ -577,6 +577,21 @@
   .byline{font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:20px;letter-spacing:.01em}
   .byline-close{text-align:center;font-family:var(--mono);font-size:13px;color:var(--ink2);margin-top:36px}
 
+  /* ---- primary call to action: open the live workbench ---- */
+  .cta-wrap{text-align:center;margin:38px 0 6px}
+  .cta-run{display:inline-flex;align-items:center;gap:.55em;padding:12px 24px;
+    font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.01em;
+    color:var(--paper);background:var(--accent);border:1px solid var(--accent-deep);
+    border-radius:var(--r);text-decoration:none;
+    transition:background .15s ease,box-shadow .15s ease}
+  .cta-run:hover{background:var(--accent-deep);box-shadow:0 2px 10px rgba(166,67,30,.28)}
+  .cta-run .arrow{transition:transform .15s ease}
+  .cta-run:hover .arrow{transform:translateX(3px)}
+  .cta-sub{font-size:12.5px;color:var(--ink2);margin-top:11px}
+  @media (prefers-reduced-motion: reduce){
+    .cta-run,.cta-run .arrow{transition:none}
+    .cta-run:hover .arrow{transform:none}}
+
   /* ---- a link that is not live yet, marked as such ---- */
   .link-soon{color:var(--ink2);border-bottom:1px dotted var(--ink3);text-decoration:none}
   .link-soon:hover{color:var(--ink2)}
@@ -1797,6 +1812,11 @@
     <div class="prose" data-reveal>
       <p>Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://claude.ai/code/artifact/f6f26ee6-5f16-457a-b01d-0aa4b1443ff3">technical thesis</a> (also <span class="mono">docs/thesis.html</span> in the repository), which is this same story told longer, for engineers, with the engine's real output in it.</p>
       <p>The repository itself is at <a href="https://github.com/mannycygn/rulekit">github.com/mannycygn/rulekit</a>. There will also be <a class="link-soon" href="#" aria-disabled="true">the engineering read</a><span class="soon">link to follow</span>, a shorter account of the build decisions and the things that had to be reversed.</p>
+    </div>
+
+    <div class="cta-wrap" data-reveal>
+      <a class="cta-run" href="/app">Open the live workbench <span class="arrow" aria-hidden="true">&rarr;</span></a>
+      <p class="cta-sub">The real engine, running on ten synthetic patients in your browser. No sign-up.</p>
     </div>
 
     <div class="closing" data-reveal>
