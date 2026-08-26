@@ -39,6 +39,10 @@ COPY --from=build /app/web/dist ./site/app
 COPY deploy/landing.html ./site/index.html
 # Landing-page vendor assets (self-hosted three.js for the intro scene).
 COPY deploy/assets ./site/assets
+# Cache policy: HTML revalidates every load (no-cache + etag), hashed assets
+# are immutable. Without this, browsers heuristically cache the HTML and a
+# redeploy strands them pointing at asset hashes that no longer exist.
+COPY deploy/serve.json ./site/serve.json
 
 ENV PORT=8080
 EXPOSE 8080
