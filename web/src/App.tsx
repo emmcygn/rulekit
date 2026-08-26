@@ -112,6 +112,9 @@ export function App() {
   // the engine sees is a function of them: a proposed fact is withheld until a
   // human confirms it, so every view downstream re-evaluates when a card moves.
   const [review, setReview] = useState(() => loadReviewState(storage()));
+  // Phone layout only: the editor collapses behind a toggle bar (the button is
+  // display:none on desktop, where both panes are always visible).
+  const [editorOpen, setEditorOpen] = useState(false);
   useEffect(() => {
     saveReviewState(storage(), review);
   }, [review]);
@@ -205,8 +208,16 @@ export function App() {
         </span>
       </header>
 
-      <div className="body">
-        <div className="editor" role="region" aria-label="Rule editor">
+      <div className={`body${editorOpen ? " editor-open" : ""}`}>
+        <button
+          className="editor-toggle"
+          aria-expanded={editorOpen}
+          aria-controls="rule-editor"
+          onClick={() => setEditorOpen((v) => !v)}
+        >
+          {editorOpen ? "Hide the rule editor" : "Edit rules"}
+        </button>
+        <div className="editor" id="rule-editor" role="region" aria-label="Rule editor">
           <div className="etabs" role="tablist" aria-label="Documents">
             {(
               [

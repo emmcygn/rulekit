@@ -299,4 +299,16 @@ describe("workbench shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy threshold back to YAML" }));
     expect(editor().value).toContain("op: lt, value: 40");
   });
+
+  it("has a phone-layout toggle that opens and closes the editor region", () => {
+    // On narrow screens the editor collapses behind this toggle (CSS hides the
+    // button on desktop; the behaviour must exist regardless of viewport).
+    render(<App />);
+    const toggle = screen.getByRole("button", { name: /edit rules/i });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  });
 });
