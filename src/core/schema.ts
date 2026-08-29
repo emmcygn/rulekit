@@ -10,7 +10,7 @@ export type WithinLeaf = { fact: string; op: "anyWithin"; codes: CodeRef; window
 export type Leaf = NumericLeaf | SetLeaf | ExistsLeaf | WithinLeaf;
 export type Condition = { all: Condition[] } | { any: Condition[] } | { not: Condition } | Leaf;
 export type Criterion = { id: string; ref?: string; kind: "inclusion" | "exclusion"; verbatim: string; when?: Condition; unmodeled?: boolean };
-export type RuleSet = { ruleset: string; rulesetVersion: string; factModel: string; protocol?: string; status?: string; effective?: string; source?: { nctId?: string; url?: string }; criteria: Criterion[] };
+export type RuleSet = { ruleset: string; rulesetVersion: string; factModel: string; protocol?: string; status?: string; effective?: string; source?: { registry?: string; id?: string; url?: string }; criteria: Criterion[] };
 export type FactDecl = { type: "number"; unit?: string } | { type: "code"; systems: string[] } | { type: "enum"; values: string[] } | { type: "boolean" };
 export type FactModel = { name: string; facts: Record<string, FactDecl> };
 export type CodeEntry = { code: string; system: string; daysAgo?: number };
@@ -60,7 +60,7 @@ const ruleSet = z
     protocol: z.string().optional(),
     status: z.string().optional(),
     effective: z.coerce.string().optional(),
-    source: z.object({ nctId: z.string().optional(), url: z.string().optional() }).optional(),
+    source: z.object({ registry: z.string().optional(), id: z.string().optional(), url: z.string().optional() }).optional(),
     criteria: z.array(criterion).min(1),
   })
   .refine((r) => new Set(r.criteria.map((c) => c.id)).size === r.criteria.length, {

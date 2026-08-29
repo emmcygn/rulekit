@@ -392,8 +392,8 @@ required.
    the protocol's own numbering in `ref`. If a criterion does not fit the
    condition language, mark it `unmodeled: true` and keep the verbatim text —
    deleting it is the one unforgivable move. Set `ruleset`, `rulesetVersion:
-   1.0.0`, `factModel: patient-facts/v1`, and `source.nctId` / `source.url` if
-   it is a registered study. [FORMAT.md](FORMAT.md) is the reference; the
+   1.0.0`, `factModel: patient-facts/v1`, and `source.registry` / `source.id` / `source.url` if
+   it is a registered study (any registry: clinicaltrials.gov, isrctn.com, ...). [FORMAT.md](FORMAT.md) is the reference; the
    condition language is four leaf forms and three combinators, and that is all.
 
 3. **Declare any new facts.** If your protocol screens on something

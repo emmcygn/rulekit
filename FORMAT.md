@@ -38,7 +38,8 @@ effective: 2026-08-04
 rulesetVersion: 1.1.0
 factModel: patient-facts/v1
 source:
-  nctId: NCT01877915
+  registry: clinicaltrials.gov
+  id: NCT01877915
   url: https://clinicaltrials.gov/study/NCT01877915
 criteria:
   - id: age-min
@@ -57,7 +58,7 @@ criteria:
 | `protocol` | no | The sponsor's own protocol id and version, as printed on the document. |
 | `status` | no | Free-text lifecycle label (`draft`, `irb-approved`, `completed`). Never interpreted. |
 | `effective` | no | `YYYY-MM-DD` this version took effect at the site. |
-| `source.nctId` / `source.url` | no | Where the criteria text came from. |
+| `source.registry` / `source.id` / `source.url` | no | Where the criteria text came from: any trial registry (`clinicaltrials.gov`, `isrctn.com`, `euclinicaltrials.eu`, ...) with the id that registry assigns, and/or a URL. |
 
 ### Criterion
 
@@ -418,7 +419,6 @@ reference parser — the format leading the implementation:
 |---|---|---|
 | `rulesetVersion` is semver | rejects `1.0` | accepts any string |
 | code `values` are strings | rejects `[88805009]` unquoted | coerces numbers to strings |
-| `source.nctId` matches `NCT\d{8}` | rejects `NCT-1` | accepts any string |
 
 ## Future work
 

@@ -162,11 +162,22 @@ describe("schema and reference parser agree on malformed facts files", () => {
  * implementation. Each of these is listed in FORMAT.md; asserting them here
  * means closing one is a test change, not a silent drift.
  */
+describe("source provenance is registry-agnostic", () => {
+  it("accepts a rule set sourced from ISRCTN as readily as from ClinicalTrials.gov", () => {
+    const yaml = `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\nsource: {registry: isrctn.com, id: ISRCTN12345678, url: "https://www.isrctn.com/ISRCTN12345678"}\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`;
+    expect(validate(RULESET, parseYaml(yaml))).toEqual([]);
+    expect(parseRuleSet(yaml).source).toEqual({
+      registry: "isrctn.com",
+      id: "ISRCTN12345678",
+      url: "https://www.isrctn.com/ISRCTN12345678",
+    });
+  });
+});
+
 describe("documented divergences: schema stricter than the reference parser", () => {
   const cases: [name: string, yaml: string][] = [
     ["rulesetVersion must be semver (parser takes any string)", `ruleset: x\nrulesetVersion: "1.0"\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
     ["code values must be strings (parser coerces numbers)", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: exclusion, verbatim: v, when: {fact: conditions, op: in, codes: {system: snomed, values: [88805009]}}}]`],
-    ["source.nctId must look like an NCT id (parser takes any string)", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\nsource: {nctId: NCT-1}\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
   ];
 
   it.each(cases)("%s", (_name, yaml) => {

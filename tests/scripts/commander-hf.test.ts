@@ -20,7 +20,8 @@ const unmodelled = ruleset.criteria.filter((c) => c.unmodeled === true);
 
 describe("provenance", () => {
   it("links to the real study", () => {
-    expect(ruleset.source?.nctId).toBe("NCT01877915");
+    expect(ruleset.source?.registry).toBe("clinicaltrials.gov");
+    expect(ruleset.source?.id).toBe("NCT01877915");
     expect(ruleset.source?.url).toContain("NCT01877915");
   });
 

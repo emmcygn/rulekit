@@ -25,7 +25,8 @@ protocol: RIVAROXHFA3001
 status: completed
 effective: "2013-09-01"
 source:
-  nctId: NCT01877915
+  registry: clinicaltrials.gov
+  id: NCT01877915
   url: https://clinicaltrials.gov/study/NCT01877915
 
 criteria:
