@@ -71,7 +71,7 @@ monaco.editor.defineTheme(RULEKIT_THEME, {
     "editorBracketHighlight.foreground4": "#7E776A",
     "editorBracketHighlight.foreground5": "#7E776A",
     "editorBracketHighlight.foreground6": "#7E776A",
-    "editorBracketHighlight.unexpectedBracket.foreground": "#A6431E",
+    "editorBracketHighlight.unexpectedBracket.foreground": "#7D2A35",
     "editorBracketPairGuide.background1": "#EDE9E1",
     "editorBracketPairGuide.activeBackground1": "#C9C2B4",
   },

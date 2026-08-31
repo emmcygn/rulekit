@@ -15,8 +15,13 @@
   --ink-3: #7e776a;
   --fill: #d6d0c4;
   --hatch: #b3ab9b;
-  --accent: #a6431e;
-  --accent-dark: #8a3617;
+  --accent: #7d2a35;
+  --accent-dark: #5e1f28;
+  /* the yes-color: passes and eligibility. Cool against the oxblood accent so
+     verdicts and alarms never share a hue (and red/green blindness never
+     collapses them -- blue vs red survives it). */
+  --affirm: #3e5c76;
+  --affirm-dark: #2e4459;
   --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --mono: "Spline Sans Mono", "Courier New", monospace;
   --display: "Martian Mono", monospace;
@@ -388,7 +393,7 @@ button {
  * bar wins and the marks follow it:
  *
  *   solid ink      removed / screen fail        (.bar-fail)
- *   light fill     passes / potentially eligible (.bar-pass)
+ *   affirm blue    passes / potentially eligible (.bar-pass)
  *   hatch          not evaluable — missing data
  *   dashed ring    pending chart review — a human has to read the chart
  */
@@ -402,8 +407,8 @@ button {
   background: var(--ink);
 }
 .mk-elig {
-  background: var(--fill);
-  border: 1px solid var(--ink-2);
+  background: var(--affirm);
+  border: 1px solid var(--affirm-dark);
 }
 .mk-ne {
   background: repeating-linear-gradient(45deg, var(--hatch) 0 1.5px, transparent 1.5px 4px);
@@ -520,7 +525,7 @@ button {
   display: flex;
 }
 .bar-pass {
-  background: var(--fill);
+  background: var(--affirm);
 }
 .bar-fail {
   background: var(--ink);
