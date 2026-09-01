@@ -11,16 +11,27 @@
 //                         stacks up, quarter after quarter, each column taller
 //                         than the last, and one hatched band settles across
 //                         the climb at the share that did not have to be spent.
-//                         It peaks under the card's own sentence — "the mistakes
-//                         turn up after the money is spent" — and then recedes.
+//                         Two fixed captions stand on the crown of it — "Eroom's
+//                         law" over "the cost of one new medicine" — so the
+//                         shape is NAMED rather than left as an abstract
+//                         skyline. It peaks under the card's own sentence — "the
+//                         mistakes turn up after the money is spent" — and then
+//                         recedes, captions and all.
 //                         NO NUMERALS, NO CURRENCY, NO SOURCE LINE anywhere in
 //                         it. The figures and their Tufts label live in chapter
 //                         01's panel, where they can be cited; this is the
 //                         feeling of the bill, and a figure a room cannot cite
-//                         is decoration. The band is hatched and not coloured
-//                         for the same reason 01-clinical's is: the avoidable
-//                         share is a judgement, and status in this piece is
-//                         solid, outline or hatch — never a colour.
+//                         is decoration. The two captions are the exception that
+//                         proves it: they are POINTERS, four and three words of
+//                         plain.html's own hero paragraph, carrying no number
+//                         and no source of their own. The claim they point at
+//                         ("new medicines per research dollar have halved
+//                         roughly every nine years") and its Scannell et al.
+//                         source line are on the card, at every width. The band
+//                         is hatched and not coloured for the same reason
+//                         01-clinical's is: the avoidable share is a judgement,
+//                         and status in this piece is solid, outline or hatch —
+//                         never a colour.
 //
 //   BEAT 1  p 0.18-0.60   THE LAW. The PROTOCOL page RISES out of the bottom of
 //                         the frame, through and behind the burn, and takes the
@@ -211,6 +222,14 @@ const PLATE_HEAD = 'SAME RULES, RUNNABLE';
 const CHECKS = ['age 18 or older', 'kidney score 30 or more', 'no clashing medicine'];
 const PLATE_FOOT = 'three answers, on purpose';
 
+// The burn's own two captions, both lifted from the framing paragraph plain.html
+// opens with, word for word: "The climb has a name: Eroom's law... so the cost of
+// one new medicine has climbed for sixty years without pause." The name goes on
+// top and the thing it names underneath, so the pair reads as a chart's title
+// and subtitle rather than as two unrelated labels.
+const EROOM_CAP = "Eroom's law";
+const CLIMB_CAP = 'the cost of one new medicine';
+
 // The document assembly's home, in station-local space. `z` is the landscape
 // value; portrait uses PORTRAIT_Z (see update).
 const DOC = { x: 0.9, y: 0.2, z: -8.2 };
@@ -250,6 +269,20 @@ const BURN = {
   // 31°-wide frustum.
   P: { x: 0.5, y: 0.75, z: -3.5, scale: 0.78 },
 };
+
+// The caption pair rides a group parked on the CROWN of the cluster (local y =
+// BURN_H), so one scale per orientation moves both of them together and grows
+// them upward, away from the blocks, instead of into them. Portrait multiplies
+// by 1.45 because the whole burn is already at 0.78 there: 0.30 x 1.45 x 0.78 is
+// 0.34 world units of cap height at ~8u of standoff, which is the same share of
+// a 62-degree frame as the law caption takes of the page's, and measures 27px on
+// a 390x844 phone. Landscape needs no boost — a 50-degree frame at the same
+// standoff already prints the name at 32px.
+const CAP_SCALE_P = 1.45;
+const CAP_NAME_Y = 0.62;     // "Eroom's law", crown-local
+const CAP_NAME_H = 0.30;
+const CAP_SUB_Y = 0.22;      // "the cost of one new medicine", crown-local
+const CAP_SUB_H = 0.22;
 
 // The printed grid on the page face. Quad aspect matches the atlas cell aspect
 // (6px wide by 1.4px tall in makeGlyphAtlas's units) so nothing is stretched.
@@ -375,18 +408,18 @@ function label(text, h, color, px) {
 
 export default {
   id: '00-hero',
-  // 19 in fact: the burn (one InstancedMesh for every block plus the hatched
-  // band = 2), the document (box, printed face, contact shadow, glyph swarm,
-  // law caption = 5), the plate (card, ink border, head, three check lines,
-  // foot = 7) and the three marks (three bodies plus the two borders = 5). One
-  // spare.
+  // 21 in fact: the burn (one InstancedMesh for every block, the hatched band,
+  // and its two captions = 4), the document (box, printed face, contact shadow,
+  // glyph swarm, law caption = 5), the plate (card, ink border, head, three
+  // check lines, foot = 7) and the three marks (three bodies plus the two
+  // borders = 5). One spare.
   //
-  // The triangles are 756 at `high` and the ceiling moves with them: the burn
+  // The triangles are 760 at `high` and the ceiling moves with them: the burn
   // is 46 boxes at 12 triangles each, which is 552 of it, and a declaration
   // that did not move when the room grew a set piece would be a wish. 900 is
   // the honest number with headroom; it was 1200 against a measured 192, and
   // reserving four times what a room spends is its own kind of dishonesty.
-  budget: { calls: 20, tris: 900 },
+  budget: { calls: 22, tris: 900 },
 
   build(ctx) {
     const g = new THREE.Group();
@@ -483,6 +516,23 @@ export default {
     );
     band.position.y = BURN_H * BURN_BAND_AT;
     burn.add(band);
+
+    // The captions. Children of `burn`, so they take its placement, its recede
+    // and its collapse for free and can never drift off the thing they name;
+    // their opacity is driven off the same burnOut the blocks fade on. Both
+    // strings are module constants, so makeTextTexture mints exactly two
+    // canvases for the life of the page (rule 4 in _stub.js).
+    const caps = new THREE.Group();
+    caps.position.y = BURN_H;
+    burn.add(caps);
+
+    const eroomCap = label(EROOM_CAP, CAP_NAME_H, '#1A1D21', 64);
+    eroomCap.position.y = CAP_NAME_Y;
+    caps.add(eroomCap);
+
+    const climbCap = label(CLIMB_CAP, CAP_SUB_H, '#5A6169', 64);
+    climbCap.position.y = CAP_SUB_Y;
+    caps.add(climbCap);
 
     // The words peeling off the page — one InstancedMesh, one draw call.
     const n = ctx.quality.count(WORDS.length * 6);
@@ -609,7 +659,7 @@ export default {
 
     g.userData = {
       doc, sheet, glyphs, seeds, dest, n, lawCap, plate, card, cardMesh, lines, head, marks, bodies, foot,
-      burn, blocks, bslot, blockCount, burnM, band, bandM,
+      burn, blocks, bslot, blockCount, burnM, band, bandM, caps, eroomCap, climbCap,
     };
     return g;
   },
@@ -636,6 +686,21 @@ export default {
       const alpha = 1 - burnOut;
       u.burnM.opacity = alpha;
       u.bandM.opacity = alpha;
+
+      // The captions live and die with the climb: full strength on the landing
+      // frame (a caption that faded IN would leave p = 0 showing an unnamed
+      // skyline, which is the exact thing this pass exists to fix), then out on
+      // the same scalar as the blocks. `caps` is scaled per orientation here
+      // rather than at build time, because the phone can turn at any moment.
+      u.caps.scale.setScalar(portrait ? CAP_SCALE_P : 1);
+      // Squared, and that is not a second timing. The blocks are bone on white
+      // and half of bone is already nearly nothing; the captions are #1A1D21 ink
+      // and half of ink is still black. On the same scalar the labels outlive
+      // the thing they label and hang over the arriving page. alpha^2 is the
+      // same curve, weighted for how much darker the ink starts.
+      const capAlpha = alpha * alpha;
+      u.eroomCap.material.opacity = capAlpha;
+      u.climbCap.material.opacity = capAlpha;
 
       // Each block gets its own slice of BURN_IN, ordered left to right and
       // bottom-up, and lands from just below its slot.

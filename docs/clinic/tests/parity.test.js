@@ -109,6 +109,7 @@ describe('checkParity', () => {
       'no-open-implementation',
       'not-medical-software',
       'tufts-sourced',
+      'eroom-sourced',
       'documents-made-up',
       'three-marks-no-fourth',
     ]);

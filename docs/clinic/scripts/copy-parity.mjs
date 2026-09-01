@@ -228,6 +228,16 @@ const CLAIM_RULES = [
     must: ['not medical software', 'not validated', 'not cleared by any regulator'],
   },
   { rule: 'tufts-sourced', panel: '01-clinical', must: ['tufts center for the study of drug development'] },
+  // The framing figure the piece now opens on, held to the same rule as the
+  // Tufts line: chapter 00's room shows a cost climbing and names it "Eroom's
+  // law", so the claim behind that shape and the paper it comes from have to be
+  // on the card, at every width. The 3D carries the pointer; the citation is not
+  // allowed to be the thing that gets cut to make the phone card fit.
+  {
+    rule: 'eroom-sourced',
+    panel: '00-hero',
+    must: ['halved roughly every nine years', 'scannell', 'nature reviews drug discovery'],
+  },
   // The one sentence that stops the invented paperwork from reading as a real
   // incident. Losing it was the worst thing the copy could do to itself, so it
   // is a rule and not a matter of editorial taste.
