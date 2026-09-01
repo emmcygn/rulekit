@@ -5,19 +5,13 @@ describe('fallbackDecision', () => {
   it('redirects when WebGL2 is missing', () => {
     expect(fallbackDecision({ webgl2: false, reducedMotion: false })).toEqual({ redirect: true, reason: 'no-webgl2' });
   });
-  it('redirects on prefers-reduced-motion', () => {
-    expect(fallbackDecision({ webgl2: true, reducedMotion: true })).toEqual({ redirect: true, reason: 'reduced-motion' });
+  it('does NOT redirect on prefers-reduced-motion (3D is the default; flat is a choice)', () => {
+    expect(fallbackDecision({ webgl2: true, reducedMotion: true })).toEqual({ redirect: false, reason: null });
   });
   it('does not redirect a capable, motion-tolerant visitor', () => {
     expect(fallbackDecision({ webgl2: true, reducedMotion: false })).toEqual({ redirect: false, reason: null });
   });
-  it('force3d overrides the reduced-motion redirect (a click outranks the media query)', () => {
-    expect(fallbackDecision({ webgl2: true, reducedMotion: true, force3d: true })).toEqual({ redirect: false, reason: null });
-  });
-  it('force3d cannot override a missing WebGL2 context', () => {
-    expect(fallbackDecision({ webgl2: false, reducedMotion: false, force3d: true }).reason).toBe('no-webgl2');
-  });
-  it('reports no-webgl2 first when both are true', () => {
+  it('reports no-webgl2 even when reduced motion is also set', () => {
     expect(fallbackDecision({ webgl2: false, reducedMotion: true }).reason).toBe('no-webgl2');
   });
 });

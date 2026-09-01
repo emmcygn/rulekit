@@ -10,17 +10,13 @@
 // no DOM and no WebGL context. The banner is the only part that touches an
 // element, and even it takes its navigation as an injected function.
 
-export function fallbackDecision({ webgl2, reducedMotion, force3d = false }) {
-  // Order matters: a visitor with neither WebGL2 nor motion tolerance is sent to
-  // /plain for the harder reason, because that is the one that would have left
-  // them looking at a blank canvas.
-  //
-  // force3d (?force3d=1, carried by the plain page's "see the 3D version" link)
-  // overrides ONLY the reduced-motion redirect: a deliberate click outranks the
-  // OS-level media query, but nothing can override a missing WebGL2 context —
-  // that redirect is technical, not a preference.
+export function fallbackDecision({ webgl2 }) {
+  // Owner decision (2026-09-01, supersedes spec section 9's reduced-motion
+  // redirect): the 3D walkthrough is the default for every capable browser.
+  // The flat edition is an explicit choice, offered by the in-flow link at the
+  // top of the page — not forced by the OS motion preference. Only a missing
+  // WebGL2 context still redirects, because there the canvas would be blank.
   if (!webgl2) return { redirect: true, reason: 'no-webgl2' };
-  if (reducedMotion && !force3d) return { redirect: true, reason: 'reduced-motion' };
   return { redirect: false, reason: null };
 }
 

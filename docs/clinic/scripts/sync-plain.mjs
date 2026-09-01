@@ -35,7 +35,7 @@ export const BACKLINK_MARKER = 'data-clinic-backlink';
 const BLOCK = `
 <div ${BACKLINK_MARKER} style="max-width:720px;margin:0 auto;padding:28px 20px 64px;
      font:400 14px/1.6 'Public Sans',Helvetica,Arial,sans-serif;color:#6B655C">
-  <a href="/walkthrough/?force3d=1" style="color:#A6431E;border-bottom:1px solid currentColor;text-decoration:none">see the 3D version</a>
+  <a href="/walkthrough/" style="color:#A6431E;border-bottom:1px solid currentColor;text-decoration:none">see the 3D version</a>
   &#8201;&#183;&#8201; same story, staged as a walk through a research clinic. Needs WebGL2 and a little motion tolerance.
 </div>
 `;

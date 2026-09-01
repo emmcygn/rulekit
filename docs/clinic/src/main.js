@@ -1,4 +1,4 @@
-import { createStage, hasWebGL2, prefersReducedMotion, isPortrait } from './core/renderer.js';
+import { createStage, hasWebGL2, isPortrait } from './core/renderer.js';
 import { createScrollDriver, syncToTarget } from './core/scrollDriver.js';
 import { createCameraRig } from './core/cameraRig.js';
 import { createQuality, detectTier, resolveTier, IDLE_FPS } from './core/quality.js';
@@ -17,7 +17,7 @@ const REST_GAP = 1e-4;
 
 // Boot gate, spec section 9. The decision itself lives in fallback.js so it can
 // be tested without a browser; this is only the two lines that act on it.
-const decision = fallbackDecision({ webgl2: hasWebGL2(), reducedMotion: prefersReducedMotion(), force3d: new URLSearchParams(location.search).has('force3d') });
+const decision = fallbackDecision({ webgl2: hasWebGL2() });
 if (decision.redirect) location.replace('/plain');
 else boot();
 

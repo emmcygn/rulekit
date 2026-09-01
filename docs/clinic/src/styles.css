@@ -26,9 +26,11 @@ body[data-tier="high"] #vignette{
 #panels{position:fixed;inset:0;z-index:2;pointer-events:none}
 #rail{position:fixed;z-index:3}
 #spacer{position:relative;z-index:-1;width:1px}
-/* Sits on top of the 3D scene, so it carries its own ground: ink3 on whatever
-   the room happens to be rendering is unreadable half the time. */
-#flatlink{position:fixed;left:14px;bottom:12px;z-index:4;font-family:var(--mono);
+/* The flat-edition toggle lives at the top of the DOCUMENT, not the viewport:
+   position:absolute anchors it to the page, so it is visible on arrival and
+   scrolls away with the hero instead of following the reader (owner decision —
+   no sticky chrome). White ground because it sits over the 3D scene. */
+#flatlink{position:absolute;top:14px;right:16px;z-index:4;font-family:var(--mono);
           font-size:12px;color:var(--ink2);text-decoration:none;
           background:#fff;border:1px solid var(--rule);padding:3px 8px;
           box-shadow:0 1px 2px rgba(0,0,0,.06)}
@@ -85,14 +87,9 @@ body[data-tier="high"] #panels .panel{
   #panels .panel{
     left:0;right:0;bottom:0;width:100%;max-width:none;
     height:40svh;max-height:40svh;border-left:0;border-right:0;border-bottom:0;
-    /* 30px of bottom padding, not 22: #flatlink is parked in this corner and a
-       card that fills its box would otherwise tuck its last line under the chip. */
-    padding:16px 18px 30px;
+    padding:16px 18px 22px;
   }
-  /* Bottom-right corner: above the card it lands mid-scene and prints over the
-     closing marks, which are centred. Down here it clears them, and the white
-     ground carries it over both the card's padding and the room. */
-  #flatlink{left:auto;right:10px;bottom:7px;font-size:11px;padding:2px 7px}
+  #flatlink{top:10px;right:10px;font-size:11px;padding:2px 7px}
 }
 #panels h2{font:600 clamp(21px,3.4vw,30px)/1.15 var(--sans);letter-spacing:-.012em;margin-bottom:12px;text-wrap:balance}
 /* --ink3 is a 2.3:1 whisper on the frosted card once the room behind it goes
