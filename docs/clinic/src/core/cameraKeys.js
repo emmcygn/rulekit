@@ -69,21 +69,48 @@ export const CAMERA_KEYS = {
                { p: 1, at: [3.5, 0.9, -17.6], off: NP }],
   },
   // Two beats: up at the fanning cards (they ride at y ≈ 1.75, z -2.6…-4.4, and
-  // the camera sweeps under them), then down-right onto the cost chart at
-  // (1.8, -3.4, -11.6). The chart needs ~8u of standoff — the taller bar is
-  // 4.8u on its own — but only ~0.9 of that can come from `off.z`: anything
-  // more unwinds into the hand-off at p = 0.88 and becomes the worst per-frame
-  // camera move in the whole journey. So the chart is placed far out instead of
-  // the camera being pulled far back. Portrait holds a little further back
-  // again: a 31°-wide frustum needs distance the 74° one does not.
+  // the camera sweeps under them), then onto the cost chart at
+  // (0.5, -2.4, -13.6) — which is the chapter's set piece, and is framed like
+  // one.
+  //
+  // ── THE AIM IS 28° OFF THE SUBJECT, ON PURPOSE ────────────────────────────
+  // Landscape docks chapter 01's card on the RIGHT, so ndc x = 0.10 rightward
+  // is behind frosted glass and the composable frame is x ∈ [-0.95, 0.10]. Its
+  // centre is -0.42, not 0. Aiming AT the chart therefore hides it: that is
+  // exactly what the old (1.7, -1.0, -11.6) key did, and the reason the whole
+  // cost chart used to render behind the panel with only the SHORT bar poking
+  // out at frame-bottom-centre.
+  //
+  // So the p = 0.84 key aims 3.0u to the right of the chart at 9u range — the
+  // axis points into the card, and the bars sit in the clear left of the frame
+  // where a reader can actually see them. Measured at 1280x800, p = 0.84: bars
+  // and labels span ndc x -0.77…-0.12, y -0.80…0.84, which is 74% of the
+  // frame's height and 0.23 of ndc clear of the card's edge.
+  //
+  // The key is at 0.84, not 0.82, because the hand-off starts at 0.88 and the
+  // chart has to still be composed when it does — this is the chapter's closing
+  // image. The cards key moved the other way, 0.40 → 0.34, so the swing onto
+  // the chart is finished by p ≈ 0.6 rather than still running at 0.7. Neither
+  // move costs anything at the seam: `off.z` came DOWN from 0.9 to 0.55 (the
+  // chart is 2u further out, so the standoff is no longer needed there), which
+  // takes the worst per-frame camera move on the 2400-step journey sweep from
+  // 0.1385u to 0.1249u against the rig test's 0.15.
+  //
+  // Portrait aims 3.7u BELOW the chart for the same reason chapters 04 and 06
+  // do: its card is docked across the bottom 46svh, so the readable frame is
+  // ndc y > -0.08 and its centre is +0.46, not 0. Dropping the target tips the
+  // axis down and lifts the whole chart above the card line — measured at
+  // 390x844, p = 0.84: ndc y 0.02…0.90, lowest ink 0.10 clear of the dock. Only
+  // `at` moves for that; `off` is within 0.1u of the old key, so portrait's
+  // worst frame is unchanged at 0.1041u.
   '01-clinical': {
     keys:     [{ p: 0, at: H, off: N },
-               { p: 0.4, at: [-0.2, 1.4, -4.4], off: [-0.4, 0.5, 0] },
-               { p: 0.82, at: [1.7, -1.0, -11.6], off: [0.15, 0.55, 0.9] },
+               { p: 0.34, at: [-0.2, 1.4, -4.4], off: [-0.4, 0.5, 0] },
+               { p: 0.84, at: [3.48, -0.65, -13.6], off: [0.15, 0.55, 0.55] },
                { p: 1, at: [-5.5, -0.8, -17.8], off: N }],
     portrait: [{ p: 0, at: HP, off: NP },
-               { p: 0.42, at: [-0.05, 1.5, -4.6], off: [0, 0.9, 2.2] },
-               { p: 0.82, at: [1.8, -1.2, -11.8], off: [0.2, 1.1, 1.3] },
+               { p: 0.34, at: [-0.05, 1.5, -4.6], off: [0, 0.9, 2.2] },
+               { p: 0.84, at: [0.63, -3.26, -13.6], off: [0.15, 1.05, 1.3] },
                { p: 1, at: [-5.5, -0.5, -17.8], off: NP }],
   },
   // The stream runs down the flight path itself, so the shot stays on axis:
