@@ -393,6 +393,17 @@ export const CAMERA_KEYS = {
   // Portrait pays for the extra distance with scale rather than with standoff
   // (07-ai.js grows the table to 1.14), so its note beat lands the size it was
   // composed at and nothing here has to move off the seam.
+  //
+  // The door beat's at.y moved 0.75 -> -0.85. The occlusion audit found the
+  // approval caption ("a person approves, or it does not exist" — doorLabel)
+  // entirely below the docked card at this key: at 0.75 the aim sits near the
+  // door's own centre, and the caption hangs under LEAF_Y - LEAF_H/2, well
+  // below the readable top. scenes/07-ai.js also gives the caption its own
+  // portrait gap (doorLabelDy), but that alone could not reach the card line
+  // without the label overlapping the door body — the two together clear it
+  // with margin at both the settle key and the p = 0.88 hold. Re-centring
+  // 07-ai.js's own CARD_HOME_PORTRAIT afterward absorbed the resulting shift in
+  // the suggestion cards' framing; see that file for the numbers.
   '07-ai': {
     keys:     [{ p: 0, at: H, off: N },
                { p: 0.36, at: [-4.20, 0.45, -8.60], off: [-0.45, 0.55, 0.50] },
@@ -401,8 +412,8 @@ export const CAMERA_KEYS = {
                { p: 1, at: [4.5, -0.7, -18.0], off: N }],
     portrait: [{ p: 0, at: HP, off: NP },
                { p: 0.36, at: [-2.85, 0.90, -8.60], off: [0, 0.85, 0.90] },
-               { p: 0.66, at: [-1.70, 0.75, -12.80], off: [0.10, 0.85, 1.40] },
-               { p: 0.88, at: [-1.70, 0.75, -12.80], off: NP },
+               { p: 0.66, at: [-1.70, -0.85, -12.80], off: [0.10, 0.85, 1.40] },
+               { p: 0.88, at: [-1.70, -0.85, -12.80], off: NP },
                { p: 1, at: [4.5, -0.4, -18.0], off: NP }],
   },
   // Chapter 08 is a wheel standing across the flight path: ten charts on one
