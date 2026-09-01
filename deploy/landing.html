@@ -930,8 +930,8 @@
   </div>
   <div class="wrap-wide">
     <p class="hero-mark"><i></i>medirulekit</p>
-    <h1>A trial's entry rules live in a PDF. You cannot run a PDF, so the mistakes turn up after the money is spent. rulekit rewrites the rules as code you can test.</h1>
-    <p class="byline">by Emmanuel Cuyugan</p>
+    <h1>A trial's candidate entry rules live in a PDF. You cannot deterministically assess a PDF against thousands of candidates, so the mistakes turn up after the money is spent. rulekit turns rules into code you can test.</h1>
+    <p class="byline">by Manny Cuyugan</p>
     <p class="hero-kicker">The plain-language tour. No code needed, about six minutes, and it builds as it goes, so read it in order. There is an engineers' edition of the same story; the last section links to it.</p>
 
     <div class="hero-canvas" aria-hidden="true"><canvas id="fold-canvas"></canvas></div>
@@ -976,7 +976,7 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">The whole thing in one picture. A paragraph nobody can run becomes a set of checks a machine can run, and the machine is allowed to say "I don't know" instead of guessing.</figcaption>
+      <figcaption class="fig-cap">In short: Clinical trial prose that has to be manually read becomes a set of checks on facts that a machine can run, and the machine is allowed to say "I don't know" instead of guessing.</figcaption>
     </figure>
 
     <div class="hero-cue"><span class="bar"></span><span>scroll, about six minutes, best in order</span></div>
@@ -989,7 +989,7 @@
 <section class="sec sec-band" id="clinical" data-section data-title="The clinical side" data-thread="prose">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">01</span>the clinical side</p>
-    <h2 data-reveal>The rules read like law. Law does not run.</h2>
+    <h2 data-reveal>Trial rules need expensive and often manual review.</h2>
     <p class="lede" data-reveal>A clinical trial tests a new medicine on volunteers. Its <span class="gloss">eligibility criteria<span class="gloss-note">the rules for who may join</span></span> decide who gets the experimental drug and who is turned away for their own safety.</p>
     <div class="prose" data-reveal>
       <p>Those criteria are written in statute language: "participants are required to have", "must be excluded if". It sounds exact the way a law sounds exact, and it works the way a law works, through whoever happens to be applying it. The <span class="gloss">protocol<span class="gloss-note">the trial's rulebook document</span></span> is the statute book. There is no court attached. Every screener at every hospital rules on it alone, and a wrong ruling can hurt somebody.</p>
@@ -1025,7 +1025,7 @@
           <span class="dc-body">requirement raised to <span class="drift-mark">at least 40</span></span>
         </div>
       </div>
-      <figcaption class="fig-cap">The documents here are made up. The failure is not. "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 is admitted by the statute and thrown out by the database query. Five readings of one law now exist, none of them binding, and nobody can say which one is current.</figcaption>
+      <figcaption class="fig-cap">Here are real failures in our (dummy) data. "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 is admitted by the statute and thrown out by the database query. Five different readings of one law now exist, none of them binding, and nobody can say which one is current.</figcaption>
     </figure>
   </div>
 
@@ -1072,7 +1072,7 @@
     </div>
     <p class="small" data-reveal>Source: Tufts Center for the Study of Drug Development, on the cost of protocol amendments.</p>
     <div class="prose" data-reveal style="margin-top:18px">
-      <p>Half a million dollars is a house, spent on changing a paragraph. Nearly half of those changes were avoidable, so the industry keeps buying houses it never needed. If you can test the rules, you find the flaw while it is still cheap to fix.</p>
+      <p>Almost half a million pounds, spent on changing a paragraph. Nearly half of those changes were avoidable. If you can test the trial rules, you find rule flaws while it is still cheap to fix.</p>
     </div>
   </div>
 </section>
@@ -1099,8 +1099,8 @@
 <section class="sec" id="engine" data-section data-title="The engine" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine</p>
-    <h2 data-reveal>Write the rule once, in a form a machine can run</h2>
-    <p class="lede" data-reveal>rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other. The next scene performs the translation on the statute's own words, one word at a time.</p>
+    <h2 data-reveal>Write the rules once, in a format a machine can run</h2>
+    <p class="lede" data-reveal>my rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other. The next scene performs the translation on the statute's own words, one word at a time.</p>
   </div>
 </section>
 
@@ -1177,8 +1177,8 @@
     </div>
     <div class="stage-inner">
       <p class="kicker">the engine &#183; idea one</p>
-      <h3>Three answers, not two</h3>
-      <p class="stage-sub">yes, no, and "I don't know", and the third one is the whole point</p>
+      <h3>We want a model to say when it's not sure</h3>
+      <p class="stage-sub">yes, no, and the most crucial - "I don't know"</p>
 
       <div class="facts-card" data-step="0+">
         <span class="fc-t">one synthetic patient &#183; what the chart contains</span>
@@ -1196,7 +1196,7 @@
         </div>
         <div data-step="2">
           <div class="versus">
-            <div class="v-card"><span class="v-tag">rulekit</span>The missing score comes back as <strong>don't know</strong>, a real answer rather than an error. That don't-know carries up through every rule built on it, so the patient's overall result reads "undetermined" and the chart lands in the pile that means <em>a human has to read this one</em>.</div>
+            <div class="v-card"><span class="v-tag">rulekit</span>The missing score comes back as <strong>don't know</strong>, a real answer rather than an error. That don't-know carries up through every rule built on it, so the patient's overall result reads "undetermined" and the chart lands in the pile for human review.</div>
           </div>
         </div>
         <div data-step="3">
@@ -1372,7 +1372,7 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">The dot next to a patient's name and the totals on every screen come from that one verdict. There is no second copy of the math to drift. It sounds obvious. The build story near the end shows what it looked like back when it was not true.</figcaption>
+      <figcaption class="fig-cap">The dot next to a patient's name and the totals on every screen come from that one verdict. There is no second copy of the math to drift.</figcaption>
     </figure>
     </div>
   </div>
@@ -1400,8 +1400,8 @@
 <section class="sec sec-band" id="ai-intro" data-section data-title="The AI part" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">03</span>the AI part</p>
-    <h2 data-reveal>The AI reads. It never decides.</h2>
-    <p class="lede" data-reveal>The hard part of screening is that the facts are buried in doctors' notes, written for other doctors. rulekit lets an AI read a note and suggest facts. Every suggestion has to carry the exact quote it came from, and a person approves it or throws it out.</p>
+    <h2 data-reveal>The AI reads facts. It never decides how they're applied.</h2>
+    <p class="lede" data-reveal>The hard part of screening is that the facts are buried in doctors' notes, written for other doctors. rulekit lets an LLM read a note and suggest facts. Every suggestion has to carry the exact quote it came from, and a person approves it or throws it out.</p>
     <div class="prose" data-reveal>
       <p>The scene below runs on a note somebody wrote by hand for this page. The suggested fact is an <span class="gloss">NYHA class<span class="gloss-note">a heart-failure severity grade</span></span>, and the number beside it is a <span class="gloss">confidence<span class="gloss-note">the AI's own certainty guess</span></span>, which only decides what gets reviewed first.</p>
     </div>
@@ -1459,7 +1459,7 @@
           <div class="note"><span class="nt">step 1 &#183; the raw material</span>This is what screening data actually looks like: a paragraph one clinician wrote for another. The fact the trial needs, the severity grade, is sitting in the middle of a sentence. Scroll, and watch the AI dig it out.</div>
         </div>
         <div data-step="1-2">
-          <div class="note"><span class="nt">a suggestion, with its receipt</span>The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can check the suggestion against the note in a few seconds, without having to trust the AI at all.</div>
+          <div class="note"><span class="nt">a suggestion, with its receipt</span>The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can check the suggestion against the note in a few seconds, without having to trust the LLM at all.</div>
         </div>
         <div data-step="3">
           <div class="note"><span class="nt">approved, and only now visible</span>The click writes the reviewer's name and a timestamp next to the fact. Until that click, the engine cannot see the suggestion at all. The AI has no wire to the decision.</div>
@@ -1479,7 +1479,7 @@
   <div class="bstage">
     <div class="bstage-inner">
       <p class="kicker">chapter 04 &#183; what exists</p>
-      <p class="bcap">ten synthetic charts arriving. seven fail a rule, three need a human, none get in. the funnel below counts the same ten.</p>
+      <p class="bcap">imagine ten synthetic patient charts arriving. seven fail a rule, three need a human, none of these patients get in. the funnel below counts the same ten.</p>
     </div>
     <div class="drop-box" aria-hidden="true">
       <span class="drop-rule"></span>
@@ -1503,8 +1503,8 @@
 <section class="sec" id="exists" data-section data-title="What exists" data-thread="decide">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">04</span>what exists</p>
-    <h2 data-reveal>It runs today</h2>
-    <p class="lede" data-reveal>Not a slide deck. It is a public code repository that runs on a laptop: no account, no cloud, nothing leaves the machine.</p>
+    <h2 data-reveal>What runs today</h2>
+    <p class="lede" data-reveal>A public code repository that runs on any computer without an account, cloud dependency, and no patient data leaves if paired with a local/sandboxed LLM.</p>
 
     <div class="coda-grid" data-zoomin data-reveal-children data-stagger="110">
       <div class="coda-cell">
@@ -1594,9 +1594,9 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">05</span>the build</p>
     <h2 data-reveal>How it was made, and where it wants to go</h2>
-    <p class="lede" data-reveal>This is a prototype built in the open. The next part of it needs people who run trials.</p>
+    <p class="lede" data-reveal>This is a prototype built to begin to validate an idea. The next part of it needs people interested in healthtech and people who run trials.</p>
     <div class="prose" data-reveal>
-      <p>Emmanuel Cuyugan built this against public registry text and invented patients. No coordinator, no screener and no data manager has yet held it up against a real screening day. That is the part he wants to do next, alongside the people who do that work. What follows is how the thing was made, so you can judge whether it was made with any care.</p>
+      <p>I've built this against public registry text and invented patients and have yet to hold it up against a real screening day.</p>
     </div>
   </div>
 
@@ -1760,7 +1760,7 @@
 
   <div class="wrap">
     <div class="prose" data-reveal>
-      <p>Where it wants to go next is more trial packs, written with the people who screen for those trials, and an honest written record of every criterion the language cannot hold. The third of criteria it cannot express is the interesting part, not the part to hide. So: if you run trials, or you sit close to the people who do, he would like to hear what this gets wrong.</p>
+      <p>Where it wants to go next is more trial packs, written with the people who screen for those trials, and an honest written record of every criterion the language cannot hold. The third of criteria it cannot express is the interesting part, not the part to hide. So: if you run trials, or you sit close to the people who do, I'd love to work with you to take this further.</p>
     </div>
   </div>
 </section>
