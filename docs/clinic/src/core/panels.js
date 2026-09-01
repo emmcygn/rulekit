@@ -19,15 +19,24 @@
 import { CHAPTERS } from './chapters.js';
 import { smoothstep, sub } from '../lib/easing.js';
 
-// Fades in over the first 8% of a chapter, holds through 88%, fades out over
-// the last 12% — so the outgoing card is gone before the incoming one starts.
-export function panelFadeFor(p, first = false) {
-  // The entry ramp exists so cards arrive with their chapters mid-journey.
-  // The FIRST chapter has no arrival: a natural page load lands at exactly
-  // p = 0, and ramping from zero there greets every visitor with a blank
-  // void. Chapter 0's card is simply on from the start.
-  const enter = first ? 1 : smoothstep(sub(p, 0, 0.08));
-  return enter * (1 - smoothstep(sub(p, 0.88, 1)));
+// Fades in over the first 5% of a chapter, holds through 90%, fades out over
+// the last 10% — so the outgoing card is gone before the incoming one starts.
+// 0.90 and not 0.88 because that is where cameraRig's HANDOFF_START now sits:
+// the card and the room leave together, and every chapter's aim-hold twin at
+// p = 0.88 is inside the opaque window rather than on its edge.
+//
+// The two outer ends of the piece are exempt, because neither is a crossing:
+//   `first`  the entry ramp exists so cards arrive with their chapters
+//            mid-journey. The FIRST chapter has no arrival: a natural page load
+//            lands at exactly p = 0, and ramping from zero there greets every
+//            visitor with a blank void. Chapter 0's card is simply on from the
+//            start.
+//   `last`   chapter 10's progress actually reaches 1 and HOLDS there for as
+//            long as the reader sits at the bottom of the page, so a fade-out
+//            leaves the closing card — the limits line, every outbound link and
+//            the credits — at opacity 0 exactly where the reader parks.
+export function panelFadeFor(p, first = false, last = false) {
+  return (first ? 1 : smoothstep(sub(p, 0, 0.05))) * (last ? 1 : 1 - smoothstep(sub(p, 0.90, 1)));
 }
 
 export function createPanelLayer({ root, railRoot, onJump = null }) {
@@ -94,7 +103,7 @@ export function createPanelLayer({ root, railRoot, onJump = null }) {
       lastOpacity = '';
       lastReadable = false;
     }
-    const fade = panelFadeFor(p, i === 0);
+    const fade = panelFadeFor(p, i === 0, i === CHAPTERS.length - 1);
     const next = fade.toFixed(3);
     if (next !== lastOpacity) {
       order[i].style.opacity = next;
