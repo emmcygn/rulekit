@@ -91,6 +91,9 @@ body[data-tier="high"] #panels .panel{
   }
   #flatlink{top:10px;right:10px;font-size:11px;padding:2px 7px}
 }
+#panels .frame-lede{font:600 clamp(19px,2.6vw,24px)/1.25 var(--sans);letter-spacing:-.01em;margin-bottom:10px;text-wrap:balance}
+#panels .pitch-box{border:1px solid var(--rule);background:var(--paper,#fff);padding:10px 12px;margin:10px 0 8px}
+#panels .pitch-box .pitch{font:600 15px/1.45 var(--sans);margin:0 0 4px}
 #panels h2{font:600 clamp(21px,3.4vw,30px)/1.15 var(--sans);letter-spacing:-.012em;margin-bottom:12px;text-wrap:balance}
 /* --ink3 is a 2.3:1 whisper on the frosted card once the room behind it goes
    dark. Every small role on a panel is --ink2 or darker. */
@@ -143,7 +146,7 @@ body[data-tier="high"] #panels .panel{
    480px box, and chapters 01, 04, 07 and 10 overran it by up to 78px. Both
    dimensions have to be small for it to bite — a 1100x700 window and a
    1024x768 one both hold the paragraphs, and both keep them. */
-@media (max-width:844px), (max-height:560px), (max-width:1279px) and (max-height:660px){
+@media (max-width:1100px), (max-height:560px), (max-width:1279px) and (max-height:842px){
   #panels .ext{display:none}
 }
 /* One rung further up the same ladder: ten paragraphs across chapters 01, 02,
@@ -158,7 +161,7 @@ body[data-tier="high"] #panels .panel{
    720px at 1440x900. 1024x768 is still short of it — 724px needed against 614
    available — which is what the 1200px width floor is keeping out. */
 #panels .ext-tall{display:none}
-@media (min-width:1200px) and (min-height:760px){
+@media (min-width:1280px) and (min-height:760px){
   #panels .ext-tall{display:revert}
 }
 /* ---- the docked-card squeeze ----
@@ -274,4 +277,25 @@ body[data-tier="high"] #panels .panel{
   .rail-tick{display:block;height:2px;background:var(--rule)}
   .rail-dot.is-current .rail-tick{background:var(--ink)}
   .rail-label{display:none}
+}
+
+/* The reordered hero card: at phone widths the framing keeps its lead but the
+   type steps down and the pitch box sheds chrome, so the card holds 40svh. */
+@media (max-width:760px) and (orientation:portrait){
+  #panels .frame-lede{font-size:17px;line-height:1.22;margin-bottom:8px}
+  #panels .pitch-box{padding:8px 10px;margin:8px 0 6px}
+  #panels .pitch-box .pitch{font-size:13.5px;line-height:1.4}
+}
+
+/* The hero card gained the pitch box; at laptop heights (<1024) the stack runs
+   32px past the 80svh cap at 1280x800. Tighter chrome on this one card only. */
+@media (min-width:761px) and (max-height:1023px){
+  /* The 845-1279w x 761-1023h band shows .ext without .ext-tall; the stack
+     runs ~34px past 80svh at 1200x800. Let this one card use the height the
+     window actually has rather than hiding more copy. */
+  #panel-00-hero{max-height:calc(100svh - 96px)}
+  #panel-00-hero .frame-lede{margin-bottom:6px;font-size:clamp(18px,2.2vw,22px)}
+  #panel-00-hero .pitch-box{margin:5px 0 3px;padding:7px 10px}
+  #panel-00-hero .pitch-box .pitch{font-size:13.5px}
+  #panel-00-hero p.small{margin-bottom:6px}
 }
