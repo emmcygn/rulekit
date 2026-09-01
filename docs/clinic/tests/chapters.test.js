@@ -13,7 +13,7 @@ describe('chapter manifest', () => {
     const all = CHAPTERS.flatMap((c) => c.plain);
     expect(new Set(all).size).toBe(all.length);
     expect(all).toEqual([
-      'hero', 'clinical', 'sw-engine', 'engine', 'engine-notes', 'p-compile',
+      'hero', 'clinical', 'engine', 'engine-notes', 'p-compile',
       'p-three', 'clash-intro', 'p-clash', 'chasm', 'onecalc',
       'sw-ai', 'ai-intro', 'p-ai', 'intake', 'exists', 'build', 'assembly', 'close',
     ]);

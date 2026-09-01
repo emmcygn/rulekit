@@ -162,7 +162,7 @@ describe('checkParity', () => {
 
   it('catches the made-up-documents sentence going missing', () => {
     const tampered = indexHtml.replace(
-      'The documents here are made up. The failure is not.',
+      'Here are real failures in our (dummy) data.',
       'The failure below is documented.',
     );
     expect(tampered).not.toBe(indexHtml);
@@ -237,8 +237,8 @@ describe('claims are co-located with the copy a phone renders', () => {
 
   it('catches the made-up-documents sentence being demoted into .ext-tall', () => {
     const tampered = indexHtml.replace(
-      '<p class="small">The documents here are made up. The failure is not.',
-      '<p class="small ext-tall">The documents here are made up. The failure is not.',
+      '<p class="small">Here are real failures in our (dummy) data.',
+      '<p class="small ext-tall">Here are real failures in our (dummy) data.',
     );
     expect(tampered).not.toBe(indexHtml);
     const claim = checkParity(tampered, plainHtml).claims.find((c) => c.rule === 'documents-made-up');

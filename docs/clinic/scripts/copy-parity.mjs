@@ -140,7 +140,7 @@ export const ALLOWLIST = [
   {
     panel: '00-hero',
     sentence: 'the entry rules, as law &#183; SAME RULES, RUNNABLE &#183; three answers, on purpose',
-    why: 'assembled readout — the three captions of #hero\'s own figure, in the figure\'s order, spliced into one mono line. They ARE plain.html verbatim; normalise() cannot see them only because it strips <svg> wholesale and the hero figure draws its captions as <text> inside one. Structural, not a claim: the sentence that makes the claim ("the whole thing in one picture...") sits in the same panel as ordinary prose and is checked the ordinary way.',
+    why: 'assembled readout — the three captions of #hero\'s own figure, in the figure\'s order, spliced into one mono line. They ARE plain.html verbatim; normalise() cannot see them only because it strips <svg> wholesale and the hero figure draws its captions as <text> inside one. Structural, not a claim: the sentence that makes the claim ("In short: ...") sits in the same panel as ordinary prose and is checked the ordinary way.',
   },
   {
     panel: '04-three',
@@ -244,7 +244,7 @@ const CLAIM_RULES = [
   {
     rule: 'documents-made-up',
     panel: '01-clinical',
-    must: ['the documents here are made up. the failure is not.'],
+    must: ['here are real failures in our (dummy) data.'],
   },
   {
     rule: 'three-marks-no-fourth',
