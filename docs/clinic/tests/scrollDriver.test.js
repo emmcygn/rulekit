@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stepState, syncToTarget, DAMPING_LAMBDA } from '../src/core/scrollDriver.js';
+import { stepState, syncToTarget, DAMPING_LAMBDA, scrollSpan, stableViewportHeight } from '../src/core/scrollDriver.js';
 
 const fresh = () => ({ targetGlobal: 0, global: 0, index: 0, p: 0, velocity: 0, atRest: true });
 
@@ -86,5 +86,64 @@ describe('syncToTarget (reload / scroll restoration path)', () => {
     const bottom = { targetGlobal: 1, global: 0, index: 0, p: 0, velocity: 0, atRest: true };
     syncToTarget(bottom);
     expect(bottom).toMatchObject({ global: 1, index: 10, p: 1, atRest: true });
+  });
+});
+
+// ── The scroll-to-progress denominator ───────────────────────────────────
+//
+// THE DEFECT THIS BLOCK EXISTS FOR. Chapter bounds are pixel positions, and the
+// pixel a chapter starts at is its share of the SCROLLABLE DISTANCE. Take that
+// distance as `scrollHeight - window.innerHeight` and it is not a constant on a
+// phone: #spacer is sized in svh, which is the viewport with the browser's own
+// UI SHOWN and never moves, while innerHeight grows by the height of the URL bar
+// the moment that bar hides. The same scroll position then lands on a different
+// chapter progress, and since the bar toggles BOTH ways during an ordinary
+// scroll the camera walks forward through beats and then back through them.
+// Measured in a real browser at 390x844 with an 82px bar, before the fix: the
+// camera moved 2.47u at one scroll position, chapter 08 progress 0.139 -> 0.275
+// and back, with the reader's finger nowhere near the screen.
+//
+// 100lvh is the LARGEST viewport height. It is the same number whether the bar
+// is showing or not, so the mapping is stable; the reader reaches p = 1 up to
+// one bar-height early when the bar is showing, and the trigger clamps there.
+describe('the scroll-to-progress denominator', () => {
+  // 1100svh on a 390x844 phone, and the two values innerHeight takes as an
+  // 82px URL bar hides and comes back.
+  const DOC = 9284, SVH = 844, LVH = 926;
+
+  it('prefers the largest-viewport probe, and does not move when the bar does', () => {
+    const probe = { offsetHeight: LVH };
+    expect(stableViewportHeight(probe, { innerHeight: SVH })).toBe(LVH);
+    expect(stableViewportHeight(probe, { innerHeight: LVH })).toBe(LVH);
+  });
+
+  it('falls back to innerHeight where lvh is not supported', () => {
+    // An unsupported `height: 100lvh` is a dropped declaration, so the probe
+    // measures 0 — no feature detection needed, and no pretending we know
+    // better than a browser that cannot tell us.
+    expect(stableViewportHeight({ offsetHeight: 0 }, { innerHeight: 800 })).toBe(800);
+    expect(stableViewportHeight(null, { innerHeight: 800 })).toBe(800);
+  });
+
+  it('never returns a span of zero', () => {
+    expect(scrollSpan(500, 500)).toBe(1);
+    expect(scrollSpan(100, 900)).toBe(1);
+  });
+
+  it('maps one scroll position to one progress across a URL-bar toggle', () => {
+    const probe = { offsetHeight: LVH };
+    const y = 6330;
+    const shown = y / scrollSpan(DOC, stableViewportHeight(probe, { innerHeight: SVH }));
+    const hidden = y / scrollSpan(DOC, stableViewportHeight(probe, { innerHeight: LVH }));
+    expect(hidden).toBe(shown);
+  });
+
+  it('is a fix for something: innerHeight moved the reader on its own', () => {
+    const y = 6330;
+    const shown = y / scrollSpan(DOC, SVH);
+    const hidden = y / scrollSpan(DOC, LVH);
+    // 0.0074 of the whole page, at a fixed scroll position, purely from the
+    // browser hiding its own toolbar.
+    expect(Math.abs(hidden - shown)).toBeGreaterThan(0.005);
   });
 });

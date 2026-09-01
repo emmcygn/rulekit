@@ -55,6 +55,59 @@ export function syncToTarget(state) {
   return state;
 }
 
+// ── The scroll-to-progress denominator ───────────────────────────────────
+//
+// Chapter bounds are pixel positions: chapter i starts at `r.start` of the
+// SCROLLABLE DISTANCE. That distance must not change while the reader is
+// standing still, and `scrollHeight - window.innerHeight` does.
+//
+// #spacer is sized in svh — the viewport with the browser's own UI SHOWN — so
+// the document height is a constant. `window.innerHeight` is not: on a phone it
+// grows by the height of the URL bar the moment that bar hides, which it does
+// on its own, while you scroll. Divide by it and the same scroll position maps
+// to a different chapter progress every time the bar moves; because the bar
+// toggles BOTH ways during an ordinary scroll, the camera walks forward through
+// beats and then back through them again. Measured in a real browser at 390x844
+// with an 82px bar: 2.47u of camera travel at one scroll position, chapter 08
+// progress 0.139 -> 0.275 and back, with nobody touching the screen. That is
+// the "scenes repeat 2-3 times" report, and it is not a keyframe problem.
+//
+// 100lvh is the LARGEST viewport height. It is the same number whether the
+// browser's UI is showing or not, so the mapping is stable. The cost is that
+// when the bar IS showing the reader can scroll one bar-height past the end and
+// the trigger simply clamps at progress 1 — which chapter 10 already does by
+// design, since its p = 1 is a held pose.
+export function scrollSpan(docHeight, viewportHeight) {
+  return Math.max(1, docHeight - viewportHeight);
+}
+
+// `probe` is an element sized `height: 100lvh`. Where lvh is unsupported the
+// declaration is dropped, the element measures 0, and we fall back to
+// innerHeight — no feature detection, and no pretending to know better than a
+// browser that cannot tell us.
+export function stableViewportHeight(probe, win) {
+  const lvh = probe ? probe.offsetHeight : 0;
+  return lvh > 0 ? lvh : win.innerHeight;
+}
+
+// Out of flow and invisible, so it cannot affect the height it exists to
+// measure, and carries no semantics for a screen reader.
+//
+// `data-viewport-probe` is a SEAM, not decoration. A headless browser has no
+// browser UI, so svh, lvh and innerHeight are all the same number there and the
+// defect this probe exists for cannot arise on its own. scripts/smoke.mjs pins
+// #spacer and this element to the two constants a real phone would supply and
+// then moves innerHeight alone — which is the only way to drive the real
+// failure in a real browser. Renaming this attribute silently disarms that pass.
+function createViewportProbe(doc) {
+  const el = doc.createElement('div');
+  el.setAttribute('aria-hidden', 'true');
+  el.dataset.viewportProbe = '';
+  el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100lvh;pointer-events:none;visibility:hidden';
+  doc.body.appendChild(el);
+  return el;
+}
+
 export function createScrollDriver({ spacer, onChapterChange = () => {} }) {
   spacer.style.height = TOTAL_VH + 'svh';
 
@@ -67,7 +120,14 @@ export function createScrollDriver({ spacer, onChapterChange = () => {} }) {
   // refresh (start/end functions re-run then). Percent-of-trigger strings would
   // push chapter 10's end one viewport past the bottom of the document, and its
   // progress would never reach 1.
-  const maxScroll = () => Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+  //
+  // "One viewport" is the LARGEST one, not the current one — see the note on
+  // scrollSpan above for what innerHeight does to a reader on a phone.
+  const probe = createViewportProbe(document);
+  const maxScroll = () => scrollSpan(
+    document.documentElement.scrollHeight,
+    stableViewportHeight(probe, window),
+  );
 
   const triggers = CHAPTERS.map((c, i) => {
     const r = ranges[i];
@@ -115,6 +175,7 @@ export function createScrollDriver({ spacer, onChapterChange = () => {} }) {
     scrollToChapter,
     destroy() {
       triggers.forEach((t) => t.kill());
+      if (probe.parentNode) probe.parentNode.removeChild(probe);
     },
   };
 }
