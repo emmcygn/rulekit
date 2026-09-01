@@ -6,14 +6,33 @@
 // frustum is 31° wide and would show one box or the other — so it is told in
 // TIME instead of in space, as three beats along one continuous approach.
 //
-//   BEAT 1  p 0.00-0.35   THE LAW. A single huge page hangs in the white and the
-//                         camera drifts out of the haze toward it. Its caption,
-//                         "the entry rules, as law", hangs under it. From a
-//                         fifth of the way in the page's own words let go of the
-//                         face and spread. Nothing here is a metaphor for a PDF
-//                         — it IS a printed page, at the scale of a wall.
+//   BEAT 0  p 0.00-0.42   THE BURN. The piece opens on the PROBLEM, not on the
+//                         document. Out of the white void a cluster of blocks
+//                         stacks up, quarter after quarter, each column taller
+//                         than the last, and one hatched band settles across
+//                         the climb at the share that did not have to be spent.
+//                         It peaks under the card's own sentence — "the mistakes
+//                         turn up after the money is spent" — and then recedes.
+//                         NO NUMERALS, NO CURRENCY, NO SOURCE LINE anywhere in
+//                         it. The figures and their Tufts label live in chapter
+//                         01's panel, where they can be cited; this is the
+//                         feeling of the bill, and a figure a room cannot cite
+//                         is decoration. The band is hatched and not coloured
+//                         for the same reason 01-clinical's is: the avoidable
+//                         share is a judgement, and status in this piece is
+//                         solid, outline or hatch — never a colour.
 //
-//   BEAT 2  p 0.34-0.70   PROSE BECOMES CODE. The loose words do not drift off:
+//   BEAT 1  p 0.18-0.60   THE LAW. The PROTOCOL page RISES out of the bottom of
+//                         the frame, through and behind the burn, and takes the
+//                         shot off it: the document arrives as the answer to a
+//                         cost that is already on screen. It turns 0.06 → 0.26
+//                         rad toward the reader and its caption, "the entry
+//                         rules, as law", hangs off it. From p ≈ 0.32 the page's
+//                         own words let go of the face and spread. Nothing here
+//                         is a metaphor for a PDF — it IS a printed page, at the
+//                         scale of a wall.
+//
+//   BEAT 2  p 0.42-0.74   PROSE BECOMES CODE. The loose words do not drift off:
 //                         they CONVERGE, into three ranks in front of the page,
 //                         and a small bordered plate resolves under them —
 //                         "SAME RULES, RUNNABLE" and the trial's three checks,
@@ -21,14 +40,14 @@
 //                         the printed lines fade in, so the last thing a word
 //                         does is turn into the line it became.
 //
-//   BEAT 3  p 0.62-1.00   THREE ANSWERS. A verdict mark materialises at the end
+//   BEAT 3  p 0.68-1.00   THREE ANSWERS. A verdict mark materialises at the end
 //                         of each check — ■ pass, □ fail, ▨ don't know — and
 //                         "three answers, on purpose" prints beneath them. The
 //                         machine is allowed to say I-don't-know in the first
 //                         thirty seconds of the story, not in chapter four. The
-//                         marks are up and readable from p ≈ 0.70; then, from
-//                         0.78, the plate LIFTS AWAY toward station 1 and the
-//                         camera flies on through the emptied page.
+//                         marks are up and readable from p ≈ 0.74; then the
+//                         plate LIFTS AWAY toward station 1 and the camera flies
+//                         on through the emptied page.
 //
 // ── The mark language starts here, and it starts complete ─────────────────
 // The three marks are built exactly the way 04-three and 10-close build them —
@@ -68,6 +87,56 @@
 // middle of the frame instead of covering it. Portrait's frustum is half as
 // wide, so update() slides the page to z = -7.0 and scales it to 0.72 there.
 //
+// ── Where the burn sits, and why the page has to arrive from below ────────
+// The burn stands at z = -3.5, roughly HALF WAY between the camera's opening
+// perch (z = +4.6) and the page (z = -8.2), and off to the +x side the shot is
+// already turning toward. Two things fall out of that:
+//
+//   * it is 8.1u from the camera at p = 0, which is one tenth of a unit past
+//     the fog's near plane — so it resolves out of the white rather than being
+//     cut into it, and it is fully crisp by the time it peaks.
+//   * the page rises BEHIND it, not beside it. 4.7u of separation at a 50°
+//     frustum is enough parallax to read as depth on a white ground where
+//     there is nothing else to read depth against.
+//
+// The page cannot simply fade up, because a page that fades up in the same
+// place the burn is standing reads as the burn TURNING INTO the page. It
+// travels: doc.y starts at DOC.y - PAGE_RISE and climbs over p 0.18-0.32.
+// PAGE_RISE is 12.4 because the page has to be entirely OUTSIDE the opening
+// frame, in both orientations, and portrait is the binding one: measured on the
+// real rig at p = 0, 11.0 still leaves the page's top edge at NDC y -0.91 —
+// under the docked card, but the card is frosted, not opaque, and a shape
+// behind frosted glass is a shape. 12.4 puts it at -1.06 (portrait) and -1.26
+// (landscape), which is off the bottom of the frame and not merely hidden.
+//
+// The camera does not have to move for any of this. The burn is framed by
+// PLACEMENT, per orientation, and cameraKeys is UNTOUCHED — measured against
+// the real rig with a projection harness, not eyeballed. NDC, so 2.0 is the
+// whole frame; the landscape card docks LEFT out to NDC x -0.12 and the
+// portrait card docks across the bottom 46svh, top edge NDC y -0.08:
+//
+//         landscape 1280x800              portrait 390x844
+//   p     burn x span      burn y span    burn x span      burn y span
+//   0.00  -0.01 .. +0.58   -0.65 .. +0.32  -0.46 .. +0.59   +0.02 .. +0.51
+//   0.05  -0.05 .. +0.61   -0.68 .. +0.33  -0.54 .. +0.61   +0.02 .. +0.53
+//   0.12  -0.06 .. +0.63   -0.72 .. +0.35  -0.58 .. +0.63   +0.02 .. +0.56
+//   0.20  -0.08 .. +0.73   -0.75 .. +0.53  -0.65 .. +0.76   +0.05 .. +0.69
+//   0.25  -0.11 .. +0.77   -0.79 .. +0.54  -0.73 .. +0.82   +0.05 .. +0.72
+//
+// Those are whole-cluster bounds, and they include the crouch of every block
+// that has not landed yet, so they over-state what is actually on screen.
+// Three things they have to hold, and do:
+//
+//   * landscape — the burn's left edge never crosses the card's -0.12 while
+//     the burn is at full strength. It comes within 0.01 at p = 0.25, by which
+//     point the fade has started and the recede is pulling it back.
+//   * landscape — the base never falls out of the bottom of the frame. It sits
+//     at -0.79 at its lowest; BURN.L.y is -2.0 and not the -2.4 it was first
+//     drawn at, because at -2.4 the front row was cut off by p = 0.25.
+//   * portrait — the burn's BOTTOM never drops below +0.02, which is a tenth
+//     of NDC clear of the docked card's top edge, at every p in the beat. That
+//     is what BURN.P's high base is for; there is no room under a 46svh dock.
+//
 // ── Why the plate has to travel, and to the right ─────────────────────────
 // The plate is the thing the reader is meant to READ, and the camera closes 13
 // units over this chapter, so a plate parked anywhere fixed is either a postage
@@ -79,19 +148,27 @@
 // forward would put its three marks straight behind that card at the exact beat
 // they arrive. Measured, landscape 1280x800 (NDC, so 2.0 is the whole frame):
 //
-//   p     dist   card width   left edge of the top mark   (card's edge: -0.12)
-//   0.60  6.44u  0.59         -0.05
-//   0.66  5.78u  0.67         +0.09
-//   0.70  5.28u  0.73         +0.06
-//   0.74  4.70u  0.81         +0.01
-//   0.78  4.00u  0.94         -0.07
+//   p     dist   plate's left edge   (the card's edge: -0.12)
+//   0.60  5.51u  -0.03
+//   0.66  4.77u  -0.03
+//   0.70  4.23u  -0.01
+//   0.74  3.67u  +0.01
+//   0.78  3.03u  -0.00
+//   0.80  2.67u  -0.02
 //
 // Then it releases: up and forward along the bearing of station 1. Its bottom
-// edge clears the top of the frame by p ≈ 0.90, two frames after the camera
-// hand-off starts (HANDOFF_START = 0.88), and update() stops drawing it there.
-// Closest approach of camera to plate over the whole chapter is 3.6u, so
-// nothing here is flown through — the only thing the camera passes through is
-// the page it has finished with.
+// edge clears the top of the frame by p = 0.90 — at 0.90 the whole plate is at
+// NDC y +1.01 and up, two frames after the camera hand-off starts
+// (HANDOFF_START = 0.88) — and update() stops drawing it there, which is a
+// measured cut and not a pop.
+//
+// The cost open pushed everything after it back by roughly a twelfth, so the
+// release now starts at 0.80 rather than 0.78 and the plate is 2.67u from the
+// camera when it does. That is still outside the 2.5u where a 3.2u plate stops
+// being a thing you read and starts being a thing you are wearing — but it is
+// the LAST beat with room to give, which is why `drift.z` came back from -1.10
+// to -0.80 in the same pass, and why the release vectors were scaled by 1.24 so
+// the plate still clears the frame in the 0.10 of chapter it has left.
 //
 // Portrait is a 62°/0.46 frame: 0.555u of width per unit of depth against
 // landscape's 1.492. The same plate would fill it twice over, so the portrait
@@ -99,11 +176,12 @@
 // card docks across the bottom 46svh, whose top edge is NDC y = -0.081, and
 // everything on this plate has to sit above that line. Measured, 390x844:
 //
-//   p     dist   card width   card bottom edge   foot caption baseline
-//   0.50  8.09u  0.24         +0.28              +0.19
-//   0.60  6.54u  0.84         +0.26              +0.23
-//   0.70  5.02u  1.13         +0.28              +0.24
-//   0.78  3.63u  1.61         +0.33              +0.29
+//   p     dist   plate's bottom edge   (the card's edge: -0.081)
+//   0.50  7.65u  +0.19
+//   0.60  6.02u  +0.23
+//   0.70  4.53u  +0.24
+//   0.78  3.23u  +0.26
+//   0.80  2.87u  +0.28
 //
 // The foot caption is the lowest ink in the room and it never comes within 0.27
 // of NDC of the card. Measured, not eyeballed — that is the T22 lesson.
@@ -139,6 +217,39 @@ const DOC = { x: 0.9, y: 0.2, z: -8.2 };
 const PORTRAIT_Z = -7.0;
 const PORTRAIT_DOC_SCALE = 0.72;
 const SLAB_W = 4.8, SLAB_H = 6.2, SLAB_D = 0.06;
+// How far below its home the page starts. See the header: it is set by the
+// bottom of the opening frame at the page's own depth, in both orientations.
+const PAGE_RISE = 12.4;
+
+// ── the cost open ─────────────────────────────────────────────────────────
+// A cluster of blocks that climbs, quarter after quarter. Authored around its
+// own BASE — the group's origin is the floor of the stack — so the per-
+// orientation layout can hang it off the bottom of the frame and the recede at
+// the end can collapse it toward that same floor with one scale.
+//
+// One InstancedMesh for every block, because the blocks are plural and the
+// budget test refuses a room that loops meshes for a plural thing. The tier
+// scales BURN_ROWS, not the column count and not the width: fewer, chunkier
+// blocks on a weak machine, with the same silhouette at the same size. A tier
+// that shortened the climb would be a tier that told a different story.
+const BURN_COLS = 7;                                        // the quarters
+const BURN_ROWS = 12;                                       // blocks in the tallest column, at `high`
+const BURN_PROFILE = [0.16, 0.26, 0.38, 0.52, 0.68, 0.84, 1.00];
+const BURN_W = 4.2;                                         // full width of the cluster
+const BURN_H = 4.0;                                         // height of the tallest column
+const BURN_BAND_AT = 0.45;                                  // where the hatched share crosses it
+const BURN_BAND_H = 0.17;
+const BURN_RECEDE_Z = 3.2;                                  // how far it backs off while it goes
+
+const BURN = {
+  // x/y are the base of the stack in station-local space; z is shared.
+  L: { x: 2.0, y: -2.0, z: -3.5, scale: 1 },
+  // Portrait's card docks across the bottom 46svh (NDC y -0.081 at 390x844),
+  // so the whole burn has to live ABOVE that line — hence a base high in the
+  // world rather than low, and 0.78 scale to keep 4.2u of cluster inside a
+  // 31°-wide frustum.
+  P: { x: 0.5, y: 0.75, z: -3.5, scale: 0.78 },
+};
 
 // The printed grid on the page face. Quad aspect matches the atlas cell aspect
 // (6px wide by 1.4px tall in makeGlyphAtlas's units) so nothing is stretched.
@@ -184,8 +295,8 @@ const CARD_Z = 0.02;                   // text and marks stand proud of the card
 const LAYOUT = {
   L: {
     home: [0.20, 0.55, 1.72],
-    drift: [2.05, 0, -1.10],         // leads the camera, and follows its aim
-    release: [0.95, 5.60, -4.20],    // up and away, on station 1's bearing
+    drift: [2.05, 0, -0.80],         // leads the camera, and follows its aim
+    release: [1.18, 6.95, -5.20],    // up and away, on station 1's bearing
     scale: 1,
     // The law caption goes UNDER the page, where plain.html prints it.
     law: [0, -(SLAB_H / 2 + 0.42), 1],
@@ -193,7 +304,7 @@ const LAYOUT = {
   P: {
     home: [-0.05, 2.45, 1.30],
     drift: [1.20, 0, -0.90],
-    release: [1.10, 5.0, -3.20],
+    release: [1.36, 6.20, -3.97],
     scale: 0.72,
     // ...and OVER it in portrait, at 1.6 the size. Not a preference: the card
     // docks across the bottom 46svh, and at the portrait page's own framing the
@@ -205,20 +316,36 @@ const LAYOUT = {
   },
 };
 
-// Beat boundaries, in chapter progress. Two of these are load bearing and the
-// rest are dressing: MARKS_IN has to FINISH where RELEASE begins, or the plate
-// starts leaving before the third mark is on it; and RELEASE has to begin by
-// 0.78, because that is where the closing camera would otherwise get inside
-// 2.5u of a 3.2u plate and wear it as a hat.
-const PEEL = [0.20, 0.45];
-const CONVERGE = [0.34, 0.62];
-const CARD_IN = [0.42, 0.62];
-const LINES_IN = [0.52, 0.70];
-const MARKS_IN = [0.62, 0.78];
-const FOOT_IN = [0.68, 0.84];
-const DRIFT = [0.42, 0.78];
-const RELEASE = [0.78, 1.00];
-const LAW_OUT = [0.38, 0.54];
+// Beat boundaries, in chapter progress. Four of these are load bearing and the
+// rest are dressing:
+//
+//   * BURN_IN has to FINISH before PAGE_IN starts, or the page rises through a
+//     cluster that is still assembling and the reader watches two things build
+//     at once instead of one thing answering another.
+//   * BURN_OUT has to FINISH long before MARKS_IN, which the owner asked for
+//     in as many words: by the marks beat the burn is gone. It is, by 0.40.
+//   * MARKS_IN has to FINISH where RELEASE begins, or the plate starts leaving
+//     before the third mark is on it.
+//   * RELEASE cannot begin much past 0.80 — that is 2.67u of standoff, and
+//     inside 2.5u the closing camera wears a 3.2u plate as a hat. The open cost
+//     the back half a twelfth of the chapter and this is where it came from.
+//
+// The band lands on the peak, not after it.
+const BURN_IN = [0.015, 0.185];   // per-block; each block gets a slice of this
+const BURN_BLOCK = 0.025;         // how long one block takes to land
+const BURN_BAND_IN = [0.125, 0.215];
+const BURN_OUT = [0.22, 0.40];
+const PAGE_IN = [0.18, 0.32];
+
+const PEEL = [0.32, 0.54];
+const CONVERGE = [0.42, 0.68];
+const CARD_IN = [0.48, 0.68];
+const LINES_IN = [0.56, 0.74];
+const MARKS_IN = [0.68, 0.80];
+const FOOT_IN = [0.72, 0.84];
+const DRIFT = [0.48, 0.80];
+const RELEASE = [0.80, 1.00];
+const LAW_OUT = [0.46, 0.60];
 
 // makeGlyphAtlas left-aligns each word 0.15/6 of a cell in from its left edge,
 // at a mono advance of ~0.6em on a 6em cell. So a short word sits far left of
@@ -244,12 +371,18 @@ function label(text, h, color, px) {
 
 export default {
   id: '00-hero',
-  // 17 in fact: the document (box, printed face, contact shadow, glyph swarm,
+  // 19 in fact: the burn (one InstancedMesh for every block plus the hatched
+  // band = 2), the document (box, printed face, contact shadow, glyph swarm,
   // law caption = 5), the plate (card, ink border, head, three check lines,
   // foot = 7) and the three marks (three bodies plus the two borders = 5). One
-  // spare, and the triangle count is the honest ~200 rather than the 6000 this
-  // room used to reserve for a set piece it never built.
-  budget: { calls: 18, tris: 1200 },
+  // spare.
+  //
+  // The triangles are 756 at `high` and the ceiling moves with them: the burn
+  // is 46 boxes at 12 triangles each, which is 552 of it, and a declaration
+  // that did not move when the room grew a set piece would be a wish. 900 is
+  // the honest number with headroom; it was 1200 against a measured 192, and
+  // reserving four times what a room spends is its own kind of dishonesty.
+  budget: { calls: 20, tris: 900 },
 
   build(ctx) {
     const g = new THREE.Group();
@@ -291,6 +424,61 @@ export default {
     shadow.position.set(0, -3.2, 0);
     doc.add(shadow);
     g.add(doc);
+
+    // ── the cost open: a burn that climbs, then goes ──────────────────────
+    // The tier buys vertical RESOLUTION, not size: `rows` is how many blocks
+    // the tallest column is cut into, and the block geometry is sized from it,
+    // so `low` shows the same 4.2 x 4.0 climb in 16 chunky blocks where `high`
+    // shows it in 46 fine ones.
+    const rows = ctx.quality.count(BURN_ROWS);
+    const unit = BURN_H / rows;
+    const pitch = BURN_W / BURN_COLS;
+
+    let blockCount = 0;
+    for (let c = 0; c < BURN_COLS; c++) blockCount += Math.max(1, Math.round(BURN_PROFILE[c] * rows));
+
+    const burn = new THREE.Group();
+    g.add(burn);
+
+    // Owned, because the burn FADES and a shared material cannot. The fade is
+    // material opacity and not instance colour for the reason the glyph swarm
+    // documents below, only worse: setColorAt multiplies, so fading a bone
+    // block toward zero drives it to BLACK, and black on a white void is the
+    // most visible this thing has ever been.
+    const burnM = cloneOwned(M.bone);
+    burnM.transparent = true;
+    const blockGeo = new THREE.BoxGeometry(pitch * 0.78, unit * 0.84, pitch * 0.78);
+    const blocks = createSwarm({ geometry: blockGeo, material: burnM, count: blockCount });
+    burn.add(blocks.mesh);
+
+    // Per-block: [x, slot y, order]. Order is the block's own index over the
+    // whole cluster — column-major, bottom-up — so blocks land at a CONSTANT
+    // RATE and the fill reads as one thing accruing rather than as seven bars
+    // growing at once. Normalising per column instead would give a two-block
+    // quarter and a twelve-block quarter the same slice of the timeline, and
+    // the tall ones would arrive as a shower.
+    const bslot = new Float32Array(blockCount * 3);
+    let bi = 0;
+    for (let c = 0; c < BURN_COLS; c++) {
+      const h = Math.max(1, Math.round(BURN_PROFILE[c] * rows));
+      for (let r = 0; r < h; r++) {
+        bslot[bi * 3 + 0] = (c - (BURN_COLS - 1) / 2) * pitch;
+        bslot[bi * 3 + 1] = (r + 0.5) * unit;
+        bslot[bi * 3 + 2] = blockCount > 1 ? bi / (blockCount - 1) : 0;
+        bi++;
+      }
+    }
+
+    // The one hatched band: the share that did not have to be spent. Hatch and
+    // not colour, exactly as 01-clinical's is — and with no number on it,
+    // because the number belongs in 01's panel with its source line.
+    const bandM = cloneOwned(M.hatch);
+    const band = new THREE.Mesh(
+      new THREE.BoxGeometry(BURN_W + 0.10, BURN_BAND_H, pitch * 0.78 + 0.10),
+      bandM,
+    );
+    band.position.y = BURN_H * BURN_BAND_AT;
+    burn.add(band);
 
     // The words peeling off the page — one InstancedMesh, one draw call.
     const n = ctx.quality.count(WORDS.length * 6);
@@ -415,7 +603,10 @@ export default {
     foot.position.set(0, FOOT_Y, CARD_Z);
     plate.add(foot);
 
-    g.userData = { doc, sheet, glyphs, seeds, dest, n, lawCap, plate, card, cardMesh, lines, head, marks, bodies, foot };
+    g.userData = {
+      doc, sheet, glyphs, seeds, dest, n, lawCap, plate, card, cardMesh, lines, head, marks, bodies, foot,
+      burn, blocks, bslot, blockCount, burnM, band, bandM,
+    };
     return g;
   },
 
@@ -425,10 +616,51 @@ export default {
     const portrait = !!(ctx && ctx.portrait);
     const A = portrait ? LAYOUT.P : LAYOUT.L;
 
+    // ── beat 0: the burn ──────────────────────────────────────────────────
+    // Placed, not re-keyed. The camera does the same thing it did before this
+    // beat existed; the burn is put where the opening frame already looks.
+    const B = portrait ? BURN.P : BURN.L;
+    const burnOut = smoothstep(sub(p, BURN_OUT[0], BURN_OUT[1]));
+    const burn = u.burn;
+    // One frame past gone, stop paying two draw calls for it.
+    burn.visible = burnOut < 0.999;
+    if (burn.visible) {
+      // It recedes as it fades — backs off on z and collapses toward its own
+      // base — so the closing camera cannot make it LARGER on the way out.
+      burn.position.set(B.x, B.y, B.z - BURN_RECEDE_Z * burnOut);
+      burn.scale.setScalar(B.scale * (1 - 0.16 * burnOut));
+      const alpha = 1 - burnOut;
+      u.burnM.opacity = alpha;
+      u.bandM.opacity = alpha;
+
+      // Each block gets its own slice of BURN_IN, ordered left to right and
+      // bottom-up, and lands from just below its slot.
+      const span = (BURN_IN[1] - BURN_IN[0]) - BURN_BLOCK;
+      const bslot = u.bslot;
+      for (let i = 0; i < u.blockCount; i++) {
+        const o = bslot[i * 3 + 2];
+        const t = smoothstep(sub(p, BURN_IN[0] + o * span, BURN_IN[0] + o * span + BURN_BLOCK));
+        const sy = bslot[i * 3 + 1];
+        _v.set(bslot[i * 3 + 0], lerp(sy - 0.30, sy, t), 0);
+        u.blocks.setAt(i, _v, Math.max(0.0001, t), 0, 1);
+      }
+      u.blocks.commit();
+
+      // The band opens out from the middle of the climb and settles across it,
+      // the same gesture 01-clinical's avoidable band makes on its own chart.
+      const bandT = smoothstep(sub(p, BURN_BAND_IN[0], BURN_BAND_IN[1]));
+      u.band.scale.x = Math.max(0.0001, bandT);
+      u.band.visible = bandT > 0.004;
+    }
+
     // Portrait's camera never runs as far down the corridor, so the page comes
     // to meet it. Read here rather than in build(), because the phone can turn
     // long after this room exists.
     doc.position.z = portrait ? PORTRAIT_Z : DOC.z;
+    // ── beat 1: the page arrives from under the frame ─────────────────────
+    // It rises THROUGH the burn rather than fading up in the same place, so the
+    // two beats read as a hand-off and not as a transformation.
+    doc.position.y = DOC.y - PAGE_RISE * (1 - smoothstep(sub(p, PAGE_IN[0], PAGE_IN[1])));
     // ...and shrinks, because pulling the portrait camera far enough back to
     // fit a 4.8u page in a 31°-wide frustum would cost more per-frame camera
     // travel over the back half of the chapter than the rig's jump budget
@@ -455,10 +687,13 @@ export default {
     );
     plate.scale.setScalar(A.scale);
     // Past the top of the frame and still climbing: stop drawing it rather than
-    // pay twelve draw calls for something nobody can see. 0.62 of the release is
-    // p ≈ 0.905, where the card's BOTTOM edge is already at NDC y 1.16
-    // (landscape) / 1.58 (portrait) — measured, so the cut is not a pop.
-    plate.visible = cardIn > 0.001 && relT < 0.62;
+    // pay twelve draw calls for something nobody can see. Half of the release
+    // is p = 0.90 exactly, where the plate's BOTTOM edge is already at NDC y
+    // 1.09 (landscape) / 1.46 (portrait) — measured, so the cut is not a pop.
+    // The threshold moved from 0.62 to 0.50 with the beat map: the release now
+    // has 0.10 of chapter rather than 0.12, and A.release was scaled to match,
+    // so half of it does what 0.62 of the old one did.
+    plate.visible = cardIn > 0.001 && relT < 0.50;
     if (plate.visible) {
       // The card resolves under the arriving words; the marks come later and on
       // their own scalar, so the plate does not pop twice.
