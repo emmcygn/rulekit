@@ -17,6 +17,7 @@ import { CHAPTERS } from '../src/core/chapters.js';
 describe('panelFadeFor', () => {
   it('fades in at the head of a chapter', () => {
     expect(panelFadeFor(0)).toBe(0);
+    expect(panelFadeFor(0, true)).toBe(1); // chapter 0: no entry ramp, visible on load
     expect(panelFadeFor(0.04)).toBeGreaterThan(0);
     expect(panelFadeFor(0.04)).toBeLessThan(1);
     expect(panelFadeFor(0.08)).toBeCloseTo(1, 6);

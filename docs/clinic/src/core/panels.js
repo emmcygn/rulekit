@@ -21,8 +21,13 @@ import { smoothstep, sub } from '../lib/easing.js';
 
 // Fades in over the first 8% of a chapter, holds through 88%, fades out over
 // the last 12% — so the outgoing card is gone before the incoming one starts.
-export function panelFadeFor(p) {
-  return smoothstep(sub(p, 0, 0.08)) * (1 - smoothstep(sub(p, 0.88, 1)));
+export function panelFadeFor(p, first = false) {
+  // The entry ramp exists so cards arrive with their chapters mid-journey.
+  // The FIRST chapter has no arrival: a natural page load lands at exactly
+  // p = 0, and ramping from zero there greets every visitor with a blank
+  // void. Chapter 0's card is simply on from the start.
+  const enter = first ? 1 : smoothstep(sub(p, 0, 0.08));
+  return enter * (1 - smoothstep(sub(p, 0.88, 1)));
 }
 
 export function createPanelLayer({ root, railRoot, onJump = null }) {
@@ -89,7 +94,7 @@ export function createPanelLayer({ root, railRoot, onJump = null }) {
       lastOpacity = '';
       lastReadable = false;
     }
-    const fade = panelFadeFor(p);
+    const fade = panelFadeFor(p, i === 0);
     const next = fade.toFixed(3);
     if (next !== lastOpacity) {
       order[i].style.opacity = next;

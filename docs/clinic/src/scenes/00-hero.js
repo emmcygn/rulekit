@@ -331,7 +331,11 @@ const LAYOUT = {
 //     the back half a twelfth of the chapter and this is where it came from.
 //
 // The band lands on the peak, not after it.
-const BURN_IN = [0.015, 0.185];   // per-block; each block gets a slice of this
+// Starts NEGATIVE on purpose: the p=0 landing frame must already show a
+// standing partial skyline (a natural page load sits at exactly p=0, and an
+// empty white void reads as a broken page). Blocks whose slot offset falls
+// before 0 are pre-landed on arrival; the rest climb as the reader scrolls.
+const BURN_IN = [-0.12, 0.185];   // per-block; each block gets a slice of this
 const BURN_BLOCK = 0.025;         // how long one block takes to land
 const BURN_BAND_IN = [0.125, 0.215];
 const BURN_OUT = [0.22, 0.40];
