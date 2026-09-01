@@ -34,8 +34,17 @@ function scriptName(run: string): string | null {
 describe("ci.yml", () => {
   const jobs = Object.entries(workflow.jobs);
 
-  it("declares at least the three jobs the repo needs", () => {
-    expect(jobs.map(([name]) => name).sort()).toEqual(["review-pane", "test", "workbench"]);
+  // One job per package in the repo: the root engine, the workbench under web/,
+  // the review-pane component, and the 3D walkthrough under docs/clinic. An
+  // exact match, not a subset — a package that quietly loses its job is exactly
+  // the regression this is here to catch.
+  it("declares one job per package the repo ships", () => {
+    expect(jobs.map(([name]) => name).sort()).toEqual([
+      "review-pane",
+      "test",
+      "walkthrough",
+      "workbench",
+    ]);
   });
 
   it.each(jobs)("every script job '%s' runs exists in the package.json it runs in", (name, job) => {

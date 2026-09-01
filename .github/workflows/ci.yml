@@ -65,3 +65,30 @@ jobs:
       - run: npm install
       - run: npm run typecheck
       - run: npm test
+
+  walkthrough:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs/clinic
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      # Build FIRST, and not only to prove it builds. tests/budget.test.js reads
+      # dist/assets/ for its 250KB gzip ceiling and SKIPS ITSELF IN SILENCE when
+      # there is no dist/ — tests before a build would go green having proved
+      # nothing about bundle size. The build also runs scripts/sync-plain.mjs,
+      # which reads ../plain.html (docs/plain.html, the essay's source of truth)
+      # and writes the public/ copy that the sync and parity tests read back.
+      - run: npm run build
+      - run: npx vitest run
+      # Copy parity: every sentence in the 3D panels must still appear verbatim
+      # in the docs/plain.html section it was transplanted from, and the
+      # claims-discipline labels ("synthetic", the 56.7% heuristic caveat, the
+      # not-medical-software notice) must survive somewhere a phone renders.
+      - run: npm run parity
+      # `npm run smoke` is deliberately absent. It drives the built bundle in a
+      # real browser through puppeteer-core and needs a local Chrome this runner
+      # does not have. It stays a pre-merge local gate: `npm run verify`.
