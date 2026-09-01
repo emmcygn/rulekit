@@ -140,6 +140,12 @@ function landscapeLayout() {
     marksTilt: -0.599,          // square to that axis, so the marks face the lens
     marksScale: 1.10,
     marksSpread: 0.95,
+    // Landscape has no docked card eating the bottom of the frame — the panel
+    // sits on a side third instead — so the original spacing (words a clean
+    // 0.03 of NDC below the squares, "there is no fourth" further below that
+    // again) is untouched here. Portrait's own numbers are in portraitLayout().
+    markWordsY: -0.44,
+    fourthY: -0.86,
   };
 }
 
@@ -186,6 +192,20 @@ function portraitLayout() {
     // marks beat three correct-looking small ones.
     marksScale: 0.88,
     marksSpread: 0.78,
+    // The docked card's readable top sits at screen y 0.54 (styles.css's 46svh
+    // squeeze). At landscape's numbers the words and "there is no fourth" both
+    // land fully under it — measured off the real p = 1 rig at 390x844: squares
+    // [0.460, 0.540], words [0.560, 0.580], fourth [0.626, 0.648] — and this is
+    // the one frame the piece holds forever once a reader reaches the bottom,
+    // so it was hiding the actual words. -0.15 clears the words fully. The
+    // squares themselves already run flush to 0.54 (bottom AT 0.540), so there
+    // is no headroom left below them for a third stacked line: -0.30 sits
+    // "there is no fourth" immediately under the words without overlapping
+    // them, but it still runs mostly under the card — an accepted residual for
+    // the same reason 06-chasm's near lip is: the squares' own footprint is the
+    // floor, not the shot.
+    markWordsY: -0.15,
+    fourthY: -0.30,
   };
 }
 
@@ -408,16 +428,17 @@ export default {
     }
     marks.add(solid, hollow, hatched);
 
+    // y is set every frame in update(), from A.markWordsY / A.fourthY — see
+    // the two layouts above for why portrait and landscape differ here.
     const markWords = MARK_WORDS.map((text) => {
       const m = caption(text, 0.13, '#5A6169', 64);
-      m.position.y = -0.44;
       m.position.z = 0.01;
       marks.add(m);
       return m;
     });
 
     const fourth = caption(NO_FOURTH, 0.14, '#858D95', 64);
-    fourth.position.set(0, -0.86, 0.01);
+    fourth.position.set(0, 0, 0.01);
     marks.add(fourth);
 
     Object.assign(g.userData, {
@@ -540,10 +561,12 @@ export default {
       const say = smoothstep(sub(p, B_WORDS[k][0], B_WORDS[k][1]));
       for (let i = 0; i < d.markWords.length; i++) {
         d.markWords[i].position.x = (i - 1) * A.marksSpread;
+        d.markWords[i].position.y = A.markWordsY;
         d.markWords[i].material.opacity = say;
         d.markWords[i].visible = say > OP_MIN;
       }
       const fourthOp = smoothstep(sub(p, B_FOURTH[k][0], B_FOURTH[k][1]));
+      d.fourth.position.y = A.fourthY;
       d.fourth.material.opacity = fourthOp;
       d.fourth.visible = fourthOp > OP_MIN;
     }
