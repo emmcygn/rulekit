@@ -24,11 +24,30 @@ describe('panelFadeFor', () => {
   });
   it('holds fully opaque through the body of the chapter', () => {
     expect(panelFadeFor(0.3)).toBe(1);
+    // p = 0.88 is every interior chapter's aim-hold twin (cameraKeys.js). The
+    // tail starts at 0.90 so the twin sits INSIDE the opaque window, not on its
+    // edge: the held shot and its card are readable at the same time.
     expect(panelFadeFor(0.88)).toBe(1);
+    expect(panelFadeFor(0.90)).toBe(1);
   });
   it('fades out at the tail', () => {
     expect(panelFadeFor(0.94)).toBeLessThan(1);
     expect(panelFadeFor(1)).toBeCloseTo(0, 6);
+  });
+  // The two outer ends of the piece are not crossings. Chapter 00 is what a
+  // cold load renders, and chapter 10's progress reaches 1 and holds there for
+  // as long as the reader sits at the bottom of the page.
+  it('gives the first chapter its title on the very first frame', () => {
+    expect(panelFadeFor(0, true)).toBe(1);
+    expect(panelFadeFor(0.02, true)).toBe(1);
+    // ...and still clears out of the way of chapter 01.
+    expect(panelFadeFor(1, true)).toBeCloseTo(0, 6);
+  });
+  it('leaves the last chapter readable where the reader parks', () => {
+    expect(panelFadeFor(1, false, true)).toBe(1);
+    expect(panelFadeFor(0.97, false, true)).toBe(1);
+    // ...and still ramps in behind chapter 09.
+    expect(panelFadeFor(0, false, true)).toBe(0);
   });
 });
 
@@ -151,6 +170,17 @@ describe('createPanelLayer', () => {
     expect(el.classList.contains('is-readable')).toBe(true);
     layer.setActive(2, 0.995);                      // faded back out
     expect(el.classList.contains('is-readable')).toBe(false);
+  });
+
+  // The exemptions are only worth anything if the layer actually passes them.
+  it('hands the first/last exemption through to the live panels', () => {
+    const { root, panels } = fakeRoot();
+    const layer = createPanelLayer({ root, railRoot: fakeEl('nav') });
+    layer.setActive(0, 0);                          // cold load, top of page
+    expect(panels.get(CHAPTERS[0].id).style.opacity).toBe('1.000');
+    layer.setActive(CHAPTERS.length - 1, 1);        // parked at the bottom
+    expect(panels.get(CHAPTERS[CHAPTERS.length - 1].id).style.opacity).toBe('1.000');
+    expect(panels.get(CHAPTERS[CHAPTERS.length - 1].id).classList.contains('is-readable')).toBe(true);
   });
 
   it('drops is-readable on the panel it leaves', () => {

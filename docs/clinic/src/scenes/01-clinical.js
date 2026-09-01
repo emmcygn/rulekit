@@ -17,7 +17,7 @@
 // The camera runs local z ≈ +8.8 → -8.9 through this room, passing the station
 // at p = 0.5, so anything at z ≈ 0 is something the camera flies through. The
 // cards therefore sit at z -2.6…-4.4 and ride high at y ≈ 1.75, and from
-// p = 0.42 they lift and sweep back over the camera — up as well as back, so
+// p = 0.28 they lift and sweep back over the camera — up as well as back, so
 // they leave the frame by the top rather than smearing across the lens exactly
 // as the bars are rising into it.
 //
@@ -35,17 +35,20 @@
 // x = 0.16…0.28. The whole cost chart, the chapter's evidence, was rendering
 // behind the panel; the one bar you could see was the SHORT one, poking out at
 // frame-bottom-centre. The fix is both halves at once: the chart moved onto the
-// axis, and cameraKeys' 01-clinical p = 0.84 key now aims ~28° to its right, so
+// axis, and cameraKeys' 01-clinical settle key now aims ~28° to its right, so
 // the bars compose in the clear left of the frame instead of under the card.
-// Measured at p = 0.84, 1280x800: bars and labels span ndc x -0.77…-0.12,
-// y -0.80…0.84 — 74% of the frame's height, entirely clear of the card edge.
+// That key is at p = 0.70 and its aim is HELD to p = 0.88 by the twin, so the
+// composed chart is what the whole back third of this chapter shows. Measured
+// at 1440x900 across the hold: bars, sleeve and all three labels span ndc
+// x -0.87…-0.08, never crossing the card's own +0.10 edge.
 //
 // Portrait's horizontal frustum is ~31° against landscape's ~74°, so the fan
 // and the chart are both narrowed at update time (never at build time — the
 // phone can turn after the room exists). Portrait also docks its card across
 // the bottom 46svh, i.e. ndc y = -0.08 down, so the chart is composed to sit
-// wholly above that line: at p = 0.84, 390x844, the bars and their labels span
-// ndc y 0.02…0.90, with the lowest ink 0.10 of ndc clear of the card.
+// wholly above that line: measured at 390x844 across the same p = 0.70 → 0.88
+// hold, every part of the chart sits at screen y 0.00…0.49 — 0% below the card
+// line at 0.70, 0.78, 0.84 and 0.88 alike.
 //
 // Sizes: the taller bar is 4.815u and the shorter 1.269u, which is 535 and 141
 // at 0.9u per $100K. Those are unchanged — the bars were never too small in
@@ -213,15 +216,15 @@ export default {
     // 8u of width and a 31°-wide frustum gives under 4u at this range. So
     // portrait fans them DOWN instead, using the 62° of vertical it does have.
     // Same five copies, same disagreement, turned through 90°.
-    const drift = smoothstep(sub(p, 0, 0.45));
-    // ── 0.42-0.66: they get out of the way ──────────────────────────────────
+    const drift = smoothstep(sub(p, 0, 0.31));
+    // ── 0.28-0.52: they get out of the way ──────────────────────────────────
     //
     // They do not simply fly at the lens. They lift 3.2u as they go back 9u and
     // shrink to a third, so by the time the bars are half-grown the copies have
     // left through the TOP of the frame and are behind the camera — which is
     // the whole point of moving them early: the cost beat gets a clean plate,
     // and nothing large crosses the shot while the chart is standing up.
-    const clear = smoothstep(sub(p, 0.42, 0.66));
+    const clear = smoothstep(sub(p, 0.28, 0.52));
     const scale = (portrait ? 0.72 : 1) * (1 - 0.67 * clear);
     for (let i = 0; i < cards.length; i++) {
       const c = cards[i];
@@ -240,15 +243,15 @@ export default {
 
     chart.scale.setScalar(portrait ? PORTRAIT_CHART : 1);
 
-    // ── 0.48-0.72: the bars rise ────────────────────────────────────────────
+    // ── 0.34-0.58: the bars rise ────────────────────────────────────────────
     //
     // Late on purpose. The camera is still swinging off the cards until about
-    // p = 0.55, and a bar that has already topped out while the shot is still
-    // moving reads as scenery. Starting at 0.48 puts the growth INSIDE the move,
+    // p = 0.45, and a bar that has already topped out while the shot is still
+    // moving reads as scenery. Starting at 0.34 puts the growth INSIDE the move,
     // so the bars come up as the frame settles onto them, and they are at full
-    // height from p = 0.72 — well before the hand-off at 0.88, which is the last
-    // moment anything in this room may still be arriving.
-    const grow = smoothstep(sub(p, 0.48, 0.72));
+    // height from p = 0.58 — before the camera settles on the chart at p = 0.66
+    // and then holds that aim to p = 0.88, which is the reader's window on it.
+    const grow = smoothstep(sub(p, 0.34, 0.58));
     barII.scale.y = Math.max(0.001, hII * grow);
     barII.position.y = barII.scale.y / 2;
     barIII.scale.y = Math.max(0.001, hIII * grow);
@@ -265,11 +268,13 @@ export default {
     labII.material.opacity = grow;
     labIII.material.opacity = grow;
 
-    // ── 0.60-0.80: the judgement lands ──────────────────────────────────────
+    // ── 0.46-0.66: the judgement lands ──────────────────────────────────────
     // The hatch and its label fade in over the finished bar. Fading, not
     // growing: the band's height is the claim, and a claim that slides into
-    // place is a claim you can watch being chosen.
-    const judged = smoothstep(sub(p, 0.60, 0.80));
+    // place is a claim you can watch being chosen. It lands ON the settle key
+    // rather than after it: the whole ladder moved -0.14 with the camera, which
+    // went from a single 0.84 key to a 0.70 settle held to 0.88.
+    const judged = smoothstep(sub(p, 0.46, 0.66));
     sleeveMat.opacity = judged;
     labAvoid.material.opacity = judged;
   },

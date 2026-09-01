@@ -61,7 +61,15 @@ export function blendOff(keys, p, out) { return blendField(keys, p, 'off', out);
 // opening pose, so the boundary is continuous no matter what the two chapters
 // were authored to do independently. The authored values already agree at every
 // seam; this keeps that true if a later scene task edits them.
-export const HANDOFF_START = 0.88;
+//
+// 0.90 rather than 0.88, and it only works paired with the aim-hold twin key
+// every interior chapter now carries at p = 0.88 (see cameraKeys.js). Alone,
+// moving this later just compresses the same swing into a shorter ramp; with
+// the twin, the composed frame holds from the settle key all the way to 0.88
+// and the exit is a 10% ramp off a pose whose `off` has already arrived at the
+// seam value. The panel fade-out at panels.js starts at the same 0.90, so the
+// card and the room leave together.
+export const HANDOFF_START = 0.90;
 
 const _pos = new THREE.Vector3();
 const _look = new THREE.Vector3();

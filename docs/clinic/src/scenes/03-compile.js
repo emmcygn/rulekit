@@ -12,9 +12,10 @@
 //   0.25-0.50  the three load-bearing words; the rest is grammar
 //   0.50-0.75  the words take their posts
 //   0.75-1.00  the verbatim line rides along
-// The 3D timings below run a little ahead of those boundaries because the
-// camera drifts past this room from p≈0.88 and hands off to station 4 — every
-// beat has to have landed while the room is still in frame.
+// The 3D timings below run WELL ahead of those boundaries: the camera settles
+// on the tree at p = 0.66 and holds that aim to p = 0.88 before handing off to
+// station 4, and every beat has to have landed before that hold opens, not
+// merely before the room leaves frame.
 //
 // Contract notes (see ./_stub.js): authored in station-local space; nothing is
 // offset by ctx.station; build() never reads ctx.portrait — both orientations
@@ -54,17 +55,19 @@ const ROOT_W = 1.55;
 const TUBE_R = 0.021;
 const PULSES_PER_BRANCH = 4;
 
-// Sub-beat windows. Everything is complete by ~0.88, where the camera turns
-// away toward station 4.
-const B_DIM = [0.25, 0.46];      // grammar greys out
-const B_FLY = [0.48, 0.68];      // the three words fly to their posts
-const B_VANISH = [0.50, 0.64];   // the greyed grammar leaves altogether
-const B_SRC = [0.50, 0.62];      // ...and so does the source tag
-const B_POP = [0.52, 0.66];      // leaf nodes pop in (staggered per node)
-const B_ROOT = [0.58, 0.72];     // the root node
-const B_VERB = [0.66, 0.78];     // the verbatim line
-const B_TETHER = [0.70, 0.82];   // the accent tether that attaches it
-const B_PULSE = [0.70, 0.90];    // the tree evaluates
+// Sub-beat windows, the whole ladder shifted -0.16 off its first draft. The
+// tree has to be finished and evaluating by p = 0.66, where the camera settles
+// on it and then holds that aim to 0.88 — the reader's window to read the
+// finished tree is that hold, not the moment the last tube lights.
+const B_DIM = [0.16, 0.34];      // grammar greys out
+const B_FLY = [0.34, 0.52];      // the three words fly to their posts
+const B_VANISH = [0.36, 0.50];   // the greyed grammar leaves altogether
+const B_SRC = [0.36, 0.48];      // ...and so does the source tag
+const B_POP = [0.38, 0.52];      // leaf nodes pop in (staggered per node)
+const B_ROOT = [0.42, 0.56];     // the root node
+const B_VERB = [0.48, 0.60];     // the verbatim line
+const B_TETHER = [0.52, 0.64];   // the accent tether that attaches it
+const B_PULSE = [0.52, 0.72];    // the tree evaluates
 
 const TUBE_COLD = new THREE.Color(0xCBD3DA);
 const TUBE_LIVE = new THREE.Color(0x7FA8C9);
@@ -263,7 +266,7 @@ export default {
     const tubeGeo = new THREE.CylinderGeometry(TUBE_R, TUBE_R, 1, 6);
     const tubes = [];
     // spine first, then the run across, then the drops into the leaves
-    const tubeWin = [[0.62, 0.72], [0.65, 0.75], [0.65, 0.75], [0.70, 0.80], [0.70, 0.80]];
+    const tubeWin = [[0.46, 0.56], [0.49, 0.59], [0.49, 0.59], [0.54, 0.64], [0.54, 0.64]];
     for (let i = 0; i < 5; i++) {
       const t = new THREE.Mesh(tubeGeo, tubeMat);
       t.visible = false;

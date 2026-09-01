@@ -99,6 +99,35 @@ const CARD_HOME = [
   [-0.65, 1.35, 1.55],
 ];
 
+// Portrait's own pass at CARD_HOME, against the portrait table's yaw 0.44 /
+// scale 1.14 — CARD_HOME above is landscape-tuned and was never re-derived for
+// a 31°-wide frustum. The two are not the same shot: portrait's settle key now
+// holds its aim on the door from p = 0.66 to the twin at p = 0.88 while the
+// camera keeps closing the distance underneath it, which swings anything off
+// that look axis hard across the frame — measured off the real rig, the old
+// CARD_HOME's own meshes ran 28-49% of a screen WIDTH off the left edge at the
+// settle key and 256-364% of one at the twin.
+//
+// Projected the same corner-by-corner way the landscape numbers were (the
+// card's own meshes through the real portrait rig, settle -> twin in fine
+// steps): x ~= +1.5 to +1.8 is the pocket that keeps the cards inside the
+// frame. card1 and card2 sit closer to the camera on z (1.05, 0.95 vs the
+// landscape-inherited 1.25, 1.55) — pulled in from their original depth, which
+// shrinks how large they project at the twin's closest approach. Measured
+// after: at the settle key all three cards are fully inside [-1, 1] of NDC
+// (from 28%, 28% and 49% of a screen width outside it); at the twin card0 is
+// still fully inside (from 257%), and card1 and card2 sit 11-15% of a screen
+// width over an edge (from 276% and 364%). That residual is the twin's own
+// parallax acting on a stack of cards that cannot all sit exactly on the
+// frozen look axis at once; it is not a miscentred CARD_HOME. y is untouched —
+// the FLOOR/CEILING math above still holds, since only x/z drive the drift
+// this fixes.
+const CARD_HOME_PORTRAIT = [
+  [1.82, 2.07, 0.95],
+  [1.62, 1.71, 1.05],
+  [1.53, 1.35, 0.95],
+];
+
 const NOTE_LABEL = 'synthetic note · patient SYN-042';
 const DOOR_LABEL = 'a person approves, or it does not exist';
 
@@ -106,14 +135,14 @@ const DOOR_LABEL = 'a person approves, or it does not exist';
 // The note crosses under the lens between p ≈ 0.25 and p ≈ 0.75, so the reading
 // and the lifting both happen while it is genuinely under the glass.
 const NOTE_X0 = 1.70, NOTE_X1 = -1.70;
-const B_READ = [[0.26, 0.40], [0.33, 0.47], [0.40, 0.54]];
-const B_LIFT = [[0.36, 0.54], [0.43, 0.61], [0.50, 0.68]];
-const B_SCAN = [0.24, 0.58];     // the lens travelling down the three lines
-// Both door beats finish by p ≈ 0.78: from p = 0.88 the rig converges on
-// chapter 08's opening pose and swings the door toward the frame edge, and in
-// portrait's ~31°-wide frame it is gone by p ≈ 0.85.
-const B_LABEL = [0.54, 0.70];    // the line under the door
-const B_MARK = [0.58, 0.78];     // the reviewer's mark landing
+const B_READ = [[0.18, 0.32], [0.25, 0.39], [0.32, 0.46]];
+const B_LIFT = [[0.28, 0.46], [0.35, 0.53], [0.42, 0.60]];
+const B_SCAN = [0.20, 0.50];     // the lens travelling down the three lines
+// Both door beats finish by p ≈ 0.64, which is where the camera settles on the
+// door and then holds that aim to p = 0.88. From p = 0.90 the rig converges on
+// chapter 08's opening pose and swings the door toward the frame edge.
+const B_LABEL = [0.46, 0.58];    // the line under the door
+const B_MARK = [0.48, 0.64];     // the reviewer's mark landing
 
 // ── the page stream ───────────────────────────────────────────────────────
 const BAND_IN = 2.90, BAND_OUT = -3.90, BAND_Z = -0.62;
@@ -139,7 +168,7 @@ const _up = new THREE.Vector3(0, 1, 0);
 // Portrait is ~31° wide against landscape's ~75°. The two set pieces are 28° of
 // bearing apart from the landscape flight line, which simply does not fit, so
 // portrait pulls both of them in toward the path to close that to ~13° — the
-// reading table and the closed door still share the frame around p ≈ 0.6, which
+// reading table and the closed door still share the frame around p ≈ 0.55, which
 // is the one shot that carries the whole claim.
 //
 // The table sits at z = -8.6 rather than -6.6 for the same framing reason the
@@ -156,6 +185,8 @@ function landscapeLayout() {
     // Dead in line with the door on x, so the door is literally in the way of
     // it and the parallax of flying past is the only thing that reveals it.
     gate: [-3.00, 0.15, -16.20], gateYaw: 0.42,
+    cardHome: CARD_HOME,
+    doorLabelDy: -0.46,
   };
 }
 
@@ -171,6 +202,17 @@ function portraitLayout() {
     table: [-3.10, 0.55, -8.60], tableYaw: 0.44, tableScale: 1.14,
     door: [-1.70, 0.35, -13.60], doorYaw: 0.26, doorScale: 0.92,
     gate: [-1.70, 0.50, -16.40], gateYaw: 0.26,
+    cardHome: CARD_HOME_PORTRAIT,
+    // Raised toward the door body rather than landscape's -0.46: the docked
+    // card covers the bottom 46svh of a portrait frame (readable line at
+    // screen y = 0.54), and at the landscape gap the caption sat fully below
+    // it at both the settle key and the twin. Scene-local alone could only buy
+    // back a little before the label would sit inside the door leaves' own
+    // silhouette (LEAF_Y +- LEAF_H/2), so this pairs with lowering
+    // CAMERA_KEYS['07-ai'].portrait's door-beat at.y (0.75 -> -0.85, see
+    // cameraKeys.js) — together they clear the line at both the settle key and
+    // the twin, measured off the real rig.
+    doorLabelDy: 0.10,
   };
 }
 
@@ -355,6 +397,9 @@ export default {
     mark.scale.setScalar(0.0001);
     door.add(mark);
 
+    // y is set every frame in update(), from A.doorLabelDy — orientation can
+    // flip mid-session, and the two layouts want a different gap under the
+    // door (see portraitLayout's comment).
     const doorLabel = captionMesh(DOOR_LABEL, 0.135, '#5A6169', 64);
     doorLabel.position.set(0, LEAF_Y - LEAF_H / 2 - 0.46, 0.20);
     doorLabel.material.opacity = 0;
@@ -432,7 +477,7 @@ export default {
       _from.set(noteX + MARGIN_X + (d.barW[i] * 0.5), BAND_Y + d.lineY[i], 0.02);
 
       const lift = smoothstep(sub(p, B_LIFT[i][0], B_LIFT[i][1]));
-      const home = CARD_HOME[i];
+      const home = A.cardHome[i];
       const card = d.cards[i];
       // A card is born ON its own source line, so the tether it drags out
       // starts at zero length. There is no moment where one exists without the
@@ -472,6 +517,7 @@ export default {
     d.mark.position.y = LEAF_Y + (1 - landed) * 0.85;
     d.mark.visible = landed > 0.002;
 
+    d.doorLabel.position.y = LEAF_Y - LEAF_H / 2 + A.doorLabelDy;
     const say = smoothstep(sub(p, B_LABEL[0], B_LABEL[1]));
     d.doorLabel.material.opacity = say;
     d.doorLabel.visible = say > 0.004;

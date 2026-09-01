@@ -62,7 +62,9 @@ describe('syncToTarget (reload / scroll restoration path)', () => {
     syncToTarget(s);
     expect(s.global).toBe(0.5);
     expect(s.index).toBe(5);
-    expect(s.p).toBeCloseTo(0.4165, 3);
+    // Half the page lands inside 05-clash, 0.3889 of the way through it:
+    // chapters 00-04 are 508 of the 1100vh, and 05 is 108 more.
+    expect(s.p).toBeCloseTo(0.3889, 3);
     expect(s.velocity).toBe(0);
     expect(s.atRest).toBe(true);
   });

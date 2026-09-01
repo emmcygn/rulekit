@@ -34,9 +34,12 @@
 // and much larger than that as the camera closes.
 //
 // TWO BEATS:
-//   p 0.04-0.42  the ten arrive out of the fog and close into the ring
-//   p 0.24-0.55  each card is stamped with the mark it earned, in ring order
-//   p 0.72-1.00  the ring opens and every card leaves. The middle stays empty,
+//   p 0.04-0.36  the ten arrive out of the fog and close into the ring
+//   p 0.20-0.51  each card is stamped with the mark it earned, in ring order
+//   p 0.51-0.88  ALL TEN COUNTED, RING STILL CLOSED — the shot this chapter is
+//                for, and it lines up with the camera settling at 0.64 and
+//                holding that aim to 0.88
+//   p 0.88-1.00  the ring opens and every card leaves. The middle stays empty,
 //                and the camera flies through the hole none of them got through.
 //
 // Contract notes (see ./_stub.js):
@@ -102,7 +105,7 @@ const FILL = [
 
 // Stamping: one card at a time, in ring order, so the tally can be counted as
 // it is made rather than appearing all at once as a fait accompli.
-const STAMP_FROM = 0.24, STAMP_STEP = 0.025, STAMP_DUR = 0.085;
+const STAMP_FROM = 0.20, STAMP_STEP = 0.025, STAMP_DUR = 0.085;
 
 // Two endpoints per segment: the card's own rectangle, then the outline mark.
 // Written once here, rewritten into world positions every frame.
@@ -219,8 +222,13 @@ export default {
 
     // Arrive, then leave. Both are one scalar for all ten: no card is admitted
     // early, held back, or let through the middle.
-    const arrive = smoothstep(sub(p, 0.04, 0.42));
-    const leave = smoothstep(sub(p, 0.72, 1));
+    // `leave` starts at 0.88 and not a hundredth earlier. It used to start at
+    // 0.72 — the camera's own settle key — so the ring began dispersing on the
+    // exact frame the shot arrived to look at it, and "all ten counted, ring
+    // still closed" lasted 97px of scroll. 0.88 is the aim-hold twin: the wheel
+    // now stays shut for the entire held shot and opens as the rig leaves.
+    const arrive = smoothstep(sub(p, 0.04, 0.36));
+    const leave = smoothstep(sub(p, 0.88, 1));
     const r = lerp(lerp(R_FAR, rHold, arrive), R_OUT, leave);
     const cz = lerp(Z_FAR, RING_Z, arrive);
     const s = lerp(0.30, cardScale, arrive) * (1 - leave);

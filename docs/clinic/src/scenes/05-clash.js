@@ -209,16 +209,33 @@ export default {
     const sx = A.sx;
     const z0 = A.z;
 
-    // 0.08-0.48  the two clauses, pages apart, slide together
-    // 0.50-0.76  the overlap lights up
-    // 0.54-0.72  the interval is named
-    // 0.70-0.80  the wording hands over to the interval it made
-    // 0.78-0.855 the label goes before the bottom edge reaches it
+    // 0.06-0.40  the two clauses, pages apart, slide together
+    // 0.42-0.64  the overlap lights up
+    // 0.46-0.60  the interval is named
+    // 0.60-0.68  the wording hands over to the interval it made
+    // 0.74-0.80  the label goes before the bottom edge reaches it
     // 0.90-1.00  the glass steps back before the camera passes it
-    const close = smoothstep(sub(p, 0.08, 0.48));
-    const glow = smoothstep(sub(p, 0.50, 0.76));
-    const named = smoothstep(sub(p, 0.54, 0.72)) * (1 - smoothstep(sub(p, 0.78, 0.855)));
-    const said = 1 - smoothstep(sub(p, 0.70, 0.80));
+    //
+    // THE LABEL OUTLIVES THE GLOW ON PURPOSE. It used to start leaving at 0.78,
+    // two hundredths after the glow finished at 0.76 — fully-lit-and-named was
+    // 20px of scroll, and the interval is the thing this chapter is about. It
+    // now stands at full opacity from 0.60 to 0.74, which is 2.3x as long and
+    // reaches into the camera's hold (settle 0.70 -> twin 0.88) rather than
+    // ending before the shot that frames it arrives.
+    //
+    // IT CANNOT SURVIVE THE WHOLE HOLD, and 0.80 is where the frame stops it.
+    // Across the hold `off` unwinds to the seam value, which drops the eye 0.4u
+    // while the aim stays frozen — so the composition rides UP the frame and the
+    // label, which hangs below the rod, sinks out of the bottom. Measured on the
+    // real rig at fov 50 / aspect 1.6: the label's underside crosses ndc.y = -1
+    // at p = 0.843 (screen y 0.994 at 0.84, 1.004 at 0.845) and is a third of
+    // its own height below the edge by p = 0.88. Fading to 0.80 puts it at 0.007
+    // opacity by p = 0.797, clear of the edge by 0.046 of p — where the old
+    // 0.855 fade ran 0.012 PAST it, at opacity, off the bottom of the frame.
+    const close = smoothstep(sub(p, 0.06, 0.40));
+    const glow = smoothstep(sub(p, 0.42, 0.64));
+    const named = smoothstep(sub(p, 0.46, 0.60)) * (1 - smoothstep(sub(p, 0.74, 0.80)));
+    const said = 1 - smoothstep(sub(p, 0.60, 0.68));
     const leave = smoothstep(sub(p, 0.90, 1.00));
 
     const th = lerp(TH_OPEN, TH_SHUT, close);

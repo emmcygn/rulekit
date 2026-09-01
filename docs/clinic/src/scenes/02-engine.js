@@ -370,8 +370,8 @@ export default {
 
       // A staggered arrival: the block writes itself rather than snapping shut.
       const d = ((i * 29) % 17) / 17;
-      const snap = smoothstep(sub(p, 0.46 + d * 0.08, 0.72 + d * 0.08));
-      const gone = smoothstep(sub(p, 0.62 + d * 0.09, 0.80 + d * 0.09));
+      const snap = smoothstep(sub(p, 0.34 + d * 0.08, 0.56 + d * 0.08));
+      const gone = smoothstep(sub(p, 0.48 + d * 0.09, 0.64 + d * 0.09));
 
       const row = i % CODE_LINES.length;
       const col = ((i / CODE_LINES.length) | 0) % cols;
@@ -398,7 +398,7 @@ export default {
     // rather than as a card fading up.
     let reveal = 0;
     for (let i = 0; i < lines.length; i++) {
-      const r = smoothstep(sub(p, 0.58 + i * 0.04, 0.74 + i * 0.04));
+      const r = smoothstep(sub(p, 0.44 + i * 0.04, 0.58 + i * 0.04));
       lines[i].material.opacity = r;
       reveal = Math.max(reveal, r);
     }
@@ -407,11 +407,11 @@ export default {
     // So everything that closes the sightline opens again before the seam:
     // opaque for the held shot, a pane you fly through by the time you do.
     const exit = 1 - smoothstep(sub(p, 0.93, 1));
-    const frame = smoothstep(sub(p, 0.54, 0.74));
+    const frame = smoothstep(sub(p, 0.40, 0.58));
     plateMat.opacity = frame * exit;
     borderMat.opacity = 0.85 * frame;
-    accentMat.opacity = smoothstep(sub(p, 0.68, 0.86));
-    scrimMat.opacity = smoothstep(sub(p, 0.78, 0.86)) * exit;
+    accentMat.opacity = smoothstep(sub(p, 0.54, 0.68));
+    scrimMat.opacity = smoothstep(sub(p, 0.60, 0.68)) * exit;
 
     const pad = portrait ? (maxW + PORT_PAD) / plateW : 1;
     plate.scale.x = pad;

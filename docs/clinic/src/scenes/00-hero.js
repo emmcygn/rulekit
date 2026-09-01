@@ -33,17 +33,17 @@
 //                         and status in this piece is solid, outline or hatch —
 //                         never a colour.
 //
-//   BEAT 1  p 0.18-0.60   THE LAW. The PROTOCOL page RISES out of the bottom of
+//   BEAT 1  p 0.18-0.50   THE LAW. The PROTOCOL page RISES out of the bottom of
 //                         the frame, through and behind the burn, and takes the
 //                         shot off it: the document arrives as the answer to a
 //                         cost that is already on screen. It turns 0.06 → 0.26
 //                         rad toward the reader and its caption, "the entry
-//                         rules, as law", hangs off it. From p ≈ 0.32 the page's
+//                         rules, as law", hangs off it. From p = 0.32 the page's
 //                         own words let go of the face and spread. Nothing here
 //                         is a metaphor for a PDF — it IS a printed page, at the
 //                         scale of a wall.
 //
-//   BEAT 2  p 0.42-0.74   PROSE BECOMES CODE. The loose words do not drift off:
+//   BEAT 2  p 0.38-0.59   PROSE BECOMES CODE. The loose words do not drift off:
 //                         they CONVERGE, into three ranks in front of the page,
 //                         and a small bordered plate resolves under them —
 //                         "SAME RULES, RUNNABLE" and the trial's three checks,
@@ -51,14 +51,25 @@
 //                         the printed lines fade in, so the last thing a word
 //                         does is turn into the line it became.
 //
-//   BEAT 3  p 0.68-1.00   THREE ANSWERS. A verdict mark materialises at the end
+//   BEAT 3  p 0.55-0.65   THREE ANSWERS. A verdict mark materialises at the end
 //                         of each check — ■ pass, □ fail, ▨ don't know — and
 //                         "three answers, on purpose" prints beneath them. The
 //                         machine is allowed to say I-don't-know in the first
-//                         thirty seconds of the story, not in chapter four. The
-//                         marks are up and readable from p ≈ 0.74; then the
-//                         plate LIFTS AWAY toward station 1 and the camera flies
-//                         on through the emptied page.
+//                         thirty seconds of the story, not in chapter four.
+//
+//   THE HOLD  p 0.66-0.88  Everything above is FINISHED, and the camera's aim
+//                         freezes on it (cameraKeys.js gives this chapter a
+//                         settle key at 0.66 and an aim-hold twin at 0.88). The
+//                         plate stops leading sideways and only backs off, so
+//                         the composition stands still while the camera keeps
+//                         closing under it. This is the chapter's reading
+//                         window, and it did not exist before: the marks used
+//                         to reach full size at 0.80, the exact frame the plate
+//                         began leaving, which left 11px of composed scroll
+//                         landscape and 0px portrait.
+//
+//   BEAT 4  p 0.88-1.00   The plate LIFTS AWAY toward station 1 and the camera
+//                         flies on through the emptied page.
 //
 // ── The mark language starts here, and it starts complete ─────────────────
 // The three marks are built exactly the way 04-three and 10-close build them —
@@ -157,29 +168,29 @@
 // target runs out to station 1 at x = +3.5 — and because chapter 00's card
 // docks on the LEFT at 1280x800, out to NDC x = -0.12. A plate that only drifted
 // forward would put its three marks straight behind that card at the exact beat
-// they arrive. Measured, landscape 1280x800 (NDC, so 2.0 is the whole frame):
+// they arrive. It leads on `drift` while the aim is still turning, and then on
+// `hold` — a second, pure-recession track — once the aim freezes at p = 0.66;
+// see LAYOUT for why one vector cannot do both jobs. Measured off the real rig
+// with both tracks in place (NDC, so 2.0 is the whole frame; the landscape card
+// docks LEFT out to ndc x -0.12):
 //
-//   p     dist   plate's left edge   (the card's edge: -0.12)
-//   0.60  5.51u  -0.03
-//   0.66  4.77u  -0.03
-//   0.70  4.23u  -0.01
-//   0.74  3.67u  +0.01
-//   0.78  3.03u  -0.00
-//   0.80  2.67u  -0.02
+//   landscape 1440x900              portrait 390x844
+//   p     dist   plate x span       dist   plate x span   plate y span
+//   0.66  6.1u   +0.15 … +0.79      5.9u   -0.05 … +0.90  +0.26 … +0.59
+//   0.74  5.6u   +0.10 … +0.81      5.5u   -0.21 … +0.85  +0.26 … +0.60
+//   0.80  5.9u   +0.04 … +0.74      5.8u   -0.27 … +0.75  +0.23 … +0.54
+//   0.88  5.4u   +0.07 … +0.88      5.5u   -0.13 … +0.98  +0.26 … +0.59
 //
-// Then it releases: up and forward along the bearing of station 1. Its bottom
-// edge clears the top of the frame by p = 0.90 — at 0.90 the whole plate is at
-// NDC y +1.01 and up, two frames after the camera hand-off starts
-// (HANDOFF_START = 0.88) — and update() stops drawing it there, which is a
-// measured cut and not a pop.
+// The plate is fully inside the frame at every one of those, it never crosses
+// the landscape card's own edge, and in portrait it never reaches the docked
+// card's line at screen y 0.54. Distance varies by 0.7u across the whole hold
+// where it used to fall from 5.2u to 2.0u — that collapse is what the `hold`
+// track exists to stop.
 //
-// The cost open pushed everything after it back by roughly a twelfth, so the
-// release now starts at 0.80 rather than 0.78 and the plate is 2.67u from the
-// camera when it does. That is still outside the 2.5u where a 3.2u plate stops
-// being a thing you read and starts being a thing you are wearing — but it is
-// the LAST beat with room to give, which is why `drift.z` came back from -1.10
-// to -0.80 in the same pass, and why the release vectors were scaled by 1.24 so
-// the plate still clears the frame in the 0.10 of chapter it has left.
+// Then it releases: up and forward along the bearing of station 1, over
+// p 0.88-1.00. At p = 0.94, where update() stops drawing it, its bottom edge is
+// at NDC y 1.36 (landscape) / 1.11 (portrait) — off the top of the frame, so
+// the cut is a measurement and not a pop.
 //
 // Portrait is a 62°/0.46 frame: 0.555u of width per unit of depth against
 // landscape's 1.492. The same plate would fill it twice over, so the portrait
@@ -329,7 +340,28 @@ const LAYOUT = {
   L: {
     home: [0.20, 0.55, 1.72],
     drift: [2.05, 0, -0.80],         // leads the camera, and follows its aim
-    release: [1.18, 6.95, -5.20],    // up and away, on station 1's bearing
+    // ── the hold track ───────────────────────────────────────────────────
+    // `drift` leads SIDEWAYS as well as forward because it was written against
+    // an aim that turns: the look target runs out toward station 1 at x = +3.5,
+    // and the plate has to keep up with it. Through the aim-hold twin
+    // (cameraKeys.js, p = 0.66 -> 0.88) the aim does NOT turn, so continuing to
+    // lead sideways walks the plate straight off the right edge — measured, its
+    // right edge reaches ndc x 4.16 at the twin on `drift` alone.
+    //
+    // What it still has to do through the hold is BACK OFF. The camera covers
+    // 4.46u of spline between 0.66 and 0.88 while the aim is frozen, which on a
+    // plate 5.2u away is the difference between something you read and
+    // something you are wearing. This vector is that recession and nothing
+    // else: 0.76 of the camera's own displacement over the hold, rotated into
+    // sheet-local space (the sheet is turned 0.26 rad by then). 0.76 rather
+    // than 1.0 on purpose — a payoff that grows a little as you reach it is the
+    // shot; one that holds a fixed pixel size is a HUD.
+    hold: [0.60, -0.22, -4.10],
+    // Up and away, on station 1's bearing. 2.2x the vector it carried when the
+    // release started at p = 0.80: the hold track leaves the plate 5.4u out
+    // rather than 2.7u, so the same world displacement buys half the NDC travel
+    // it used to, and the draw-cut below is a measurement, not a guess.
+    release: [2.60, 15.29, -11.44],
     scale: 1,
     // The law caption goes UNDER the page, where plain.html prints it.
     law: [0, -(SLAB_H / 2 + 0.42), 1],
@@ -337,7 +369,10 @@ const LAYOUT = {
   P: {
     home: [-0.05, 2.45, 1.30],
     drift: [1.20, 0, -0.90],
-    release: [1.36, 6.20, -3.97],
+    // Same 0.76 of the camera's own hold displacement, which is (1.07, 0.05,
+    // -4.22) in portrait rather than landscape's (0.81, 0.01, -4.39).
+    hold: [1.06, -0.49, -5.48],
+    release: [2.99, 13.64, -8.73],
     scale: 0.72,
     // ...and OVER it in portrait, at 1.6 the size. Not a preference: the card
     // docks across the bottom 46svh, and at the portrait page's own framing the
@@ -374,15 +409,38 @@ const BURN_BAND_IN = [0.125, 0.215];
 const BURN_OUT = [0.22, 0.40];
 const PAGE_IN = [0.18, 0.32];
 
-const PEEL = [0.32, 0.54];
-const CONVERGE = [0.42, 0.68];
-const CARD_IN = [0.48, 0.68];
-const LINES_IN = [0.56, 0.74];
-const MARKS_IN = [0.68, 0.80];
-const FOOT_IN = [0.72, 0.84];
-const DRIFT = [0.48, 0.80];
-const RELEASE = [0.80, 1.00];
-const LAW_OUT = [0.46, 0.60];
+// ── The plate ladder is COMPRESSED, not shortened ─────────────────────────
+// Everything from PEEL on used to end at 0.84 (FOOT_IN) with the plate already
+// releasing from 0.80 — so the three marks reached full size on the exact frame
+// the plate began leaving, and the foot line did not finish printing until four
+// hundredths after that. Measured off the real rig, this chapter's finished,
+// composed, still-in-frame image lasted 11px of scroll landscape and 0px
+// portrait: nothing else in the piece was that bad.
+//
+// The camera now settles at p = 0.66 and holds that aim to p = 0.88
+// (cameraKeys.js), so the whole ladder is re-cut to be FINISHED by 0.65. Each
+// beat's p-length is divided by 1.5714 — which is exactly the ratio this
+// chapter's own vh grew by, 70 -> 110 (chapters.js) — so every beat lasts the
+// same number of PIXELS it used to. Nothing is rushed; the chapter is longer.
+//
+// BURN_IN, BURN_BAND_IN, BURN_OUT and PAGE_IN are untouched. They are the
+// owner's cost open, they are measured against the card edges in the header
+// table above, and the camera pose at p <= 0.55 is unchanged, so they compose
+// exactly as they did.
+const PEEL = [0.32, 0.46];
+const CONVERGE = [0.38, 0.55];
+const CARD_IN = [0.42, 0.55];
+const LINES_IN = [0.47, 0.59];
+const MARKS_IN = [0.55, 0.62];
+const FOOT_IN = [0.57, 0.65];
+// DRIFT is the lead-while-the-aim-turns track and it finishes ON the settle
+// key; HOLD is the back-off-while-the-aim-is-frozen track and it spans exactly
+// the twin's hold. RELEASE starts where the hold ends. See LAYOUT above for why
+// the middle one has to exist rather than DRIFT simply running longer.
+const DRIFT = [0.42, 0.66];
+const HOLD = [0.66, 0.88];
+const RELEASE = [0.88, 1.00];
+const LAW_OUT = [0.41, 0.50];
 
 // makeGlyphAtlas left-aligns each word 0.15/6 of a cell in from its left edge,
 // at a mono advance of ~0.6em on a 6em cell. So a short word sits far left of
@@ -741,6 +799,7 @@ export default {
 
     // ── the plate's track ─────────────────────────────────────────────────
     const driftT = smoothstep(sub(p, DRIFT[0], DRIFT[1]));
+    const holdT = smoothstep(sub(p, HOLD[0], HOLD[1]));
     const relT = smoothstep(sub(p, RELEASE[0], RELEASE[1]));
     const cardIn = smoothstep(sub(p, CARD_IN[0], CARD_IN[1]));
     const marksIn = smoothstep(sub(p, MARKS_IN[0], MARKS_IN[1]));
@@ -750,18 +809,19 @@ export default {
     // on the frame the manager builds this room at p = 1 and nothing has been
     // walked through in order.
     plate.position.set(
-      A.home[0] + A.drift[0] * driftT + A.release[0] * relT,
-      A.home[1] + A.drift[1] * driftT + A.release[1] * relT,
-      A.home[2] + A.drift[2] * driftT + A.release[2] * relT,
+      A.home[0] + A.drift[0] * driftT + A.hold[0] * holdT + A.release[0] * relT,
+      A.home[1] + A.drift[1] * driftT + A.hold[1] * holdT + A.release[1] * relT,
+      A.home[2] + A.drift[2] * driftT + A.hold[2] * holdT + A.release[2] * relT,
     );
     plate.scale.setScalar(A.scale);
     // Past the top of the frame and still climbing: stop drawing it rather than
-    // pay twelve draw calls for something nobody can see. Half of the release
-    // is p = 0.90 exactly, where the plate's BOTTOM edge is already at NDC y
-    // 1.09 (landscape) / 1.46 (portrait) — measured, so the cut is not a pop.
-    // The threshold moved from 0.62 to 0.50 with the beat map: the release now
-    // has 0.10 of chapter rather than 0.12, and A.release was scaled to match,
-    // so half of it does what 0.62 of the old one did.
+    // pay twelve draw calls for something nobody can see. Half of the release is
+    // p = 0.94 now that RELEASE spans [0.88, 1.00], and at 0.94 the plate's
+    // BOTTOM edge is at NDC y 1.36 (landscape) / 1.11 (portrait) — measured off
+    // the real rig with the hold track in place, so the cut is not a pop. It is
+    // the release vector that was scaled to make that true, not this threshold:
+    // the plate is 5.4u out when it lets go rather than 2.7u, and a cut chosen
+    // to paper over a plate that has not left yet would be a wish.
     plate.visible = cardIn > 0.001 && relT < 0.50;
     if (plate.visible) {
       // The card resolves under the arriving words; the marks come later and on

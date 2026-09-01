@@ -52,7 +52,13 @@ for (let p = 0; p <= 1 + 1e-9; p += BEAT) BEATS.push(Math.min(p, 1));
 // Where room 06 can be frozen when a reader comes back. `lay` is 1 from p = 0.14
 // on, so every one of these is the full-strength floor; the later ones also carry
 // the cluster, the panels and the fallen walkers, which are geometry too.
-const PINS = [0.14, 0.32, 0.60, 0.85, 1.00];
+//
+// Derived from chapter 06's own beats rather than picked round, so a retune of
+// the room moves the sample points with it: 0.14 is where `lay` completes, 0.28
+// is the mid camera key, 0.50 is where `born` completes, 0.66 is where `wire`
+// completes (the settle key is 0.68), 0.88 is the aim-hold twin, and 1.00 is
+// the chapter fully built and handed off.
+const PINS = [0.14, 0.28, 0.50, 0.66, 0.88, 1.00];
 
 // One materials set for both rooms, as the manager hands out.
 function stage(portrait, tier = 'high') {
