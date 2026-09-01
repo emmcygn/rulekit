@@ -37,8 +37,7 @@
 //                         the frame, through and behind the burn, and takes the
 //                         shot off it: the document arrives as the answer to a
 //                         cost that is already on screen. It turns 0.06 → 0.26
-//                         rad toward the reader and its caption, "the entry
-//                         rules, as law", hangs off it. From p = 0.32 the page's
+//                         rad toward the reader. From p = 0.32 the page's
 //                         own words let go of the face and spread. Nothing here
 //                         is a metaphor for a PDF — it IS a printed page, at the
 //                         scale of a wall.
@@ -46,14 +45,12 @@
 //   BEAT 2  p 0.38-0.59   PROSE BECOMES CODE. The loose words do not drift off:
 //                         they CONVERGE, into three ranks in front of the page,
 //                         and a small bordered plate resolves under them —
-//                         "SAME RULES, RUNNABLE" and the trial's three checks,
-//                         set in type instead of prose. The swarm fades out as
+//                         the trial's three checks, set in type instead of prose. The swarm fades out as
 //                         the printed lines fade in, so the last thing a word
 //                         does is turn into the line it became.
 //
 //   BEAT 3  p 0.55-0.65   THREE ANSWERS. A verdict mark materialises at the end
-//                         of each check — ■ pass, □ fail, ▨ don't know — and
-//                         "three answers, on purpose" prints beneath them. The
+//                         of each check — ■ pass, □ fail, ▨ don't know. The
 //                         machine is allowed to say I-don't-know in the first
 //                         thirty seconds of the story, not in chapter four.
 //
@@ -205,8 +202,10 @@
 //   0.78  3.23u  +0.26
 //   0.80  2.87u  +0.28
 //
-// The foot caption is the lowest ink in the room and it never comes within 0.27
-// of NDC of the card. Measured, not eyeballed — that is the T22 lesson.
+// The foot caption was the lowest ink in the room and never came within 0.27
+// of NDC of the card; it is gone with plain.html's caption, and everything
+// left sits higher, so that margin only grew. Measured, not eyeballed — that is
+// the T22 lesson.
 //
 // ── One draw call for every word ──────────────────────────────────────────
 // The words are one InstancedMesh sharing one glyph atlas, so which cell of the
@@ -224,14 +223,14 @@ import { sub, smoothstep, lerp } from '../lib/easing.js';
 
 const WORDS = ['participants', 'are', 'required', 'to', 'have', 'an', 'eGFR', 'of', 'at', 'least', '30', 'at', 'screening'];
 
-// Fixed label strings, every one of them lifted from plain.html's hero figure
-// word for word. Fixed is the contract (see _stub.js rule 4): makeTextTexture
-// memoises by string with no eviction, so a label that varied with p would mint
-// a canvas per frame.
-const LAW_CAPTION = 'the entry rules, as law';
-const PLATE_HEAD = 'SAME RULES, RUNNABLE';
+// Fixed label strings, lifted from plain.html's hero figure word for word. The
+// figure's three captions ("the entry rules, as law", "SAME RULES, RUNNABLE",
+// "three answers, on purpose") left plain.html in the second copy pass, so the
+// room no longer prints them either; the check lines are all the type it sets.
+// Fixed is the contract (see _stub.js rule 4): makeTextTexture memoises by
+// string with no eviction, so a label that varied with p would mint a canvas
+// per frame.
 const CHECKS = ['age 18 or older', 'kidney score 30 or more', 'no clashing medicine'];
-const PLATE_FOOT = 'three answers, on purpose';
 
 // The burn's own two captions, both lifted from the framing paragraph plain.html
 // opens with, word for word: "The climb has a name: Eroom's law... so the cost of
@@ -317,9 +316,7 @@ const ROW_Y = [0.22, -0.10, -0.42];   // the three check rows
 const MARK_X = -1.26;                  // the mark's column, left inset
 const TEXT_X = -1.03;                  // where each check line starts
 const MARK = 0.20;                     // ■ □ ▨ are this square
-const HEAD_Y = 0.70, HEAD_H = 0.115;
 const LINE_H = 0.19;
-const FOOT_Y = -1.16, FOOT_H = 0.125;
 const CARD_Z = 0.02;                   // text and marks stand proud of the card
 
 // Where the plate lives, in the page's own (sheet-local) frame, and what it
@@ -363,8 +360,6 @@ const LAYOUT = {
     // it used to, and the draw-cut below is a measurement, not a guess.
     release: [2.60, 15.29, -11.44],
     scale: 1,
-    // The law caption goes UNDER the page, where plain.html prints it.
-    law: [0, -(SLAB_H / 2 + 0.42), 1],
   },
   P: {
     home: [-0.05, 2.45, 1.30],
@@ -374,13 +369,6 @@ const LAYOUT = {
     hold: [1.06, -0.49, -5.48],
     release: [2.99, 13.64, -8.73],
     scale: 0.72,
-    // ...and OVER it in portrait, at 1.6 the size. Not a preference: the card
-    // docks across the bottom 46svh, and at the portrait page's own framing the
-    // space under it is NDC y -0.38 — behind the card, in the clip, where a
-    // caption is not a caption. The page's other edge is at +0.28, which a
-    // reader can actually read. Same words, same object, the side of it that is
-    // on screen.
-    law: [0, SLAB_H / 2 + 0.42, 1.6],
   },
 };
 
@@ -432,7 +420,6 @@ const CONVERGE = [0.38, 0.55];
 const CARD_IN = [0.42, 0.55];
 const LINES_IN = [0.47, 0.59];
 const MARKS_IN = [0.55, 0.62];
-const FOOT_IN = [0.57, 0.65];
 // DRIFT is the lead-while-the-aim-turns track and it finishes ON the settle
 // key; HOLD is the back-off-while-the-aim-is-frozen track and it spans exactly
 // the twin's hold. RELEASE starts where the hold ends. See LAYOUT above for why
@@ -440,7 +427,6 @@ const FOOT_IN = [0.57, 0.65];
 const DRIFT = [0.42, 0.66];
 const HOLD = [0.66, 0.88];
 const RELEASE = [0.88, 1.00];
-const LAW_OUT = [0.41, 0.50];
 
 // makeGlyphAtlas left-aligns each word 0.15/6 of a cell in from its left edge,
 // at a mono advance of ~0.6em on a 6em cell. So a short word sits far left of
@@ -466,18 +452,17 @@ function label(text, h, color, px) {
 
 export default {
   id: '00-hero',
-  // 21 in fact: the burn (one InstancedMesh for every block, the hatched band,
+  // 18 in fact: the burn (one InstancedMesh for every block, the hatched band,
   // and its two captions = 4), the document (box, printed face, contact shadow,
-  // glyph swarm, law caption = 5), the plate (card, ink border, head, three
-  // check lines, foot = 7) and the three marks (three bodies plus the two
-  // borders = 5). One spare.
+  // glyph swarm = 4), the plate (card, ink border, three check lines = 5) and
+  // the three marks (three bodies plus the two borders = 5). One spare.
   //
   // The triangles are 760 at `high` and the ceiling moves with them: the burn
   // is 46 boxes at 12 triangles each, which is 552 of it, and a declaration
   // that did not move when the room grew a set piece would be a wish. 900 is
   // the honest number with headroom; it was 1200 against a measured 192, and
   // reserving four times what a room spends is its own kind of dishonesty.
-  budget: { calls: 22, tris: 900 },
+  budget: { calls: 19, tris: 900 },
 
   build(ctx) {
     const g = new THREE.Group();
@@ -507,13 +492,6 @@ export default {
     );
     page.position.z = PAGE_Z;
     sheet.add(page);
-
-    // plain.html prints "the entry rules, as law" under the left-hand box. So
-    // does this: the page is not a mystery object, it is named, and the name is
-    // what the plate is about to answer.
-    const lawCap = label(LAW_CAPTION, 0.34, '#5A6169', 64);
-    lawCap.position.z = GLYPH_Z;      // y and scale are per-orientation; see update
-    sheet.add(lawCap);
 
     const shadow = makeContactShadow(M, { radius: 3.2, opacity: 0.16 });
     shadow.position.set(0, -3.2, 0);
@@ -673,12 +651,6 @@ export default {
     cardEdge.position.z = 0.004;   // off the plane, so the border cannot z-fight it
     cardMesh.add(cardEdge);
 
-    // The head sits over the MARK column, not the text column, so the card has
-    // one left margin and not two.
-    const head = label(PLATE_HEAD, HEAD_H, '#5A6169', 64);
-    head.position.set(MARK_X - MARK / 2 + head.geometry.parameters.width / 2, HEAD_Y, CARD_Z);
-    card.add(head);
-
     const lines = CHECKS.map((text, i) => {
       const m = label(text, LINE_H, '#1A1D21', 64);
       m.position.set(TEXT_X + m.geometry.parameters.width / 2, ROW_Y[i], CARD_Z);
@@ -711,12 +683,8 @@ export default {
       marks.add(body);
     }
 
-    const foot = label(PLATE_FOOT, FOOT_H, '#5A6169', 64);
-    foot.position.set(0, FOOT_Y, CARD_Z);
-    plate.add(foot);
-
     g.userData = {
-      doc, sheet, glyphs, seeds, dest, n, lawCap, plate, card, cardMesh, lines, head, marks, bodies, foot,
+      doc, sheet, glyphs, seeds, dest, n, plate, card, cardMesh, lines, marks, bodies,
       burn, blocks, bslot, blockCount, burnM, band, bandM, caps, eroomCap, climbCap,
     };
     return g;
@@ -829,9 +797,7 @@ export default {
       u.card.scale.setScalar(Math.max(0.0001, cardIn));
 
       const lineIn = smoothstep(sub(p, LINES_IN[0], LINES_IN[1]));
-      u.head.material.opacity = smoothstep(sub(p, CARD_IN[0] + 0.04, CARD_IN[1]));
       for (let i = 0; i < u.lines.length; i++) u.lines[i].material.opacity = lineIn;
-      u.foot.material.opacity = smoothstep(sub(p, FOOT_IN[0], FOOT_IN[1]));
 
       // ALL THREE MARKS ON ONE SCALAR. No per-mark offset, ever: a "don't know"
       // that arrives after its two siblings is a "don't know" that has been
@@ -841,11 +807,6 @@ export default {
         for (let i = 0; i < u.bodies.length; i++) u.bodies[i].scale.setScalar(marksIn);
       }
     }
-
-    // The law caption hands over to the plate rather than sitting under it.
-    u.lawCap.position.y = A.law[1];
-    u.lawCap.scale.setScalar(A.law[2]);
-    u.lawCap.material.opacity = 1 - smoothstep(sub(p, LAW_OUT[0], LAW_OUT[1]));
 
     // ── the words: off the page, then into the lines they became ──────────
     // Two blends per axis, no allocation: the page slot eases out to a free
