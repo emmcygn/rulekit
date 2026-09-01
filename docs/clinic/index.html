@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>rulekit — the research clinic</title>
-  <meta name="description" content="A trial's entry rules live in a PDF. You cannot run a PDF. rulekit rewrites the rules as code you can test.">
+  <meta name="description" content="A trial's candidate entry rules live in a PDF. You cannot deterministically assess a PDF against thousands of candidates. rulekit turns rules into code you can test.">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600&family=Martian+Mono:wght@600&display=swap">
   <link rel="stylesheet" href="/src/styles.css">
 </head>
@@ -34,15 +34,9 @@
       <p class="small ext">Trials are usually rules written as prose in a mountain of documents, read five ways by different parties, and often amended mid-trial at six figures a change.</p>
       <p class="src">Source: Scannell, Blanckley, Boldon &amp; Warrington,<span class="ext"> "Diagnosing the decline in pharmaceutical R&amp;D efficiency",</span> Nature Reviews Drug Discovery (2012).</p>
       <div class="pitch-box">
-        <p class="pitch">A trial's entry rules live in a PDF. You cannot run a PDF, so the mistakes turn up after the money is spent. rulekit rewrites the rules as code you can test.</p>
-        <p class="small">by Emmanuel Cuyugan</p>
+        <p class="pitch">A trial's candidate entry rules live in a PDF. You cannot deterministically assess a PDF against thousands of candidates, so the mistakes turn up after the money is spent. rulekit turns rules into code you can test.</p>
+        <p class="small">by Manny Cuyugan</p>
       </div>
-      <!-- .ext, and a REBALANCE, not a cut: the tour note is a reading
-           instruction, and the framing below it is the reason the piece exists.
-           A 380x780 card holds one of the two, so the phone gets the one that
-           says what the problem is. Both are still plain.html's #hero, word for
-           word, and every desktop card renders both. -->
-      <p class="small ext">The plain-language tour. No code needed, about six minutes, and it builds as it goes, so read it in order. There is an engineers' edition of the same story; the last section links to it.</p>
       <!-- The framing, and the three sentences outside `.ext` are BASE copy at
            every width: the cost of a new medicine climbing, the name that curve
            has, and the part of it this project is about. That is the issue the
@@ -57,39 +51,34 @@
            colour, not claim, and the only reason any of it is gated is that
            380x780 is 358px of box. -->
 
-      <!-- The hero figure's own three captions, in its own order, because the
-           room now performs exactly that arc: the page of law, the same rules
-           as a runnable plate, three verdict marks on the ends of the checks.
-           Base copy, not .ext: it is the framing the whole piece hangs off, and
-           a phone reader gets it or nobody does. The three CHECK lines are not
-           repeated here — 00-hero.js prints them in the room itself, at every
-           width, the way chapter 10 prints its three marks. -->
-      <p class="small mono ext">the entry rules, as law &#183; SAME RULES, RUNNABLE &#183; three answers, on purpose</p>
+      <!-- The hero figure's one remaining caption. The copy rework took the
+           runnable plate and the "three answers" foot out of plain.html's
+           figure; the room still performs that arc in 3D (00-hero.js), but the
+           card can only carry what the source still says. -->
+      <p class="small mono ext">the entry rules, as law</p>
       <!-- .ext, and the same rebalance: this sentence explains the mono line
            above it, and the mono line is the one that has to survive on a phone
            because the room performs what it names. Measured, not guessed — at
            380x780 the card is 358px of box and the framing paragraph, its source
            line and the caption line spend 314 of it. -->
-      <p class="small ext">The whole thing in one picture. A paragraph nobody can run becomes a set of checks a machine can run, and the machine is allowed to say "I don't know" instead of guessing.</p>
-      <p class="small mono ext">scroll, about six minutes, best in order</p>
+      <p class="small ext">In short: Clinical trial prose that has to be manually read becomes a set of checks on facts that a machine can run, and the machine is allowed to say "I don't know" instead of guessing.</p>
     </section>
     <section class="panel" id="panel-01-clinical" data-panel="01-clinical" data-plain="clinical" data-side="right" aria-labelledby="h-01-clinical">
       <p class="eyebrow"><span class="ch">01</span>the clinical side</p>
-      <h2 id="h-01-clinical">The rules read like law. Law does not run.</h2>
+      <h2 id="h-01-clinical">Trial rules need expensive and often manual review.</h2>
       <p class="small ext">A clinical trial tests a new medicine on volunteers. Its <span class="gloss">eligibility criteria<span class="gloss-note">the rules for who may join</span></span> decide who gets the experimental drug and who is turned away for their own safety.</p>
-      <p class="small">The documents here are made up. The failure is not.<span class="ext-tall"> "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 is admitted by the statute and thrown out by the database query. Five readings of one law now exist, none of them binding, and nobody can say which one is current.</span></p>
+      <p class="small">Here are real failures in our (dummy) data.<span class="ext-tall"> "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 is admitted by the statute and thrown out by the database query. Five different readings of one law now exist, none of them binding, and nobody can say which one is current.</span></p>
       <p class="small"><span class="big-num">$141K</span><br>median direct cost of one substantial amendment in <span class="gloss">Phase II<span class="gloss-note">the mid-stage test</span></span></p>
       <p class="small"><span class="big-num">$535K</span><br>median direct cost in <span class="gloss">Phase III<span class="gloss-note">the large late-stage test</span></span></p>
       <p class="small"><span class="big-num">~45%</span><br>of substantial amendments judged avoidable</p>
       <p class="src">Source: Tufts Center for the Study of Drug Development, on the cost of protocol amendments.</p>
-      <p class="small ext-tall">Half a million dollars is a house, spent on changing a paragraph. Nearly half of those changes were avoidable, so the industry keeps buying houses it never needed. If you can test the rules, you find the flaw while it is still cheap to fix.</p>
+      <p class="small ext-tall">Almost half a million pounds, spent on changing a paragraph. Nearly half of those changes were avoidable. If you can test the trial rules, you find rule flaws while it is still cheap to fix.</p>
     </section>
-    <section class="panel" id="panel-02-engine" data-panel="02-engine" data-plain="sw-engine engine engine-notes" data-side="left" aria-labelledby="h-02-engine">
+    <section class="panel" id="panel-02-engine" data-panel="02-engine" data-plain="engine engine-notes" data-side="left" aria-labelledby="h-02-engine">
       <p class="eyebrow"><span class="ch">02</span>the engine</p>
-      <h2 id="h-02-engine">Write the rule once, in a form a machine can run</h2>
-      <p class="lede">rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other.</p>
+      <h2 id="h-02-engine">Write the rules once, in a format a machine can run</h2>
+      <p class="lede">my rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other.</p>
       <div class="ext">
-        <p class="small mono">the statute stops here. what follows is a file you can run.</p>
         <p class="small"><strong>line 3 &#183; the original words.</strong> <span class="mono">verbatim</span> is the protocol's exact sentence, copied in and never touched again.</p>
         <p class="small"><strong>line 4 &#183; the runnable meaning.</strong> <span class="mono">when</span> is that same sentence turned into logic: <span class="mono">egfr</span> must be <span class="mono">gte</span> (greater than or equal to) 30. A machine can run this line. A person can still read it.</p>
       </div>
@@ -109,12 +98,12 @@
     </section>
     <section class="panel" id="panel-04-three" data-panel="04-three" data-plain="p-three" data-side="left" aria-labelledby="h-04-three">
       <p class="eyebrow"><span class="ch">02</span>idea one</p>
-      <h2 id="h-04-three">Three answers, not two</h2>
-      <p class="lede">yes, no, and "I don't know", and the third one is the whole point</p>
+      <h2 id="h-04-three">We want a model to say when it's not sure</h2>
+      <p class="lede">yes, no, and the most crucial - "I don't know"</p>
       <p class="small mono">one synthetic patient &#183; age: 63 &#183; heart pump strength: 38 &#183; kidney score: missing</p>
       <div class="ext">
         <p class="small"><strong>most screening software.</strong> A yes-or-no program has nowhere to put "we don't know". The missing kidney score gets read as "no problem", and the patient sails past a safety rule that nobody ever checked.</p>
-        <p class="small"><strong>rulekit.</strong> The missing score comes back as <span class="mono">don't know</span>, a real answer rather than an error. That don't-know carries up through every rule built on it, so the patient's overall result reads "undetermined" and the chart lands in the pile that means a human has to read this one.</p>
+        <p class="small"><strong>rulekit.</strong> The missing score comes back as <span class="mono">don't know</span>, a real answer rather than an error. That don't-know carries up through every rule built on it, so the patient's overall result reads "undetermined" and the chart lands in the pile for human review.</p>
       </div>
       <p class="small"><strong>the rule that never bends.</strong> The system never turns a don't-know into a yes. There is no code path that does it. A patient counts as eligible only when every rule actually passes on confirmed facts, and one confirmed "no" settles the case on its own.</p>
     </section>
@@ -134,33 +123,32 @@
       <p class="small mono ext">exactly 30: admitted by rule 1, barred by rule 2</p>
       <p class="lede">A patient's verdict is computed exactly once. The printed report and the visual app both read that one result, so two screens can never show different counts.</p>
       <p class="small">The dot next to a patient's name and the totals on every screen come from that one verdict. There is no second copy of the math to drift.</p>
-      <p class="small ext">It sounds obvious. The build story near the end shows what it looked like back when it was not true.</p>
     </section>
     <section class="panel" id="panel-07-ai" data-panel="07-ai" data-plain="sw-ai ai-intro p-ai" data-side="right" aria-labelledby="h-07-ai">
       <p class="eyebrow"><span class="ch">03</span>the AI part</p>
-      <h2 id="h-07-ai">The AI reads. It never decides.</h2>
-      <p class="lede"><span class="ext">The hard part of screening is that the facts are buried in doctors' notes, written for other doctors. rulekit lets an AI read a note and suggest facts. </span>Every suggestion has to carry the exact quote it came from, and a person approves it or throws it out.</p>
+      <h2 id="h-07-ai">The AI reads facts. It never decides how they're applied.</h2>
+      <p class="lede"><span class="ext">The hard part of screening is that the facts are buried in doctors' notes, written for other doctors. rulekit lets an LLM read a note and suggest facts. </span>Every suggestion has to carry the exact quote it came from, and a person approves it or throws it out.</p>
       <p class="small">The suggested fact is an <span class="gloss">NYHA class<span class="gloss-note">a heart-failure severity grade</span></span>, and the number beside it is a <span class="gloss">confidence<span class="gloss-note">the AI's own certainty guess</span></span>, which only decides what gets reviewed first.</p>
       <p class="small mono">every document, patient and clinician here is synthetic<br>nyha_class = III &#183; confidence 0.94</p>
-      <p class="small ext-tall"><strong>a suggestion, with its receipt.</strong> The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can check the suggestion against the note in a few seconds, without having to trust the AI at all.</p>
+      <p class="small ext-tall"><strong>a suggestion, with its receipt.</strong> The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can check the suggestion against the note in a few seconds, without having to trust the LLM at all.</p>
       <p class="small">If the quote is not in the source document word for word, the software throws the suggestion out before any person lays eyes on it.</p>
     </section>
     <section class="panel" id="panel-08-intake" data-panel="08-intake" data-plain="intake" data-side="left" aria-labelledby="h-08-intake">
       <p class="eyebrow"><span class="ch">04</span>what exists</p>
       <h2 id="h-08-intake">Ten charts arriving</h2>
-      <p class="lede">ten synthetic charts arriving. seven fail a rule, three need a human, none get in.</p>
+      <p class="lede">imagine ten synthetic patient charts arriving. seven fail a rule, three need a human, none of these patients get in.</p>
       <p class="small mono">the funnel below counts the same ten.</p>
     </section>
     <section class="panel" id="panel-09-build" data-panel="09-build" data-plain="exists build" data-side="right" aria-labelledby="h-09-build">
       <p class="eyebrow"><span class="ch">04</span>what exists</p>
-      <h2 id="h-09-build">It runs today</h2>
-      <p class="small">Not a slide deck. It is a public code repository that runs on a laptop: no account, no cloud, nothing leaves the machine. <span class="mono">470</span> automated tests, all passing, re-run on every change. Every person in this project is synthetic.</p>
+      <h2 id="h-09-build">What runs today</h2>
+      <p class="small">A public code repository that runs on any computer without an account, cloud dependency, and no patient data leaves if paired with a local/sandboxed LLM. <span class="mono">470</span> automated tests, all passing, re-run on every change. Every person in this project is synthetic.</p>
       <p class="small"><strong>The honest coverage number.</strong> Of 12,060 entry criteria pulled from 996 real trials, 56.7% look like the rule language could express them as written, 12.2% partially, and 31.1% not at all. That is a <strong>heuristic estimate</strong>: pattern matching over the text, never checked against human judges.</p>
       <div class="ext">
         <p class="eyebrow"><span class="ch">05</span>the build</p>
-        <p class="small">This is a prototype built in the open. The next part of it needs people who run trials.</p>
-        <p class="small ext-tall">Emmanuel Cuyugan built this against public registry text and invented patients. No coordinator, no screener and no data manager has yet held it up against a real screening day. That is the part he wants to do next, alongside the people who do that work.</p>
-        <p class="small">So: if you run trials, or you sit close to the people who do, he would like to hear what this gets wrong.</p>
+        <p class="small">This is a prototype built to begin to validate an idea. The next part of it needs people interested in healthtech and people who run trials.</p>
+        <p class="small ext-tall">I've built this against public registry text and invented patients and have yet to hold it up against a real screening day.</p>
+        <p class="small">So: if you run trials, or you sit close to the people who do, I'd love to work with you to take this further.</p>
       </div>
     </section>
     <section class="panel" id="panel-10-close" data-panel="10-close" data-plain="assembly close" data-side="left" aria-labelledby="h-10-close">

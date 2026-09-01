@@ -45,7 +45,7 @@
 export const CHAPTERS = [
   { id: '00-hero',     num: '00', title: 'Start',                 plain: ['hero'],                                vh: 110 },
   { id: '01-clinical', num: '01', title: 'The clinical side',     plain: ['clinical'],                            vh: 110 },
-  { id: '02-engine',   num: '02', title: 'The engine',            plain: ['sw-engine', 'engine', 'engine-notes'], vh:  90 },
+  { id: '02-engine',   num: '02', title: 'The engine',            plain: ['engine', 'engine-notes'], vh:  90 },
   { id: '03-compile',  num: '02', title: 'The sentence compiles', plain: ['p-compile'],                           vh:  90 },
   { id: '04-three',    num: '02', title: 'Three answers',         plain: ['p-three'],                             vh: 108 },
   { id: '05-clash',    num: '02', title: 'The contradiction',     plain: ['clash-intro', 'p-clash'],              vh: 108 },
