@@ -57,15 +57,23 @@ describe('camera keyframes', () => {
     }
   });
 
-  // THE AIM-HOLD TWIN, pinned. Every interior chapter carries a key at p = 0.88
-  // that repeats the settle key's `at` — that repetition IS the hold, and it is
-  // what gives each chapter a composed frame the reader can stop on. Its `off`
-  // must be the seam value and NOT the settle key's: a twin that freezes the
-  // whole pose measures 0.1785u per frame on the journey sweep below and blows
-  // the 0.15 budget. Both halves are load-bearing, so both are asserted.
+  // THE AIM-HOLD TWIN, pinned. Every chapter that has a successor carries a key
+  // at p = 0.88 that repeats the settle key's `at` — that repetition IS the
+  // hold, and it is what gives each chapter a composed frame the reader can
+  // stop on. Its `off` must be the seam value and NOT the settle key's: a twin
+  // that freezes the whole pose measures 0.1969u per frame on the journey sweep
+  // below and blows the 0.15 budget. Both halves are load-bearing, so both are
+  // asserted.
+  //
+  // 10-close is the only chapter exempt, and for a reason no other chapter can
+  // claim: it has no successor to hand off to, its progress actually REACHES 1
+  // and holds there for as long as the reader sits at the bottom of the page,
+  // so its p = 1 key is already an unbounded hold. 00-hero is NOT exempt — it
+  // is the chapter a cold load lands in, and it used to run one interior key
+  // straight into the seam.
   it('holds the aim from the settle key to p = 0.88, with off already at the seam', () => {
-    const interior = CHAPTERS.filter((c) => c.id !== '00-hero' && c.id !== '10-close');
-    expect(interior).toHaveLength(9);
+    const interior = CHAPTERS.filter((c) => c.id !== '10-close');
+    expect(interior).toHaveLength(10);
     for (const c of interior) {
       for (const list of [CAMERA_KEYS[c.id].keys, CAMERA_KEYS[c.id].portrait]) {
         expect(list, `${c.id} should carry the twin`).toHaveLength(5);
@@ -163,8 +171,8 @@ const MAX_FRAME_UNITS = 0.15;
 const MAX_FRAME_UNITS_RATIO = 3;
 
 // Measured at the current keys, vh and HANDOFF_START:
-//   landscape  maxDeg 5.98  maxUnits 0.1435  ratio 1.82  seams exact
-//   portrait   maxDeg 4.87  maxUnits 0.1481  ratio 1.86  seams exact
+//   landscape  maxDeg 5.98  maxUnits 0.1435  ratio 1.74  seams exact
+//   portrait   maxDeg 5.28  maxUnits 0.1481  ratio 1.78  seams exact
 //
 // THE UNIT BAR IS THE TIGHT ONE, and it is only clear because of how the
 // aim-hold twin is built. Camera travel per frame scales as 1/vh, so
@@ -172,9 +180,14 @@ const MAX_FRAME_UNITS_RATIO = 3;
 // 0.1435, 60 -> 0.1483, 58 -> 0.1534, 55 -> 0.1618 — and the twin at p = 0.88
 // carries the SEAM `off`, not the settle key's, so `off` finishes its move
 // during the hold where the aim is still. A twin that froze the whole pose
-// measures 0.1969 and fails this. Both of those are asserted directly above,
+// measures 0.2186 and fails this. Both of those are asserted directly above,
 // so a regression names itself rather than arriving here as an unexplained
 // number.
+//
+// 04-three and 03-compile are the other two chapters with no headroom, and it
+// is vh rather than keys that binds them: at 100vh 04 measures 0.1527 and at
+// 84vh 03 measures 0.1483. Both are documented in chapters.js, where the
+// numbers that produce them live.
 
 function poseAt(rig, camera, index, p, portrait, outDir) {
   rig.update({ index, p, atRest: false }, 1 / 60, 0, portrait);

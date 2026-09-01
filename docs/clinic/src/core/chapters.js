@@ -19,30 +19,41 @@
 // At 55vh that sweep measures 0.1618 and fails. TOTAL_VH stays 1100; anything
 // added here has to be taken from somewhere else.
 //
-// 00-hero IS THE ONE OUTLIER LEFT, and deliberately so. The intro rework took
-// its card from 112 words to 246, which is 28.5vh per 100 words — the tightest
-// in the piece, tighter than 02-engine ever was. But length is not what ails
-// this chapter: its beat map is. MARKS_IN ends at 0.80 and RELEASE starts at
-// 0.80, so the three verdict marks reach full size on the exact frame the plate
-// begins leaving, and FOOT_IN does not finish until 0.84, by which point the
-// marks are running off the top-left corner in portrait (measured off the real
-// rig at 390x844). More vh scales that window; it does not open it. Fixing 00
-// means retuning 00-hero.js's own beats against a settle key it does not yet
-// have, which is a separate piece of work from this one — so it keeps its 70
-// and the spread stays honest about where the remaining problem is.
+// 00-hero's 110 is the intro rework's bill. That rework took its card from 112
+// words to 246, which at the old 70 was 28.5vh per 100 words — the tightest
+// allocation in the piece, tighter than 02-engine has ever been. 110 puts it at
+// 44.7, inside the range everything else lives in.
+//
+// The 40vh it needed came from the chapters with the most composed frame to
+// spare — 01-clinical, 03-compile, 07-ai and 09-build give 8, 10, 8 and 8, and
+// 10-close gives the last 6 because its dwell is unbounded (its progress
+// reaches 1 and holds) so vh taken from it costs no reading window at all.
+// Measured after, the four give up 217, 193, 257 and 263px of composed frame
+// against a ~120px bar.
+//
+// TWO CHAPTERS COULD NOT GIVE, and both refusals are measured, not assumed:
+//   08-intake, even though it is the most over-allocated per word in the whole
+//     table — 62 is the hard floor above, and 08 is the chapter that sets it.
+//   04-three, which looks like it has room (227px of composed frame) but sits
+//     on one of the widest station gaps: at 100vh the 2400-step journey sweep
+//     measures 0.1527u against the 0.15 budget and fails outright. It keeps 108.
+// Taking more than 10 from 03-compile has the same effect from the other end —
+// at 84 the sweep measures 0.1483 and 03 becomes the binding chapter instead of
+// 08. At 90 the worst frame is back to 08's own 0.1435, where it was before
+// this re-cut, so chapter 00 is paid for out of slack and not out of headroom.
 
 export const CHAPTERS = [
-  { id: '00-hero',     num: '00', title: 'Start',                 plain: ['hero'],                                vh:  70 },
-  { id: '01-clinical', num: '01', title: 'The clinical side',     plain: ['clinical'],                            vh: 118 },
+  { id: '00-hero',     num: '00', title: 'Start',                 plain: ['hero'],                                vh: 110 },
+  { id: '01-clinical', num: '01', title: 'The clinical side',     plain: ['clinical'],                            vh: 110 },
   { id: '02-engine',   num: '02', title: 'The engine',            plain: ['sw-engine', 'engine', 'engine-notes'], vh:  90 },
-  { id: '03-compile',  num: '02', title: 'The sentence compiles', plain: ['p-compile'],                           vh: 100 },
+  { id: '03-compile',  num: '02', title: 'The sentence compiles', plain: ['p-compile'],                           vh:  90 },
   { id: '04-three',    num: '02', title: 'Three answers',         plain: ['p-three'],                             vh: 108 },
   { id: '05-clash',    num: '02', title: 'The contradiction',     plain: ['clash-intro', 'p-clash'],              vh: 108 },
   { id: '06-chasm',    num: '02', title: 'One calculation',       plain: ['chasm', 'onecalc'],                    vh:  80 },
-  { id: '07-ai',       num: '03', title: 'The AI part',           plain: ['sw-ai', 'ai-intro', 'p-ai'],           vh: 128 },
+  { id: '07-ai',       num: '03', title: 'The AI part',           plain: ['sw-ai', 'ai-intro', 'p-ai'],           vh: 120 },
   { id: '08-intake',   num: '04', title: 'Ten charts',            plain: ['intake'],                              vh:  62 },
-  { id: '09-build',    num: '05', title: 'What exists, and the build', plain: ['exists', 'build'],                vh: 108 },
-  { id: '10-close',    num: '06', title: 'Close',                 plain: ['assembly', 'close'],                   vh: 128 },
+  { id: '09-build',    num: '05', title: 'What exists, and the build', plain: ['exists', 'build'],                vh: 100 },
+  { id: '10-close',    num: '06', title: 'Close',                 plain: ['assembly', 'close'],                   vh: 122 },
 ];
 
 export const TOTAL_VH = CHAPTERS.reduce((s, c) => s + c.vh, 0);

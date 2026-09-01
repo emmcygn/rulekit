@@ -51,13 +51,15 @@
 // instant, and nine of the eleven chapters gave the reader less than one wheel
 // notch of composed frame.
 //
-// So each interior chapter now settles at p ~= 0.64-0.70 and carries a FOURTH
-// interior key at p = 0.88 that repeats the settle key's `at`. The aim is what
-// holds the composition, and freezing it across 0.64 -> 0.88 buys 1.0-1.9
+// So every chapter with a successor now settles at p ~= 0.64-0.70 and carries a
+// FOURTH interior key at p = 0.88 that repeats the settle key's `at`. The aim is
+// what holds the composition, and freezing it across 0.64 -> 0.88 buys 1.2-2.2
 // notches of readable frame while the camera keeps travelling underneath it.
+// 10-close is the only chapter without one, because its progress reaches 1 and
+// holds there — its p = 1 key is already an unbounded hold.
 //
 // THE TWIN'S `off` IS THE SEAM VALUE, NOT THE SETTLE KEY'S, and that detail is
-// load-bearing: a naive twin that freezes the whole pose measures 0.1969 units
+// load-bearing: a naive twin that freezes the whole pose measures 0.2186 units
 // per frame (0.1956 portrait) on the 2400-step journey sweep and fails the 0.15
 // budget in tests/cameraRig.test.js. Letting `off` finish its move into N/NP
 // over the hold — where the aim is still, so it costs nothing visible —
@@ -81,12 +83,32 @@ export const CAMERA_KEYS = {
   // (scenes/00-hero.js) rather than by hanging the camera further back: the
   // back half of this chapter already spends 9u of spline on the shortest
   // chapter in the piece, and there is no per-frame move budget left for more.
+  //
+  // ── THE SETTLE KEY IS A FREEZE OF THE POSE THAT WAS ALREADY THERE ────────
+  // Chapter 00 used to run one interior key at p = 0.55 straight into the seam,
+  // so its own payoff — three verdict marks and "three answers, on purpose" —
+  // landed while the rig was already swinging toward station 1. Measured, that
+  // gave the chapter 11px of composed frame landscape and 0px portrait: the
+  // worst in the piece.
+  //
+  // The p = 0.66 key's `at` and `off` are EXACTLY what the old two-key blend
+  // produced at p = 0.66 (smoothstep(0.2444) = 0.150047 of the way from the
+  // 0.55 key to the seam), and the 0.55 key is untouched. That is deliberate:
+  // every pose at p <= 0.55 is bit-identical to before, so the burn's own
+  // measured NDC table in scenes/00-hero.js — the one that pins the cost open's
+  // left edge off the landscape card and its base off the portrait dock — still
+  // holds without re-deriving a line of it. Only p > 0.55 changes, and what it
+  // changes to is a hold on the frame the chapter was already arriving at.
   '00-hero': {
     keys:     [{ p: 0, at: [0.4, 0.3, -9], off: [0, 0.35, 4.6] },
                { p: 0.55, at: [0.9, 0.3, -8.4], off: [0.3, 0.5, 0.6] },
+               { p: 0.66, at: [1.29, 0.345, -9.78], off: [0.255, 0.477, 0.51] },
+               { p: 0.88, at: [1.29, 0.345, -9.78], off: N },
                { p: 1, at: [3.5, 0.6, -17.6], off: N }],
     portrait: [{ p: 0, at: [0.5, 0.5, -9], off: [0, 0.6, 6.2] },
                { p: 0.55, at: [0.8, 0.4, -7.2], off: [0, 0.7, 1.6] },
+               { p: 0.66, at: [1.205, 0.475, -8.76], off: [0, 0.685, 1.54] },
+               { p: 0.88, at: [1.205, 0.475, -8.76], off: NP },
                { p: 1, at: [3.5, 0.9, -17.6], off: NP }],
   },
   // Two beats: up at the fanning cards (they ride at y ≈ 1.75, z -2.6…-4.4, and
