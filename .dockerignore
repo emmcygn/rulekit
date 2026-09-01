@@ -1,6 +1,10 @@
+# Docker anchors a slash-less pattern to the context root, so `node_modules` and
+# `dist` below cover the ROOT ones only. Every nested package needs its own line.
 node_modules
 web/node_modules
 web/dist
+docs/clinic/node_modules
+docs/clinic/dist
 dist
 .git
 .github
