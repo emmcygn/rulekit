@@ -10,12 +10,17 @@
 // no DOM and no WebGL context. The banner is the only part that touches an
 // element, and even it takes its navigation as an injected function.
 
-export function fallbackDecision({ webgl2, reducedMotion }) {
+export function fallbackDecision({ webgl2, reducedMotion, force3d = false }) {
   // Order matters: a visitor with neither WebGL2 nor motion tolerance is sent to
   // /plain for the harder reason, because that is the one that would have left
   // them looking at a blank canvas.
+  //
+  // force3d (?force3d=1, carried by the plain page's "see the 3D version" link)
+  // overrides ONLY the reduced-motion redirect: a deliberate click outranks the
+  // OS-level media query, but nothing can override a missing WebGL2 context —
+  // that redirect is technical, not a preference.
   if (!webgl2) return { redirect: true, reason: 'no-webgl2' };
-  if (reducedMotion) return { redirect: true, reason: 'reduced-motion' };
+  if (reducedMotion && !force3d) return { redirect: true, reason: 'reduced-motion' };
   return { redirect: false, reason: null };
 }
 
