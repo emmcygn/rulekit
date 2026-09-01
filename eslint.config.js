@@ -12,7 +12,11 @@ export default tseslint.config(
       }],
     },
   },
-  // web/ and web-components/ are self-contained packages with their own
-  // toolchains; deploy/assets holds vendored minified libraries (three.js).
-  { ignores: ["dist/**", "web/**", "web-components/**", "deploy/assets/**"] },
+  // web/, web-components/ and docs/clinic/ are self-contained packages with
+  // their own toolchains. docs/clinic is browser ES modules (three.js, gsap):
+  // no TypeScript, and no browser globals declared here, so this config would
+  // flag `window`, `document` and `console` on nearly every line of it. Its own
+  // job in ci.yml is what guards it. deploy/assets holds vendored minified
+  // libraries (three.js).
+  { ignores: ["dist/**", "web/**", "web-components/**", "docs/clinic/**", "deploy/assets/**"] },
 );

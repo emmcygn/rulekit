@@ -1,4 +1,8 @@
 {
+  "trailingSlash": true,
+  "rewrites": [
+    { "source": "/plain/", "destination": "/plain.html" }
+  ],
   "headers": [
     {
       "source": "**/*.html",

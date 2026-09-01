@@ -50,24 +50,30 @@ Smoke needs a local Chrome and `puppeteer-core`; neither is installed here (a
 | `?tier=low` | force a quality tier, for throttled testing |
 | `?debug=1` | draw the camera spline and station markers |
 
-## Deploy (Railway)
+## Deploy — one page of the one rulekit service
 
-Static only — there is no server code. `railway.json` at the repo root holds the
-config; the deploy is `npm ci && npm run build`, then `serve dist`.
+Static only, and no service of its own any more. The repo root's `Dockerfile`
+builds this project alongside the workbench and assembles a single served tree:
 
-Dashboard settings for the service:
+| path | source |
+|---|---|
+| `/` | `deploy/landing.html` |
+| `/app` | `web/dist` |
+| `/walkthrough` | `docs/clinic/dist` — this project |
+| `/plain` | `docs/clinic/dist/plain.html` |
 
-| setting | value | why |
-|---|---|---|
-| Root Directory | `design/rulekit-thesis/clinic` | the repo has no root `package.json` |
-| Config-as-code path | `railway.json` | it lives at the repo root, not in this folder |
-| Builder | Nixpacks | set by `railway.json` |
-| `NIXPACKS_NODE_VERSION` | `22` | Vite 8 needs Node 20+; this pins it |
+Two consequences worth holding on to:
 
-Then:
+- **`base: './'` in `vite.config.js` is what makes `/walkthrough` work.** The
+  built `index.html` asks for `./assets/…`, which resolves under any mount point;
+  an absolute base would hard-code `/assets/…` and 404 every file.
+- **`/plain` is lifted out of `dist/`, never copied from `../plain.html`.** Only
+  the dist copy carries the injected back-link. Taking the source directly would
+  ship the essay with no way back to the 3D version.
 
-    railway link                    # pick or create the project
-    railway up --service clinic
+That back-link points at `/walkthrough`, not `/`, because `/` is the landing page
+here. `scripts/sync-plain.mjs` owns the string and `tests/syncPlain.test.js` pins
+it, so the two cannot drift apart silently.
 
 ### The `/plain` contract — do not break this
 
@@ -82,15 +88,21 @@ resolves to `plain.html` and `/plain.html` 301s to `/plain`. Two consequences:
   every unmatched path to `index.html`, `/plain` included, and the loop is back.
 - **Never add a catch-all rewrite** to a `serve.json`. Missing paths should 404.
 
-Verified against `dist/` on the real start command:
+Verified against the assembled site, the way the Dockerfile lays it out:
 
 | request | expected |
 |---|---|
-| `/` | 200, the 3D clinic |
-| `/plain` | 200, `plain.html` |
+| `/walkthrough` | 200, the 3D clinic |
+| `/plain` | 200, `plain.html`, back-link to `/walkthrough` |
 | `/plain.html` | 301 → `/plain`, then 200 |
-| `/?ch=4` | 200, the 3D clinic |
+| `/walkthrough/?ch=4` | 200, the 3D clinic |
 | `/anything-else` | 404 — *not* `index.html` |
+
+Standalone (`npm start`, this folder's `dist/` on its own) the clinic still
+answers at `/` and its `/plain` still works — but the back-link inside that
+`/plain` points at `/walkthrough`, which does not exist in the standalone tree.
+Use `npm run dev` for local work; `npm start` is for checking the bundle, not the
+links.
 
 `PORT` is written as `${PORT:-3000}` on purpose. `serve -l` with an empty argument
 exits with `ARG_MISSING_REQUIRED_LONGARG`, which on Railway is a restart loop, so

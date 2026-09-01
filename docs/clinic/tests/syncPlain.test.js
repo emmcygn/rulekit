@@ -11,7 +11,7 @@ describe('injectBacklink', () => {
     const out = injectBacklink(source);
     expect(out.split(BACKLINK_MARKER)).toHaveLength(2);
     expect(out).toContain('see the 3D version');
-    expect(out).toContain('href="/"');
+    expect(out).toContain('href="/walkthrough"');
   });
 
   it('is idempotent - running it twice does not duplicate the block', () => {
@@ -49,12 +49,16 @@ describe('syncPlain', () => {
     expect(readFileSync(out, 'utf8')).toBe(first);
   });
 
-  it('keeps the /plain URL contract: the back-link points at the site root', () => {
-    // The static host for the deployed build (Task 25) must resolve /plain to
-    // this file, and this file's only link back must resolve to the 3D page at /.
+  it('keeps the /plain URL contract: the back-link points at /walkthrough', () => {
+    // The static host must resolve /plain to this file, and this file's only
+    // link back must resolve to the 3D page. In the combined rulekit deploy the
+    // 3D page is mounted at /walkthrough — `/` is the landing page — so a
+    // back-link to `/` would quietly send readers to the wrong document. Pinned
+    // here so the topology cannot drift without a red test.
     const copy = readFileSync(syncPlain().out, 'utf8');
     const block = copy.slice(source.length);
-    expect(block).toContain('href="/"');
+    expect(block).toContain('href="/walkthrough"');
+    expect(block).not.toContain('href="/"');
     expect(block).toContain('see the 3D version');
   });
 });
