@@ -209,10 +209,88 @@ for (let i = 0; i < cardIds.length; i++) {
   console.log(`fit@380 ch${String(i).padStart(2, '0')} ->`, JSON.stringify(m));
 }
 
+// ── URL-bar pass: does the camera hold still when only the chrome moves? ──
+//
+// A phone's browser UI shows and hides as you scroll. That changes
+// window.innerHeight and NOTHING else: #spacer is sized in svh, which is the
+// viewport with the UI SHOWN and does not move. Chapter bounds are measured in
+// pixels against the scrollable distance, so if that distance is taken as
+// scrollHeight - innerHeight, the SAME scroll position maps to a different
+// chapter progress every time the bar toggles — and because the bar toggles
+// both ways during an ordinary scroll, the camera walks forward through beats
+// and then back through them again. That is a scene repeating.
+//
+// Headless Chrome has no browser UI, so svh == lvh == innerHeight here and the
+// condition cannot arise on its own. A phone supplies two constants that
+// headless cannot: svh (the viewport with the bar SHOWN) and lvh (with it
+// hidden). Neither moves when the bar does; only innerHeight moves. So this
+// pass pins both — #spacer to 1100 * svh, and the driver's own lvh probe to
+// lvh — and then moves the viewport height alone, which is exactly what the
+// device does.
+//
+// Pinning the probe does NOT pre-answer the question. If the driver measures
+// chapter bounds against innerHeight, pinning it changes nothing and the camera
+// still walks; the pass only goes green if the driver actually uses the stable
+// height. Confirmed by running it against the code before the fix.
+const BAR = 82;                       // iOS Safari's bottom bar, near enough
+const PHONE = { width: 390, height: 844 };
+const barMoves = [];
+{
+  const bar = await b.newPage();
+  bar.on('pageerror', (e) => { errors.push('url-bar pageerror: ' + e.message); });
+  await bar.setViewport({ ...PHONE, isMobile: true, hasTouch: true });
+  await bar.goto(TARGET, { waitUntil: 'load' });
+  await bar.waitForFunction('window.__clinic && window.__clinic.driver', { timeout: 20000 });
+  await bar.evaluate((svhPx, lvhPx) => {
+    const el = document.createElement('style');
+    el.textContent = `#spacer{height:${svhPx}px !important}`
+      + `[data-viewport-probe]{height:${lvhPx}px !important}`;
+    document.head.appendChild(el);
+  }, 1100 * PHONE.height / 100, PHONE.height + BAR);
+  await bar.evaluate(() => window.__clinic.driver.refresh());
+  const frames = (n) => bar.evaluate((k) => new Promise((r) => {
+    let i = 0; const t = () => (++i >= k ? r() : requestAnimationFrame(t)); requestAnimationFrame(t);
+  }), n);
+  const pose = () => bar.evaluate(() => {
+    const c = window.__clinic, cam = c.stage.camera, s = c.driver.state;
+    return { x: cam.position.x, y: cam.position.y, z: cam.position.z, ch: s.index, p: s.p };
+  });
+  for (const y of [1266, 3798, 5064, 6330, 7596]) {
+    await bar.setViewport({ ...PHONE, isMobile: true, hasTouch: true });
+    await bar.evaluate((yy) => window.scrollTo(0, yy), y);
+    await frames(70);
+    const before = await pose();
+    await bar.setViewport({ ...PHONE, height: PHONE.height + BAR, isMobile: true, hasTouch: true });
+    await frames(70);
+    const after = await pose();
+    const move = Math.hypot(after.x - before.x, after.y - before.y, after.z - before.z);
+    barMoves.push({ y, before, after, move });
+    console.log(`urlbar y=${String(y).padStart(4)} -> ` + JSON.stringify({
+      ch: `${before.ch}:${before.p.toFixed(3)} -> ${after.ch}:${after.p.toFixed(3)}`,
+      move: +move.toFixed(3),
+    }));
+  }
+  await bar.close();
+}
+
 await b.close();
 
 // ── assertions ────────────────────────────────────────────────────────────
 const fail = [];
+// The camera is allowed to move a little when the frustum changes shape — a
+// taller viewport is a different aspect and the portrait keys re-frame for it.
+// It is NOT allowed to travel down the flight path, which is what a re-mapped
+// scroll position does. 0.5u is well under a station gap (18u) and well over
+// the re-framing.
+const BAR_TOL = 0.5;
+for (const m of barMoves) {
+  if (m.move > BAR_TOL) {
+    fail.push(`urlbar y=${m.y}: the camera moved ${m.move.toFixed(2)}u (limit ${BAR_TOL}) when only the browser UI height changed - `
+      + `chapter progress went ${m.before.ch}:${m.before.p.toFixed(3)} -> ${m.after.ch}:${m.after.p.toFixed(3)}, so the reader is replayed beats they have already seen`);
+  }
+}
+if (barMoves.length !== 5) fail.push(`urlbar pass measured ${barMoves.length} positions, expected 5`);
+
 // The fit pass. 1px of tolerance for sub-pixel line boxes, nothing more.
 const TOL = 1;
 for (const { chapter, expected, m } of fits) {
@@ -251,6 +329,7 @@ const g = states.map((s) => s.global);
 const worst = Math.max(...fits.map(({ m }) => m.scrollHeight - m.clientHeight));
 console.log(`\nSMOKE PASS: global ${g[0].toFixed(4)} -> ${g[g.length - 1].toFixed(4)} monotonic over ${STEPS + 1} samples, index 0 -> ${Math.max(...states.map((s) => s.index))}, max residency ${Math.max(...states.map((s) => s.rooms))} rooms, 0 page errors`);
 console.log(`FIT PASS: all ${fits.length} cards fit at ${NARROW.width}x${NARROW.height}, worst card is ${worst}px inside its box, no sideways scroll`);
+console.log(`URLBAR PASS: worst camera move on a ${BAR}px browser-UI change is ${Math.max(...barMoves.map((m) => m.move)).toFixed(3)}u (limit ${BAR_TOL}), across ${barMoves.length} scroll depths`);
 // Explicit: the spawned server is unref'd, but say so rather than rely on an
 // empty event loop to end a script that has already printed its verdict.
 process.exit(0);
