@@ -42,16 +42,40 @@ describe('cameraT', () => {
 });
 
 describe('camera keyframes', () => {
-  it('every chapter has landscape and portrait keys, 2 to 4 each, starting at p=0', () => {
+  it('every chapter has landscape and portrait keys, 2 to 5 each, starting at p=0', () => {
     for (const c of CHAPTERS) {
       const k = CAMERA_KEYS[c.id];
       expect(k, `missing keys for ${c.id}`).toBeDefined();
       for (const list of [k.keys, k.portrait]) {
         expect(list.length).toBeGreaterThanOrEqual(2);
-        expect(list.length).toBeLessThanOrEqual(4);
+        // Five: the seam pair, two beats, and the aim-hold twin.
+        expect(list.length).toBeLessThanOrEqual(5);
         expect(list[0].p).toBe(0);
         expect(list[list.length - 1].p).toBe(1);
         for (let i = 1; i < list.length; i++) expect(list[i].p).toBeGreaterThan(list[i - 1].p);
+      }
+    }
+  });
+
+  // THE AIM-HOLD TWIN, pinned. Every interior chapter carries a key at p = 0.88
+  // that repeats the settle key's `at` — that repetition IS the hold, and it is
+  // what gives each chapter a composed frame the reader can stop on. Its `off`
+  // must be the seam value and NOT the settle key's: a twin that freezes the
+  // whole pose measures 0.1785u per frame on the journey sweep below and blows
+  // the 0.15 budget. Both halves are load-bearing, so both are asserted.
+  it('holds the aim from the settle key to p = 0.88, with off already at the seam', () => {
+    const interior = CHAPTERS.filter((c) => c.id !== '00-hero' && c.id !== '10-close');
+    expect(interior).toHaveLength(9);
+    for (const c of interior) {
+      for (const list of [CAMERA_KEYS[c.id].keys, CAMERA_KEYS[c.id].portrait]) {
+        expect(list, `${c.id} should carry the twin`).toHaveLength(5);
+        const settle = list[2], twin = list[3], seam = list[4];
+        expect(twin.p, `${c.id} twin p`).toBe(0.88);
+        // The settle key sits inside the chapter, not in its own exit ramp.
+        expect(settle.p, `${c.id} settle key is too late`).toBeLessThanOrEqual(0.70);
+        expect(settle.p, `${c.id} settle key is too early`).toBeGreaterThanOrEqual(0.64);
+        expect(twin.at, `${c.id} twin must repeat the settle aim`).toEqual(settle.at);
+        expect(twin.off, `${c.id} twin off must already be the seam value`).toEqual(seam.off);
       }
     }
   });
@@ -134,9 +158,23 @@ const FRAME_STEP = 1 / 2400;
 const MAX_FRAME_DEGREES = 15;
 const MAX_FRAME_UNITS = 0.15;
 // Fastest frame vs the median frame. Smooth travel varies <2x across chapters
-// (dwell lengths differ, so 08-intake's short 70vh covers its segment fastest);
+// (dwell lengths differ, so 08-intake's short 62vh covers its segment fastest);
 // a discontinuity shows up as 10x or more.
 const MAX_FRAME_UNITS_RATIO = 3;
+
+// Measured at the current keys, vh and HANDOFF_START:
+//   landscape  maxDeg 5.98  maxUnits 0.1435  ratio 1.82  seams exact
+//   portrait   maxDeg 4.87  maxUnits 0.1481  ratio 1.86  seams exact
+//
+// THE UNIT BAR IS THE TIGHT ONE, and it is only clear because of how the
+// aim-hold twin is built. Camera travel per frame scales as 1/vh, so
+// 08-intake's 62vh is the floor the 0.15 sets — measured on this tree, 62 ->
+// 0.1435, 60 -> 0.1483, 58 -> 0.1534, 55 -> 0.1618 — and the twin at p = 0.88
+// carries the SEAM `off`, not the settle key's, so `off` finishes its move
+// during the hold where the aim is still. A twin that froze the whole pose
+// measures 0.1969 and fails this. Both of those are asserted directly above,
+// so a regression names itself rather than arriving here as an unexplained
+// number.
 
 function poseAt(rig, camera, index, p, portrait, outDir) {
   rig.update({ index, p, atRest: false }, 1 / 60, 0, portrait);
