@@ -29,8 +29,8 @@
 // spending it again here would demote the one place it means something. Status
 // is ink, paper and hatch only.
 //
-// CAMERA. cameraKeys '06-chasm' passes within 1.06u of the station origin at
-// p = 0.52 (1.29u at p = 0.58 in portrait — measured off the real rig, handoff
+// CAMERA. cameraKeys '06-chasm' passes within 0.97u of the station origin at
+// p = 0.52 (1.20u at p = 0.58 in portrait — measured off the real rig, handoff
 // blend included), so the origin is exactly where the hole is: the nearest solid
 // thing to it is the inner top edge of a side strip, 2.84u away (2.64u
 // portrait). The cluster hangs at z ≈ -15.5 — 25u out and almost pure fog at
@@ -315,8 +315,13 @@ export default {
     const hx = A.hx;
 
     // 0.02-0.55  the seven cross, and three of them do not
-    // 0.42-0.80  the screens arrive out of the fog
-    // 0.52-0.90  the conduits draw themselves back to the core
+    // 0.34-0.62  the screens arrive out of the fog
+    // 0.42-0.66  the conduits draw themselves back to the core
+    // The wiring used to finish at 0.90, two hundredths after the panel fade
+    // and the hand-off both fired — so this chapter's whole claim, one
+    // calculation feeding every surface, was true for 7px of scroll. It now
+    // completes at p ~= 0.645, just inside the camera's settle key at 0.68, and
+    // the finished picture holds from there to the twin at 0.88.
     // THE CHASM ARRIVES LATE ON PURPOSE. The manager poses a room ahead of you
     // at p = 0 and leaves it frozen there, so this room's p = 0 state is what
     // chapter 05's audience is looking at for the whole of chapter 05 — and a
@@ -331,9 +336,9 @@ export default {
     // What keeps chapter 05 clean on the way back is FZ_NEAR — see the note on
     // it above. Never move the floor forward on z to sell an earlier arrival.
     const lay = smoothstep(sub(p, 0.00, 0.14));
-    const born = smoothstep(sub(p, 0.30, 0.62));
-    const arrive = smoothstep(sub(p, 0.42, 0.80));
-    const wire = smoothstep(sub(p, 0.52, 0.90));
+    const born = smoothstep(sub(p, 0.24, 0.50));
+    const arrive = smoothstep(sub(p, 0.34, 0.62));
+    const wire = smoothstep(sub(p, 0.42, 0.66));
 
     // ── the floor ─────────────────────────────────────────────────────────
     const sideW = FX - hx;

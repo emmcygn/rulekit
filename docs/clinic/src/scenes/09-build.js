@@ -36,11 +36,13 @@
 // qualifies it. Nothing in this room is a numeral.
 //
 // BEATS:
-//   p 0.08-0.68  the wall assembles row by row, bottom to top
-//   p 0.28-0.68  the five screens arrive out of the fog, staggered, OVER THE
+//   p 0.06-0.56  the wall assembles row by row, bottom to top
+//   p 0.22-0.58  the five screens arrive out of the fog, staggered, OVER THE
 //                TOP of the wall — never through it (see SCREEN_RISE)
-// Everything is finished by p = 0.68 and the shot holds on it until the
-// hand-off at 0.88 starts pulling the room off frame.
+// Everything is finished by p = 0.58, before the camera settles on the room at
+// p = 0.66 and then holds that aim to p = 0.88 — so the money shot is a
+// finished room, not a room still arriving. The hand-off at 0.90 pulls it off
+// frame.
 // The wall starts before the screens exist and is still going when they land,
 // which is the honest picture of a suite written first and kept growing.
 //
@@ -67,7 +69,7 @@ const TESTS = 470;
 // chapter 10's camera runs from here toward (+3.0, +1.6, -18) station-local, so
 // anything parked on the +x side of this room gets flown through on the way
 // out. At (-4.0, 0.85, -13.0) the closing crane never gets nearer than ~2.5u to
-// any mark on this wall, and this chapter frames it head on from p 0.6 to 0.8.
+// any mark on this wall, and this chapter frames it head on from p 0.66 to 0.88.
 const WX = -4.0, WY = 0.85, WZ = -13.0;
 // One yaw for the whole room, toward the stretch of path it is read from. The
 // scene contract hands update() no camera, so this is a fixed turn, not a
@@ -236,7 +238,7 @@ export default {
     const x0 = -(cols - 1) * pitch * 0.5;
     const y0 = -(rows - 1) * pitch * 0.5;
 
-    const assemble = sub(p, 0.08, 0.68);
+    const assemble = sub(p, 0.06, 0.56);
     for (let i = 0; i < n; i++) {
       const col = i % cols;
       const row = (i / cols) | 0;
@@ -257,7 +259,7 @@ export default {
     // smaller one, because shrinking is what makes the labels unreadable.
     for (let i = 0; i < SCREENS.length; i++) {
       const k = i - 2;
-      const t = smoothstep(sub(p, 0.28 + i * 0.05, 0.48 + i * 0.05));
+      const t = smoothstep(sub(p, 0.22 + i * 0.05, 0.38 + i * 0.05));
       const s = lerp(0.55, 1, t);
       const yaw = portrait ? 0 : -SCREEN_YAW * k;
       const cs = Math.cos(yaw), sn = Math.sin(yaw);

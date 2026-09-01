@@ -106,14 +106,14 @@ const DOOR_LABEL = 'a person approves, or it does not exist';
 // The note crosses under the lens between p ≈ 0.25 and p ≈ 0.75, so the reading
 // and the lifting both happen while it is genuinely under the glass.
 const NOTE_X0 = 1.70, NOTE_X1 = -1.70;
-const B_READ = [[0.26, 0.40], [0.33, 0.47], [0.40, 0.54]];
-const B_LIFT = [[0.36, 0.54], [0.43, 0.61], [0.50, 0.68]];
-const B_SCAN = [0.24, 0.58];     // the lens travelling down the three lines
-// Both door beats finish by p ≈ 0.78: from p = 0.88 the rig converges on
-// chapter 08's opening pose and swings the door toward the frame edge, and in
-// portrait's ~31°-wide frame it is gone by p ≈ 0.85.
-const B_LABEL = [0.54, 0.70];    // the line under the door
-const B_MARK = [0.58, 0.78];     // the reviewer's mark landing
+const B_READ = [[0.18, 0.32], [0.25, 0.39], [0.32, 0.46]];
+const B_LIFT = [[0.28, 0.46], [0.35, 0.53], [0.42, 0.60]];
+const B_SCAN = [0.20, 0.50];     // the lens travelling down the three lines
+// Both door beats finish by p ≈ 0.64, which is where the camera settles on the
+// door and then holds that aim to p = 0.88. From p = 0.90 the rig converges on
+// chapter 08's opening pose and swings the door toward the frame edge.
+const B_LABEL = [0.46, 0.58];    // the line under the door
+const B_MARK = [0.48, 0.64];     // the reviewer's mark landing
 
 // ── the page stream ───────────────────────────────────────────────────────
 const BAND_IN = 2.90, BAND_OUT = -3.90, BAND_Z = -0.62;
@@ -139,7 +139,7 @@ const _up = new THREE.Vector3(0, 1, 0);
 // Portrait is ~31° wide against landscape's ~75°. The two set pieces are 28° of
 // bearing apart from the landscape flight line, which simply does not fit, so
 // portrait pulls both of them in toward the path to close that to ~13° — the
-// reading table and the closed door still share the frame around p ≈ 0.6, which
+// reading table and the closed door still share the frame around p ≈ 0.55, which
 // is the one shot that carries the whole claim.
 //
 // The table sits at z = -8.6 rather than -6.6 for the same framing reason the

@@ -254,7 +254,7 @@ export default {
 
     // All three rise on ONE scalar. There is no per-exit offset here and there
     // must never be: "don't know" arrives with the others or the room is lying.
-    const rise = smoothstep(sub(p, 0.25, 0.7));
+    const rise = smoothstep(sub(p, 0.20, 0.60));
     const h = rise < 0.0015 ? 0.0015 : rise;
     for (let e = 0; e < 3; e++) {
       const body = u.bodies[e];
@@ -268,7 +268,7 @@ export default {
     }
 
     // The sorted run only exists once there is somewhere to sort to.
-    const reach = smoothstep(sub(p, 0.16, 0.52));
+    const reach = smoothstep(sub(p, 0.13, 0.44));
     const flow = p * 1.35;
     const exitT = 1 - TUBE_T;
 
