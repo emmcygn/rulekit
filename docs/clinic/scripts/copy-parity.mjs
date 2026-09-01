@@ -138,11 +138,6 @@ export function panelsOf(indexHtml) {
 // ---------------------------------------------------------------------------
 export const ALLOWLIST = [
   {
-    panel: '00-hero',
-    sentence: 'the entry rules, as law &#183; SAME RULES, RUNNABLE &#183; three answers, on purpose',
-    why: 'assembled readout — the three captions of #hero\'s own figure, in the figure\'s order, spliced into one mono line. They ARE plain.html verbatim; normalise() cannot see them only because it strips <svg> wholesale and the hero figure draws its captions as <text> inside one. Structural, not a claim: the sentence that makes the claim ("In short: ...") sits in the same panel as ordinary prose and is checked the ordinary way.',
-  },
-  {
     panel: '04-three',
     sentence: 'one synthetic patient &#183; age: 63 &#183; heart pump strength: 38 &#183; kidney score: missing',
     why: 'assembled readout — #p-three labels its facts card "one synthetic patient · what the chart contains" and lists the values underneath; the panel splices label and values into one mono line. Every token is the source\'s; only the card furniture is gone.',
