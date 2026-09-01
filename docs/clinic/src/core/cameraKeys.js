@@ -141,15 +141,30 @@ export const CAMERA_KEYS = {
   },
   // The stream runs down the flight path itself, so the shot stays on axis:
   // mid-chapter the target is straight ahead, then it settles onto the code
-  // block — (1.6, 0.9, -13.5) landscape, (1.19, 1.2, -11.0) portrait — at p =
+  // block — (1.6, 0.9, -13.5) landscape, (1.50, 1.2, -11.0) portrait — at p =
   // 0.70 and holds there until the handoff. It used to settle at p = 0.88,
   // which was HANDOFF_START to the digit: the block finished writing at 0.86
   // and the shot that was supposed to hold it lasted 13px of scroll. The twin
-  // at 0.88 is what makes the comment true. Those are the block's own coordinates in
-  // scenes/02-engine.js; move one and you must move the other. The portrait
-  // key aims 0.31 SHORT of the block on x on purpose: in a 31°-wide frustum the
-  // swing toward station 3 that starts at HANDOFF_START would otherwise push
-  // the plate off the left edge before the chapter is over.
+  // at 0.88 is what makes the comment true. Those are the block's own coordinates
+  // in scenes/02-engine.js; move one and you must move the other, and
+  // 02-engine.js's own write beats moved earlier to match.
+  //
+  // The portrait key used to aim 0.31 SHORT of the block on x, to keep the
+  // HANDOFF_START swing toward station 3 from pushing the plate off the LEFT
+  // edge before the chapter was over — but that swing now starts at 0.90, a
+  // full twin-hold later than it did, and the occlusion audit found the
+  // OPPOSITE edge cropping instead: with the aim short and the camera closing
+  // on the block through the p = 0.70 -> 0.88 hold, the plate's right edge ran
+  // off frame (11.4% of a screen width past it at the twin, taking 9.0% of the
+  // `when:` code line with it). `off.z` cannot buy that back any more — the
+  // twin's `off` is pinned to the seam value NP, load-bearing for the motion
+  // budget above — so the fix is aim, not standoff: at.x = 1.50 points straight
+  // at the block's own x (PORT_POS[0]), which centres it through the whole hold
+  // instead of letting the frozen-but-approaching camera swing it wide.
+  // Measured at 390x844 at the twin: plate 11.4% -> 0.1% off the right edge,
+  // the two long code lines 9.0%/4.6% -> 0.0%, at a cost of 0.4% off the left.
+  // And the last segment into the p = 1 seam (1.50 -> 4.5) is a SMALLER swing
+  // than before (1.19 -> 4.5), so HANDOFF_START is, if anything, safer.
   '02-engine': {
     keys:     [{ p: 0, at: H, off: N },
                { p: 0.40, at: [0.9, 0.35, -9], off: [0, 0.5, 0] },
@@ -158,8 +173,8 @@ export const CAMERA_KEYS = {
                { p: 1, at: [4.5, 1.6, -17.8], off: N }],
     portrait: [{ p: 0, at: HP, off: NP },
                { p: 0.40, at: [0.5, 0.9, -8], off: [0, 0.8, 1.2] },
-               { p: 0.70, at: [1.19, 1.2, -11.0], off: [0, 0.8, 1.2] },
-               { p: 0.88, at: [1.19, 1.2, -11.0], off: NP },
+               { p: 0.70, at: [1.50, 1.2, -11.0], off: [0, 0.8, 1.2] },
+               { p: 0.88, at: [1.50, 1.2, -11.0], off: NP },
                { p: 1, at: [4.5, 1.9, -17.8], off: NP }],
   },
   // Two subjects, one behind the other: the sentence strip at z = -5.2 and the
@@ -170,6 +185,20 @@ export const CAMERA_KEYS = {
   // verbatim line and the accent tether are all still in frame through the hold
   // to p = 0.88, where the hand-off to station 4 takes over. Portrait holds ~1.3u further
   // back again and re-frames the tree as a column — see scenes/03-compile.js.
+  //
+  // The column runs from the root at world y ~= 1.50 down to its lowest leaf
+  // ("value: 30") at y ~= -0.92, a 2.42u spread the old at.y = 1.25 spent
+  // entirely on the root end — the occlusion audit found all three leaves
+  // (fact/op/value) fully below the docked card at the settle key. at.y = -0.40
+  // aims low enough to bring fact and op fully clear (nodes[0] 92.8% -> 0%,
+  // nodes[1] 100% -> 0% below card at p = 0.66, and both still 0% at the twin)
+  // and to cut the lowest leaf from 100% to 76.2% at the settle key. The three
+  // sentence tokens the tree compiles from clear outright (100% -> 0%), as do
+  // three of the four tubes. 99% of the lowest leaf survives at the twin, where
+  // the frozen aim and the closing camera swing it back down — see the aim-hold
+  // twin note above. The root stays fully framed at both beats; it only picks
+  // up a 3.5% left-edge graze at the very end of the hold, which is the one
+  // place this trade-off shows.
   '03-compile': {
     keys:     [{ p: 0, at: H, off: N },
                { p: 0.30, at: [0.10, 0.90, -6.6], off: [-0.30, 0.55, -0.6] },
@@ -178,8 +207,8 @@ export const CAMERA_KEYS = {
                { p: 1, at: [-6.0, -0.4, -17.8], off: N }],
     portrait: [{ p: 0, at: HP, off: NP },
                { p: 0.30, at: [0.05, 1.15, -6.6], off: [0, 0.85, 0.5] },
-               { p: 0.66, at: [0.17, 1.25, -9.9], off: [0, 1.10, 2.0] },
-               { p: 0.88, at: [0.17, 1.25, -9.9], off: NP },
+               { p: 0.66, at: [0.17, -0.40, -9.9], off: [0, 1.10, 2.0] },
+               { p: 0.88, at: [0.17, -0.40, -9.9], off: NP },
                { p: 1, at: [-6.0, -0.1, -17.8], off: NP }],
   },
   // Chapter 04 flies PAST the machine, not through it. The intake tube, the
@@ -261,6 +290,21 @@ export const CAMERA_KEYS = {
   // Portrait aims shorter and swings less — ±0.85 rather than ±1.35 — because
   // a 31°-wide frustum turns the same parallax into the seam leaving frame.
   // The room answers by narrowing its own score axis; see PORTRAIT sx there.
+  //
+  // The occlusion audit found the actual interval numbers — num30, num45, the
+  // [30, 45) band label — entirely below the docked card at the old at.y =
+  // 0.60, which aimed near the crossing walls' own WALL_Y = 0.32 and left the
+  // numbers (NUM_Y = -1.80, BAND_Y = -2.10) more than 2u below the axis. -1.8
+  // aims close to the numbers' own height instead. Measured off the real rig at
+  // 390x844: numLo, numHi, the band label, the rod and both ticks all go from
+  // 100% below the card to 0%, at the settle key AND at the p = 0.88 twin, and
+  // the two walls and their seam go from 41-46% to 0%. The walls pay for it on
+  // the horizontal — wallB already ran 11.3% of a screen width off the left
+  // edge at the settle key before this change, from the twin's own parallax as
+  // the camera closes on the room, and this takes it to 14.8% (57.5% at the
+  // twin, from 43.6%). That residual predates this fix and is not something
+  // `at.y` alone can buy back without re-opening the numbers it exists to
+  // clear — the two walls are staging, not the content the card was hiding.
   '05-clash': {
     keys:     [{ p: 0, at: H, off: N },
                { p: 0.44, at: [-1.30, 0.30, -9.2], off: [-1.35, 0.55, 0.4] },
@@ -269,8 +313,8 @@ export const CAMERA_KEYS = {
                { p: 1, at: [2.5, 2.2, -18.0], off: N }],
     portrait: [{ p: 0, at: HP, off: NP },
                { p: 0.44, at: [-0.55, 0.55, -9.4], off: [-0.85, 0.85, 1.6] },
-               { p: 0.70, at: [0.85, 0.60, -11.6], off: [0.85, 1.00, 1.9] },
-               { p: 0.88, at: [0.85, 0.60, -11.6], off: NP },
+               { p: 0.70, at: [0.85, -1.8, -11.6], off: [0.85, 1.00, 1.9] },
+               { p: 0.88, at: [0.85, -1.8, -11.6], off: NP },
                { p: 1, at: [2.5, 2.5, -18.0], off: NP }],
   },
   // Two subjects, one behind the other, and the camera changes height between
@@ -392,10 +436,28 @@ export const CAMERA_KEYS = {
     // cards to 0.86 (08-intake.js, applied equally to all ten), and the camera
     // holds 0.4u further back than the seam value across both interior keys —
     // constant through the chapter, so it costs travel and not per-frame move.
+    //
+    // The occlusion audit found more than half the ring below the docked card
+    // at the old at.y = 0.60 — a full circle straddles whatever line you aim it
+    // at, and 0.60 favoured the ring's upper cards over its lower ones. -0.60
+    // lifts the ensemble: measured per card at 390x844, the two that sat worst
+    // at the settle key clear outright (faces#8 49.8% -> 0%, faces#3 2.1% ->
+    // 0%) and two more are cut roughly in half or better (faces#4 100% ->
+    // 26.2%, faces#7 100% -> 64.3%). At the twin, faces#4 98.3% -> 13.4% and
+    // faces#8 100% -> 26.1%. 08 is this file's floor for per-frame camera
+    // travel (see chapters.js: 62vh is the minimum the 2400-step journey sweep
+    // tolerates before it fails at 0.1618u against the 0.15 budget), so `off.z`
+    // is NOT available here the way it is at 01/02/05/09 — a bump on the settle
+    // key's own off.z pushes the sweep over budget and fails
+    // tests/cameraRig.test.js outright. So this is at.y ONLY, `off` untouched,
+    // and two cards (faces#5 and faces#6, the ring's own bottom, diametrically
+    // opposite the top) stay at 100% below card by construction: a full circle
+    // centred below the readable line always has a bottom half under it, the
+    // same way 06-chasm's near lip always runs under the card it hangs over.
     portrait: [{ p: 0, at: HP, off: NP },
                { p: 0.38, at: [0, 0.50, -11.0], off: [0, 0.7, 1.4] },
-               { p: 0.64, at: [-0.40, 0.60, -12.0], off: [0, 0.7, 1.4] },
-               { p: 0.88, at: [-0.40, 0.60, -12.0], off: NP },
+               { p: 0.64, at: [-0.40, -0.60, -12.0], off: [0, 0.7, 1.4] },
+               { p: 0.88, at: [-0.40, -0.60, -12.0], off: NP },
                { p: 1, at: [-5.0, 1.8, -18.0], off: NP }],
   },
   // Chapter 09 is one set piece, parked at (-4.0, 0.85, -13.0) station-local —
@@ -427,10 +489,22 @@ export const CAMERA_KEYS = {
     // 2.9u of half-width and the room re-lays itself to fit inside that (the
     // wall re-flows to 19 columns, the screens stack into a column — see
     // 09-build.js). Height is free in portrait, so the room spends it.
+    //
+    // Free on paper, but not for nothing: the 470-mark wall plus its five
+    // screens read tall as an ensemble, and the occlusion audit found the whole
+    // group meaningfully below the docked card at the old at.y = 0.90. 0.40
+    // lifts it — the wall's own mark field goes from 42.4% to 34.5% below card
+    // at the settle key and 45.4% to 37.3% at the twin, and the middle screen
+    // label (labels[2]) clears outright at the twin, 100% -> 0%. The residual
+    // is the wall's own footprint, the same shape as 03-compile's leaf-value
+    // trade-off: the bottom two screen labels stay under the card at both
+    // beats, and pushing at.y further starts costing the settle key's left
+    // margin faster than it buys back below-card, so this stops short of fully
+    // clearing it.
     portrait: [{ p: 0, at: HP, off: NP },
                { p: 0.36, at: [-2.4, 0.85, -11.0], off: [0, 0.8, 1.3] },
-               { p: 0.66, at: [-4.0, 0.90, -13.0], off: [0, 0.8, 1.3] },
-               { p: 0.88, at: [-4.0, 0.90, -13.0], off: NP },
+               { p: 0.66, at: [-4.0, 0.40, -13.0], off: [0, 0.8, 1.3] },
+               { p: 0.88, at: [-4.0, 0.40, -13.0], off: NP },
                { p: 1, at: [3.0, 2.1, -18.0], off: NP }],
   },
   // Last chapter: no successor, so the closing pose is free. The camera is
