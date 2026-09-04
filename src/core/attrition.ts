@@ -50,11 +50,10 @@ export type CriterionAttrition = {
   /** Patients in the whole cohort this criterion fails, ignoring order. */
   failsAlone: number;
   /**
-   * Patients this criterion alone keeps out: it fails and every other MODELED
-   * criterion passes, so relaxing it would move them to potentially-eligible.
-   * A patient with an `unknown` anywhere else is not counted — relaxing this
-   * criterion would leave them not-evaluable, not eligible. Unmodeled criteria
-   * are ignored on purpose: they are parked in chart review rather than drained.
+   * Patients this criterion alone keeps out: it fails and every other criterion
+   * passes, so removing it would actually move them to potentially-eligible.
+   * Any unknown — including an unresolved unmodeled criterion — prevents the
+   * counterfactual from being overstated.
    */
   soleReason: number;
 };
@@ -73,15 +72,14 @@ export function bandOf<E extends { overall: Evaluation["overall"] }>(e: E): Pati
 
 /**
  * The criterion that alone keeps this patient out, if there is one: exactly one
- * modeled criterion fails and every other modeled criterion passes. Exported
+ * criterion fails and every other criterion passes. Exported
  * because the "sole-disqualifier argument" — the list of patients a site would
  * gain by relaxing one criterion — is the reason to compute attrition at all.
  */
 export function soleReasonCriterionId(e: Evaluation): string | undefined {
-  const modeled = e.results.filter((r) => !r.unmodeled);
-  const fails = modeled.filter((r) => r.verdict === "fail");
+  const fails = e.results.filter((r) => r.verdict === "fail");
   if (fails.length !== 1) return undefined;
-  return modeled.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
+  return e.results.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
 }
 
 /**
@@ -89,7 +87,8 @@ export function soleReasonCriterionId(e: Evaluation): string | undefined {
  * evaluator always leaves unmodeled criteria `unknown`, so on core-produced
  * evaluations this is just "unmodeled" — but a chart-review pass (the
  * workbench's) may resolve an unmodeled criterion's verdict, and then it is no
- * longer parked. `soleReason` ignores parked criteria only.
+ * longer parked. Parked criteria still prevent a sole-reason claim because
+ * relaxing one failure would leave the patient undetermined, not eligible.
  */
 export const isParked = (r: { unmodeled: boolean; verdict: "pass" | "fail" | "unknown" }): boolean =>
   r.unmodeled && r.verdict === "unknown";
@@ -150,10 +149,9 @@ export function attritionFrom<E extends AttritionInput>(evaluations: readonly E[
   const verdictOf = (e: AttritionInput, id: string) => e.results.find((r) => r.id === id)?.verdict;
 
   const soleReasonIds = evaluations.map((e) => {
-    const decisive = e.results.filter((r) => !isParked(r));
-    const fails = decisive.filter((r) => r.verdict === "fail");
+    const fails = e.results.filter((r) => r.verdict === "fail");
     if (fails.length !== 1) return undefined;
-    return decisive.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
+    return e.results.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
   });
 
   let pool: readonly E[] = evaluations;

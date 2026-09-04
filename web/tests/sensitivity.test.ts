@@ -37,7 +37,7 @@ describe("numericTargets", () => {
     expect(renal.label).toBe("eGFR < 45");
     expect(renal.fact).toBe("egfr");
     const egfrMin = targets.find((t) => t.criterionId === "egfr-min")!;
-    expect(egfrMin.unit).toBe("mL/min");
+    expect(egfrMin.unit).toBe("mL/min/1.73m2");
   });
 });
 
@@ -86,8 +86,8 @@ describe("live re-count", () => {
     const after = displayBandCounts(evalResolved(setKnob(DEMO_RULESET_CURRENT, renal.path, 40)));
     expect(before["screen-fail"]).toBe(7);
     expect(after["screen-fail"]).toBe(5);
-    expect(after["pending-chart-review"]).toBe(before["pending-chart-review"] + 1);
-    expect(after["not-evaluable"]).toBe(before["not-evaluable"] + 1);
+    expect(after["pending-chart-review"]).toBe(before["pending-chart-review"]);
+    expect(after["not-evaluable"]).toBe(before["not-evaluable"] + 2);
   });
 
   it("tightening a threshold moves patients the other way", () => {

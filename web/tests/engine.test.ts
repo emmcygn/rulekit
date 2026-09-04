@@ -45,12 +45,11 @@ describe("realEngine.evalPatient", () => {
     expect(at("renal-safety")).toBe("pass"); // egfr = 45, exclusion is strict < 45
   });
 
-  it("keeps an unmodeled criterion unknown for everyone", () => {
+  it("keeps a modeled enum criterion unknown until the fact is available", () => {
     const r = verdict("SYN-061", "nyha-class-iv");
-    expect(r.unmodeled).toBe(true);
+    expect(r.unmodeled).toBe(false);
     expect(r.verdict).toBe("unknown");
-    // Core reports no trace for an unmodeled criterion; the views must not need one.
-    expect(r.trace).toBeUndefined();
+    expect(r.trace?.detail).toContain("missing");
     expect(evaluate("SYN-061").overall).toBe("undetermined");
   });
 
@@ -86,33 +85,29 @@ describe("realEngine.evalPatient", () => {
 describe("realEngine.check", () => {
   const findings = realEngine.check(DEMO_RULESET_CURRENT, DEMO_FACT_MODEL);
 
-  it("reports exactly the seeded conflict, the unit warning and the honesty ledger", () => {
+  it("reports the explicit boundaries of its clean static result", () => {
     expect(findings.map((f) => [f.level, f.code])).toEqual([
-      ["error", "contradictory-band"],
-      ["warning", "unit-mismatch"],
-      ["info", "unmodeled-criterion"],
+      ["info", "analysis-incomplete"],
+      ["info", "analysis-incomplete"],
     ]);
   });
 
-  it("catches the seeded contradictory band with the interval evidence", () => {
-    const conflict = findings.find((f) => f.code === "contradictory-band")!;
-    expect(conflict.level).toBe("error");
-    expect(conflict.criteria).toEqual(["egfr-min", "renal-safety"]);
-    // Exact characters matter: the checks panel renders this string verbatim.
-    expect(conflict.evidence).toBe(
-      "egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)",
-    );
+  it("does not mistake an ordinary inclusion/exclusion overlap for a contradiction", () => {
+    expect(findings.filter((f) => f.level === "error")).toEqual([]);
   });
 
-  it("warns when a rule's unit is not the fact model's unit", () => {
-    const unit = findings.find((f) => f.code === "unit-mismatch")!;
-    expect(unit.level).toBe("warning");
+  it("blocks when a rule's unit is not the fact model's unit", () => {
+    const bad = DEMO_RULESET_CURRENT.replace("value: 30, unit: mL/min/1.73m2", "value: 30, unit: mL/min");
+    const unit = realEngine.check(bad, DEMO_FACT_MODEL).find((f) => f.code === "unit-mismatch")!;
+    expect(unit.level).toBe("error");
     expect(unit.criteria).toEqual(["egfr-min"]);
   });
 
-  it("records unmodeled criteria as info, not as silence", () => {
-    const info = findings.find((f) => f.code === "unmodeled-criterion")!;
-    expect(info.criteria).toEqual(["nyha-class-iv"]);
+  it("records unsupported analysis scope as info, not as silence", () => {
+    expect(findings.filter((f) => f.code === "analysis-incomplete").map((f) => f.criteria[0])).toEqual([
+      "anticoag-washout",
+      "nyha-class-iv",
+    ]);
   });
 
   it("finds no conflict in the pre-amendment rule set", () => {
@@ -135,7 +130,7 @@ describe("realEngine.check", () => {
 
   it("still runs the conflict pass when the fact model does not parse", () => {
     const codes = realEngine.check(DEMO_RULESET_CURRENT, "name: 1\n").map((f) => f.code);
-    expect(codes).toContain("contradictory-band");
+    expect(codes).toContain("analysis-incomplete");
     expect(codes).toContain("fact-model-schema");
   });
 

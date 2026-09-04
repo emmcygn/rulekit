@@ -22,8 +22,24 @@ criteria:
 
 describe("structuralDiff", () => {
   it("finds added and changed criteria; version bump alone is not a change", () => {
-    expect(structuralDiff(V1, V2)).toEqual({ added: ["renal-safety"], removed: [], changed: ["anticoag-washout"] });
-    expect(structuralDiff(V1, V1)).toEqual({ added: [], removed: [], changed: [] });
+    expect(structuralDiff(V1, V2)).toEqual({ added: ["renal-safety"], removed: [], changed: ["anticoag-washout"], renamed: [], reordered: [], metadataChanged: [] });
+    expect(structuralDiff(V1, V1)).toEqual({ added: [], removed: [], changed: [], renamed: [], reordered: [], metadataChanged: [] });
+  });
+
+  it("tracks criterion order and rule-set metadata", () => {
+    const changed = {
+      ...V1,
+      protocol: "Protocol amendment 2",
+      criteria: [...V1.criteria].reverse(),
+    };
+    const d = structuralDiff(V1, changed);
+    expect(d.reordered).toEqual(["age-min", "anticoag-washout"]);
+    expect(d.metadataChanged).toEqual(["protocol"]);
+  });
+
+  it("refuses to compare unrelated rule sets or fact models", () => {
+    expect(() => structuralDiff(V1, { ...V1, ruleset: "other" })).toThrow(/unrelated rule sets/);
+    expect(() => behavioralDiff(V1, { ...V1, factModel: "patient-facts/v2" }, [])).toThrow(/different fact models/);
   });
 });
 

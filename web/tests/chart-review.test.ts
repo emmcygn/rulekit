@@ -2,11 +2,8 @@
  * Chart-review resolution — triage cluster C, the "confirm yesterday's NYHA and
  * the numbers move" flow (operator showstopper S2).
  *
- * Route taken and why: demo-hf-001's E4 stays `unmodeled: true`, because the
- * closed rule language has no way to compare an enum fact. Instead the
- * workbench declares which unmodeled criteria a human can settle from a
- * confirmed fact, and applies that between the engine and the screen. See the
- * header of `web/src/engine/chart-review.ts`.
+ * demo-hf-001's E4 is modeled as enum equality. The engine alone decides it;
+ * the workbench annotates verdicts whose input came through human review.
  */
 import { describe, expect, it } from "vitest";
 import { parseRuleSet } from "../../src/core/schema.js";
@@ -32,28 +29,27 @@ const e4Of = (state: ReviewState, id: string) =>
 
 const initial = initialReviewState(DEMO_FACTS);
 
-describe("the language really cannot model E4", () => {
-  it("leaves nyha-class-iv unmodeled in the shipped rule set", () => {
+describe("enum criteria are first-class engine logic", () => {
+  it("models nyha-class-iv in the shipped rule set", () => {
     const e4 = parseRuleSet(DEMO_RULESET_CURRENT).criteria.find((c) => c.id === "nyha-class-iv")!;
-    expect(e4.unmodeled).toBe(true);
-    expect(e4.when).toBeUndefined();
+    expect(e4.unmodeled).toBeUndefined();
+    expect(e4.when).toEqual({ fact: "nyha_class", op: "eq", value: "IV" });
   });
 
-  it("cannot express `nyha_class eq IV`: numeric eq takes numbers only", () => {
-    const withEnumEq = DEMO_RULESET_CURRENT.replace(
-      "    unmodeled: true",
-      "    when: { fact: nyha_class, op: eq, value: IV }",
-    );
-    expect(() => parseRuleSet(withEnumEq)).toThrow();
+  it("evaluates `nyha_class eq IV` deterministically", () => {
+    const pass = realEngine.evalPatient(DEMO_RULESET_CURRENT, { patient: "III", facts: { nyha_class: "III" } });
+    const fail = realEngine.evalPatient(DEMO_RULESET_CURRENT, { patient: "IV", facts: { nyha_class: "IV" } });
+    expect(pass.results.find((r) => r.id === "nyha-class-iv")?.verdict).toBe("pass");
+    expect(fail.results.find((r) => r.id === "nyha-class-iv")?.verdict).toBe("fail");
   });
 
-  it("cannot express it as a code set either: `in` matches code lists, not enums", () => {
+  it("does not confuse enum equality with code-set membership", () => {
     const asCodes = DEMO_RULESET_CURRENT.replace(
-      "    unmodeled: true",
+      "    when: { fact: nyha_class, op: eq, value: IV }",
       "    when: { fact: nyha_class, op: in, codes: { system: nyha, values: [IV] } }",
     );
-    // It parses, but the evaluator refuses a bare string as a code list, so the
-    // criterion would be *unknown for everyone* — a worse lie than `unmodeled`.
+    // The raw evaluator is defensive; checked execution additionally rejects
+    // this operator/type pairing against the fact model.
     const r = realEngine
       .evalPatient(asCodes, { patient: "X", facts: { nyha_class: "IV" } })
       .results.find((x) => x.id === "nyha-class-iv")!;
@@ -71,7 +67,7 @@ describe("resolveChartReview", () => {
     const r = e4Of(initial, "SYN-019");
     expect(r.verdict).toBe("unknown");
     expect(r.chartReview).toBeUndefined();
-    expect(resultProse(r)).toContain("chart review required");
+    expect(resultProse(r)).toContain("nyha_class missing → unknown");
   });
 
   it("does not resolve from a proposal nobody decided", () => {
@@ -87,7 +83,7 @@ describe("resolveChartReview", () => {
     const state = decide(initial, cardId("SYN-019", "nyha_class"), "confirmed");
     const r = e4Of(state, "SYN-019");
     expect(r.verdict).toBe("pass");
-    expect(r.unmodeled).toBe(true); // still unmodeled in the rule set — we say so
+    expect(r.unmodeled).toBe(false);
     expect(r.chartReview).toEqual({
       fact: "nyha_class",
       value: "III",
@@ -110,11 +106,11 @@ describe("the operator's flow: confirm yesterday's NYHA and the numbers move", (
   it("step 1 — overriding a stale eGFR moves SYN-019 out of screen fail", () => {
     expect(bandOf(initial, "SYN-019")).toBe("screen-fail");
     const withEgfr = decide(initial, cardId("SYN-019", "egfr"), "confirmed");
-    expect(bandOf(withEgfr, "SYN-019")).toBe("pending-chart-review");
+    expect(bandOf(withEgfr, "SYN-019")).toBe("not-evaluable");
     expect(bandsFor(withEgfr)).toEqual({
       "screen-fail": 6,
-      "not-evaluable": 0,
-      "pending-chart-review": 4,
+      "not-evaluable": 4,
+      "pending-chart-review": 0,
       "potentially-eligible": 0,
     });
   });
@@ -128,8 +124,8 @@ describe("the operator's flow: confirm yesterday's NYHA and the numbers move", (
     expect(bandOf(state, "SYN-019")).toBe("potentially-eligible");
     expect(bandsFor(state)).toEqual({
       "screen-fail": 6,
-      "not-evaluable": 0,
-      "pending-chart-review": 3,
+      "not-evaluable": 3,
+      "pending-chart-review": 0,
       "potentially-eligible": 1,
     });
   });
@@ -146,8 +142,8 @@ describe("the operator's flow: confirm yesterday's NYHA and the numbers move", (
     expect(bandOf(state, "SYN-019")).toBe("screen-fail");
     expect(bandsFor(state)).toEqual({
       "screen-fail": 7,
-      "not-evaluable": 0,
-      "pending-chart-review": 3,
+      "not-evaluable": 3,
+      "pending-chart-review": 0,
       "potentially-eligible": 0,
     });
   });
@@ -160,6 +156,6 @@ describe("the operator's flow: confirm yesterday's NYHA and the numbers move", (
     );
     const row = computeFunnel(evalsFor(state)).rows.find((r) => r.id === "nyha-class-iv")!;
     expect(row.chartReviewResolved).toBe(1);
-    expect(row.chartReview).toBe(3);
+    expect(row.chartReview).toBe(0);
   });
 });

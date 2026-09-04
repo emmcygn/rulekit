@@ -150,7 +150,7 @@ export type BandFlip = {
   patient: string;
   from: DisplayBand;
   to: DisplayBand;
-  /** Criteria whose verdict changed between the versions. */
+  /** Criteria whose verdict or modeled/unmodeled status changed. */
   responsible: string[];
 };
 
@@ -175,9 +175,13 @@ export function amendmentImpact(
     const from = displayBandOf(b);
     const to = displayBandOf(a);
     if (from === to) continue;
-    const beforeVerdicts = new Map(b.results.map((r) => [r.id, r.verdict]));
+    const beforeResults = new Map(b.results.map((r) => [r.id, r]));
     const responsible = a.results
-      .filter((r) => beforeVerdicts.get(r.id) !== r.verdict)
+      .filter((r) => {
+        const previous = beforeResults.get(r.id);
+        if (previous === undefined) return r.verdict !== "pass";
+        return previous.verdict !== r.verdict || previous.unmodeled !== r.unmodeled;
+      })
       .map((r) => r.id);
     flips.push({ patient: b.patient, from, to, responsible });
   }

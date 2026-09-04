@@ -19,7 +19,7 @@ criteria:
     ref: I3
     kind: inclusion
     verbatim: "eGFR at least 30 mL/min/1.73m2"
-    when: { fact: egfr, op: gte, value: 30, unit: mL/min }
+    when: { fact: egfr, op: gte, value: 30, unit: mL/min/1.73m2 }
   - id: anticoag-washout
     ref: E1
     kind: exclusion

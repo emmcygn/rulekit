@@ -81,14 +81,11 @@ describe("applyReview — withhold the proposal, keep the record", () => {
     expect(syn007.facts["age"]).toBe(61);
   });
 
-  it("never manufactures a not-evaluable patient out of data it already had", () => {
-    // The three patients with facts files all have structured values, so none of
-    // them is un-evaluable at rest (uiux B6).
+  it("keeps missing modeled facts explicitly not evaluable", () => {
+    // NYHA is now modeled, but no proposed value enters evaluation before a
+    // reviewer confirms it.
     const bands = bandsFor(initial);
-    expect(bands["not-evaluable"]).toBe(0);
-    for (const id of ["SYN-007", "SYN-019", "SYN-042"]) {
-      expect(bandOfPatient(initial, id)).not.toBe("not-evaluable");
-    }
+    expect(bands["not-evaluable"]).toBe(3);
   });
 
   it("hands the engine the confirmed value, and only after a human confirms", () => {
@@ -188,8 +185,8 @@ describe("G10 — deciding a fact moves the bands", () => {
   it("starts with everyone either failed or waiting on a chart review", () => {
     expect(bandsFor(initial)).toEqual({
       "screen-fail": 7,
-      "not-evaluable": 0,
-      "pending-chart-review": 3,
+      "not-evaluable": 3,
+      "pending-chart-review": 0,
       "potentially-eligible": 0,
     });
   });
@@ -199,7 +196,7 @@ describe("G10 — deciding a fact moves the bands", () => {
     // Confirming is an override, and the funnel reflects it immediately.
     expect(bandOfPatient(initial, "SYN-019")).toBe("screen-fail");
     const one = decide(initial, cardId("SYN-019", "egfr"), "confirmed");
-    expect(bandOfPatient(one, "SYN-019")).toBe("pending-chart-review");
+    expect(bandOfPatient(one, "SYN-019")).toBe("not-evaluable");
     expect(bandsFor(one)["screen-fail"]).toBe(6);
   });
 
@@ -292,7 +289,7 @@ describe("buildCards", () => {
   it("flags the facts that would change a band, in the funnel's own words", () => {
     const egfr019 = cards.find((c) => c.id === cardId("SYN-019", "egfr"))!;
     expect(egfr019.flipsVerdict).toBe(true);
-    expect(egfr019.impact).toBe("screen fail → pending chart review");
+    expect(egfr019.impact).toBe("screen fail → not evaluable");
   });
 
   it("marks a fact no criterion reads, and leaves it without an impact claim", () => {

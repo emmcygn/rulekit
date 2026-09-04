@@ -1,5 +1,7 @@
-import type { Condition, Leaf, PatientFacts, FactValue, CodeEntry, CodeRef, Criterion, RuleSet, Verdict, Overall } from "./schema.js";
+import type { Condition, Leaf, PatientFacts, FactValue, CodeEntry, CodeRef, Criterion, RuleSet, Verdict, Overall, FactModel } from "./schema.js";
 import { andTri, orTri, notTri, type Tri } from "./tri.js";
+import { checkRuleSet } from "./conflicts.js";
+import { lintPatient } from "./lint.js";
 
 export type TraceNode = {
   kind: "all" | "any" | "not" | "leaf";
@@ -24,8 +26,8 @@ function evalLeaf(leaf: Leaf, facts: PatientFacts): TraceNode {
   const observed = v === undefined ? null : v;
 
   if (leaf.op === "exists") {
-    const result: Tri = v === undefined ? "false" : "true";
-    return { kind: "leaf", result, observed, detail: `${leaf.fact} ${v === undefined ? "absent" : "present"}` };
+    const result: Tri = v === undefined ? "unknown" : "true";
+    return { kind: "leaf", result, observed, detail: `${leaf.fact} ${v === undefined ? "missing → unknown" : "present"}` };
   }
   if (v === undefined) {
     return { kind: "leaf", result: "unknown", observed, detail: `${leaf.fact} missing → unknown` };
@@ -52,8 +54,15 @@ function evalLeaf(leaf: Leaf, facts: PatientFacts): TraceNode {
     return { kind: "leaf", result, observed, detail: `${leaf.fact} ${hit ? "contains" : "lacks"} ${leaf.codes.system}:{${leaf.codes.values.join(",")}}` };
   }
 
-  // numeric ops
-  if (typeof v !== "number")
+  // Scalar equality supports declared enum and boolean facts. Ordering remains
+  // numeric-only; a runtime type mismatch is unknown, never a false comparison.
+  if ((leaf.op === "eq" || leaf.op === "neq") && typeof leaf.value !== "number") {
+    if (typeof v !== typeof leaf.value)
+      return { kind: "leaf", result: "unknown", observed, detail: `${leaf.fact} = ${JSON.stringify(v)} (wrong scalar type) → unknown` };
+    const ok = leaf.op === "eq" ? v === leaf.value : v !== leaf.value;
+    return { kind: "leaf", result: ok ? "true" : "false", observed, detail: `${leaf.fact} = ${JSON.stringify(v)}, required ${OP_TEXT[leaf.op]} ${JSON.stringify(leaf.value)}` };
+  }
+  if (typeof v !== "number" || typeof leaf.value !== "number")
     return { kind: "leaf", result: "unknown", observed, detail: `${leaf.fact} = ${JSON.stringify(v)} (non-numeric) → unknown` };
   const cmp: Record<string, boolean> = {
     eq: v === leaf.value, neq: v !== leaf.value, gt: v > leaf.value, gte: v >= leaf.value, lt: v < leaf.value, lte: v <= leaf.value,
@@ -107,4 +116,18 @@ export function evalPatient(rs: RuleSet, facts: PatientFacts): Evaluation {
       ? "undetermined"
       : "eligible";
   return { patient: facts.patient, results, overall };
+}
+
+/**
+ * Safe application boundary for callers that have not already validated their
+ * inputs. `evalPatient` stays a small, deterministic primitive; production
+ * entry points should use this function or perform the same checks once before
+ * evaluating a corpus.
+ */
+export function evalPatientChecked(rs: RuleSet, fm: FactModel, facts: PatientFacts): Evaluation {
+  const errors = [...checkRuleSet(rs, fm), ...lintPatient(facts, fm)].filter((f) => f.level === "error");
+  if (errors.length > 0) {
+    throw new Error(`evaluation blocked: ${errors.map((f) => `${f.code}: ${f.message}`).join("; ")}`);
+  }
+  return evalPatient(rs, facts);
 }

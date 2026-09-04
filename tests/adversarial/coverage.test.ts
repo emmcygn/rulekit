@@ -16,7 +16,7 @@ const rs: RuleSet = {
   ],
 };
 
-describe("D1 — an unmodeled criterion is reported as a test-coverage gap", () => {
+describe("D1 — unmodeled criteria are not impossible coverage gaps", () => {
   const suite: TestSuite = {
     cases: [
       { name: "adult", facts: { age: 40, nyha_class: 2 }, expect: {} },
@@ -24,14 +24,12 @@ describe("D1 — an unmodeled criterion is reported as a test-coverage gap", () 
     ],
   };
 
-  it('reads "never passes, never fails" — a gap no test case can ever close', () => {
+  it("shows its unknown count without an uncloseable warning", () => {
     const cov = runSuite(rs, suite).coverage.find((c) => c.criterion === "chart-review")!;
     expect(cov).toMatchObject({ pass: 0, fail: 0, unknown: 2 });
-    // MISLEADS: the CLI prints "chart-review: 0/0/2  ⚠ never passes, never fails"
-    // in the same column as a genuine untested branch. Unmodeled criteria are
-    // structurally unknown; `deadRules` knows this and skips them, `coverage`
-    // does not.
-    expect(cov.gaps).toEqual(["never passes", "never fails"]);
+    // Unmodeled criteria are structurally unknown, so pass/fail coverage would
+    // be impossible to close and must not fail the coverage gate.
+    expect(cov.gaps).toEqual([]);
   });
 
   it("deadRules correctly exempts unmodeled criteria", () => {
@@ -40,32 +38,30 @@ describe("D1 — an unmodeled criterion is reported as a test-coverage gap", () 
   });
 });
 
-describe("D2 — a criterion that is ALWAYS unknown is filed as a harmless dead rule", () => {
+describe("D2 — a criterion that is always unknown is identified explicitly", () => {
   const corpus = [
     { patient: "P1", facts: { age: 40 } }, // nyha_class never present
     { patient: "P2", facts: { age: 50 } },
   ];
 
-  it('"never fires on the corpus" hides that it makes every patient undetermined', () => {
+  it("distinguishes missing data from a rule that simply never fires", () => {
     const dead = deadRules(rs, corpus);
     const nyha = dead.find((d) => d.criterion === "nyha-class")!;
-    expect(nyha.reason).toBe("never fires on the corpus (0 of 2 patients)");
-    // MISLEADS: the same sentence is produced by "no corpus patient has NYHA IV"
-    // (rule is fine, corpus is thin) and by "this fact is absent from every
-    // patient file" (rule is inert and poisons the whole cohort). Here it is
-    // the second, and every patient is undetermined because of it.
+    expect(nyha.reason).toContain("always unknown on the corpus");
+    // This is distinct from a known-value criterion that merely never fires:
+    // here every patient is undetermined because the fact is absent.
     expect(corpus.every((p) => {
       const ev = runSuite(rs, { cases: [{ name: p.patient, facts: p.facts, expect: {} }] });
       return ev.cases.length === 1;
     })).toBe(true);
   });
 
-  it("an inclusion in the same state is reported as 'never fails' — reads like a no-op", () => {
+  it("uses the same explicit message for an inclusion", () => {
     const inclusionOnly: RuleSet = {
       ...rs,
       criteria: [{ id: "lvef-40", kind: "inclusion", verbatim: "LVEF <= 40", when: { fact: "lvef", op: "lte", value: 40 } }],
     };
-    expect(deadRules(inclusionOnly, corpus)[0]!.reason).toBe("never fails on the corpus (0 of 2 patients)");
+    expect(deadRules(inclusionOnly, corpus)[0]!.reason).toContain("always unknown on the corpus");
     // ...while in truth it passes nobody either: everyone is unknown.
     const cov = runSuite(inclusionOnly, { cases: corpus.map((p) => ({ name: p.patient, facts: p.facts, expect: {} })) }).coverage[0]!;
     expect(cov).toMatchObject({ pass: 0, fail: 0, unknown: 2 });

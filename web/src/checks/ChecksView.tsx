@@ -5,7 +5,7 @@ type Props = {
   findings: Finding[];
   spans: Map<string, CriterionSpan>;
   rulesetVersion: string;
-  /** The editor's document does not parse: name no version, and say what these are. */
+  /** The editor's document is not safe to evaluate: name no version and label retained results. */
   stale?: boolean;
   onJump: (line: number) => void;
 };
@@ -18,11 +18,16 @@ type Props = {
  */
 const TITLE: Record<string, string> = {
   "unknown-fact": "unknown fact",
+  "fact-model-mismatch": "wrong fact model",
   "type-mismatch": "type mismatch",
   "unit-mismatch": "unit mismatch",
+  "unit-undeclared": "unit missing",
+  "unknown-enum-value": "unknown enum value",
+  "exists-value-type": "presence check on valued fact",
   "unknown-code-system": "unknown code system",
   "unmodeled-criterion": "unmodeled criterion",
-  "contradictory-band": "contradictory band",
+  "analysis-incomplete": "analysis incomplete",
+  "unsatisfiable-ruleset": "rule set admits no patient",
   "unsatisfiable-criterion": "criterion can never fire",
 
   schema: "rule set does not parse",
@@ -49,7 +54,7 @@ export function ChecksView({ findings, spans, rulesetVersion, stale = false, onJ
         <span className="sub">
           {stale ? (
             <>
-              the editor's document does not parse · the parse error is live, everything under it is
+              the editor's document is invalid · the blocking error is live, everything under it is
               from the <b>last valid version</b>
             </>
           ) : (
@@ -63,8 +68,8 @@ export function ChecksView({ findings, spans, rulesetVersion, stale = false, onJ
 
       {findings.length === 0 && (
         <div className="note">
-          0 conflicts found. Static analysis covers single-fact interval logic, the fact model and
-          the code systems — it does not prove the rule set correct.
+          0 conflicts found. Static analysis covers interval and direct code-set proofs plus the
+          fact-model contract; incomplete criteria are labeled explicitly.
         </div>
       )}
 

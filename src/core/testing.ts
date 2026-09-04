@@ -20,29 +20,36 @@ export function runSuite(rs: RuleSet, suite: TestSuite): SuiteResult {
     const mismatches = Object.entries(tc.expect)
       .filter(([key, expected]) => actualById[key] !== expected)
       .map(([key, expected]) => ({ key, expected, actual: actualById[key] ?? "(no such criterion)" }));
+    if (tc.expect.overall === undefined) {
+      mismatches.unshift({ key: "overall", expected: "(required)", actual: ev.overall });
+    }
     return { name: tc.name, ok: mismatches.length === 0, mismatches };
   });
   const coverage: Coverage[] = rs.criteria.map((c) => {
     const n = counts.get(c.id)!;
     const gaps: string[] = [];
-    if (n.pass === 0) gaps.push("never passes");
-    if (n.fail === 0) gaps.push("never fails");
+    if (c.unmodeled !== true) {
+      if (n.pass === 0) gaps.push("never passes");
+      if (n.fail === 0) gaps.push("never fails");
+    }
     return { criterion: c.id, ...n, gaps };
   });
   return { cases, ok: cases.every((c) => c.ok), coverage };
 }
 
 export function deadRules(rs: RuleSet, corpus: PatientFacts[]): DeadRule[] {
-  const fired = new Map<string, number>(rs.criteria.map((c) => [c.id, 0]));
+  const counts = new Map<string, { pass: number; fail: number; unknown: number }>(rs.criteria.map((c) => [c.id, { pass: 0, fail: 0, unknown: 0 }]));
   for (const p of corpus) {
     for (const r of evalPatient(rs, p).results) {
-      if (r.verdict === "fail") fired.set(r.id, fired.get(r.id)! + 1);
+      counts.get(r.id)![r.verdict] += 1;
     }
   }
   return rs.criteria
-    .filter((c) => c.unmodeled !== true && fired.get(c.id) === 0)
+    .filter((c) => c.unmodeled !== true && counts.get(c.id)!.fail === 0)
     .map((c) => ({
       criterion: c.id,
-      reason: `${c.kind === "exclusion" ? "never fires" : "never fails"} on the corpus (0 of ${corpus.length} patients)`,
+      reason: counts.get(c.id)!.unknown === corpus.length
+        ? `always unknown on the corpus (${corpus.length} of ${corpus.length} patients); the required fact may be absent or invalid`
+        : `${c.kind === "exclusion" ? "never fires" : "never fails"} on the corpus (0 of ${corpus.length} patients; ${counts.get(c.id)!.unknown} unknown)`,
     }));
 }

@@ -83,7 +83,7 @@ one. Roughly a third of real criteria land here; see
 
 ## 2. The condition language
 
-Deliberately closed: three combinators over four families of leaf, no
+Deliberately closed: three combinators over five families of leaf, no
 arbitrary expressions. That closure is what makes static interval analysis (§4)
 and live threshold sensitivity tractable — the lesson from general-purpose rule
 engines whose conditions can only be understood by running them.
@@ -104,16 +104,17 @@ Each takes at least one child and nests arbitrarily. Any object carrying a
 | Form | Applies to | True when | `unknown` when |
 |---|---|---|---|
 | `{ fact, op: eq\|neq\|gt\|gte\|lt\|lte, value, unit? }` | `number` facts | the comparison holds | fact absent, or present but not a number (e.g. a quarantined `">60"`) |
+| `{ fact, op: eq\|neq, value }` | `enum` or `boolean` facts | the scalar comparison holds | fact absent, or present with the wrong runtime type |
 | `{ fact, op: in\|notIn, codes: {system, values} }` | `code` facts | `in`: any entry matches system+code. `notIn`: none does | fact absent, or not a code list |
-| `{ fact, op: exists }` | any fact | the fact is present | **never** — see §8 |
+| `{ fact, op: exists }` | number or code facts | the fact is present | fact absent |
 | `{ fact, op: anyWithin, codes, windowDays }` | `code` facts | a matching entry has `daysAgo <= windowDays` | fact absent, not a code list, or a matching entry carries no `daysAgo` |
 
 Notes that carry weight:
 
 - **`unit` performs no conversion.** It declares what the literal is written in.
-  If it differs from the fact model's declaration, `rules check` raises the
-  `unit-mismatch` warning and the numbers are still compared as written. The
-  format does not do arithmetic behind your back.
+  If a numeric fact has a declared unit, an omitted or different literal unit is
+  a blocking validation error. Patient numbers are normalized to that same
+  canonical unit before evaluation.
 - **`anyWithin` is the entire temporal algebra.** One operator, one direction,
   days only. Anything more (intervals between events, ordering, "on treatment
   at randomisation") is `unmodeled: true`. A washout window is the case that
@@ -200,30 +201,35 @@ what the format requires is that one exists for every non-`unmodeled` criterion.
 
 | Code | Level | What it means |
 |---|---|---|
+| `fact-model-mismatch` | error | The loaded model's name differs from the rule set's declared `factModel`. |
 | `unknown-fact` | error | The criterion names a fact the fact model does not declare. |
-| `type-mismatch` | error | A numeric op on a non-number fact, or a code op on a non-code fact. |
+| `type-mismatch` | error | An operator or literal is incompatible with the declared fact type. |
+| `unknown-enum-value` | error | An enum equality literal is outside the fact's closed value list. |
+| `exists-value-type` | error | `exists` is used on an enum or boolean, where `eq`/`neq` must express the intended value. |
 | `unknown-code-system` | error | The value set cites a system not declared for that fact. |
-| `unit-mismatch` | warning | The literal's `unit` differs from the declared unit. Values are still compared as written. |
+| `unit-undeclared` | error | A numeric literal omits the unit declared by its fact. |
+| `unit-mismatch` | error | The literal's `unit` differs from the declared unit; evaluation is blocked. |
 | `unmodeled-criterion` | info | Recorded so the count of unmodeled criteria is never invisible. |
+| `analysis-incomplete` | info | The criterion contains logic outside complete static analysis; no clean-proof claim is made for it. |
 | `unsatisfiable-criterion` | error | One criterion's own `all` constraints on a fact intersect to the empty set — it can never fire. |
 | `contradictory-inclusions` | error | Two or more inclusions whose constraints on one fact intersect to nothing: the rule set admits nobody. |
-| `contradictory-band` | error | A numeric range that every inclusion admits and an exclusion then removes ("eGFR 30–45 passes inclusion and is excluded by `renal-safety`"). |
+| `unsatisfiable-ruleset` | error | An exclusion covers the entire numeric domain admitted by the inclusions: no patient can pass. |
 
 **Scope, stated because an over-claimed checker is worse than none.** The
-analysis is interval arithmetic and set intersection over *single-fact*
+analysis uses interval arithmetic and direct code-set reasoning over necessary
 constraints reachable through `all` chains. It is explicitly not an SMT solver.
 Concretely:
 
-- A criterion containing `any` or `not` anywhere is skipped by the conflict
-  passes (it still lints).
+- Necessary sibling constraints remain analyzable when a criterion also contains
+  `any` or `not`, but the criterion receives `analysis-incomplete`.
 - Contradictions that only exist across two different facts are not found.
-- Code-set overlaps between an inclusion and an exclusion are not analysed —
-  only numeric intervals are.
+- Direct `in S` plus `notIn T` contradictions are proved when `S` is a subset
+  of `T`; richer terminology relationships are not expanded.
 - A clean run means "no conflicts found *within that scope*", never "no
   conflicts exist". The CLI prints the scope alongside the clean result.
 
-Within the scope, the claim is the strong one: a reported contradictory band
-holds for **all inputs**, not just the corpus you happened to test.
+Within the scope, the claim is the strong one: a reported contradiction holds
+for **all inputs**, not just the corpus you happened to test.
 
 ---
 
@@ -244,7 +250,7 @@ facts:
 
 | Declaration | Fields | Notes |
 |---|---|---|
-| `number` | `unit?` | Declare the unit. A number without one cannot raise `unit-mismatch`, which is the only guard against a mL/min vs mL/min/1.73m² mix-up. |
+| `number` | `unit?` | Declare the canonical unit unless the value is genuinely unitless. Rules must repeat it exactly; ingestion must normalize patient values to it. |
 | `code` | `systems` | The permitted code systems for this fact. |
 | `enum` | `values` | Closed value list. |
 | `boolean` | — | |
@@ -279,6 +285,11 @@ facts:
 **An absent key is `unknown`, never `false`.** This is the single most important
 sentence in the format: a fact model with 40 facts and a patient record with 12
 of them is the normal case, not an error, and the evaluator's job is to say so.
+
+Checked execution validates each declared patient value's runtime type, enum
+membership, and code system against the loaded model. Bare numeric values carry
+no per-row unit: their documented contract is that ingestion has already
+converted them to the model's canonical unit.
 
 **Identity is canonical in `fixtures/patients/`** for this repo's synthetic
 patients: `age` and `sex` there win over any other file mentioning the same id.
@@ -380,16 +391,13 @@ rule set names the exact model it was authored against.
 
 Stated here rather than discovered later.
 
-- **`exists` cannot tell "never measured" from "measured and discarded".** It is
-  the one leaf that never returns `unknown`: an absent fact makes it `false`. But
-  the normalize stage deliberately omits values it cannot trust (a censored
-  `">60"`, an unresolvable local lab code), so `exists` reads a quarantined
-  result as an absent one. Do not use `exists` to mean "was this test done" on
-  ingested data — it means "is there a value here now". A future format version
-  should either give `exists` a tri-state sibling or make quarantine visible in
-  the fact model.
-- **Static analysis is single-fact and `all`-only** (§4). Cross-fact
-  contradictions and code-set overlaps are out of scope.
+- **`exists` cannot tell "never measured" from "measured and discarded".** Both
+  are missing usable evidence and therefore evaluate `unknown`. Do not use
+  `exists` to mean "was this test done" on ingested data — it means "is there a
+  usable value here now".
+- **Static analysis is incomplete** (§4). Cross-fact implications, terminology
+  expansion, and complete proofs through `any`/`not` are out of scope and are
+  labeled `analysis-incomplete` rather than silently presented as clean.
 - **No unit conversion.** `unit` declares, it does not convert.
 - **No temporal algebra beyond `anyWithin`.** No event ordering, no intervals,
   no "at randomisation".
@@ -412,13 +420,9 @@ are enforced by the reference parser and asserted in
   `rules check`, since it needs both files);
 - the quote-grounding gate (`facts check`, since it needs the notes).
 
-And three places where the **schema is deliberately stricter** than the current
-reference parser — the format leading the implementation:
-
-| Rule | Schema | Parser today |
-|---|---|---|
-| `rulesetVersion` is semver | rejects `1.0` | accepts any string |
-| code `values` are strings | rejects `[88805009]` unquoted | coerces numbers to strings |
+The published schema and reference parser agree on semantic-version syntax,
+calendar dates, non-empty code strings, fact names, and the rest of the shape.
+The conformance suite rejects any drift between them.
 
 ## Future work
 

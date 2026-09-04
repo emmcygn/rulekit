@@ -14,18 +14,16 @@ const SUITE = parseTestSuite(read("rules/trials/demo-hf-001/tests.yaml"));
 const CORPUS = readdirSync("fixtures/patients").map((f) => parsePatient(read(join("fixtures/patients", f))));
 
 describe("DEMO-HF-001 content (spec weeks 1-2 milestone)", () => {
-  it("check catches exactly the seeded conflict and the unit warning", () => {
+  it("the shipped rules are valid; partial inclusion/exclusion overlap is not a contradiction", () => {
     const findings = checkRuleSet(RS, FM);
-    expect(findings.filter((f) => f.level === "error").map((f) => f.code)).toEqual(["contradictory-band"]);
-    expect(findings.find((f) => f.code === "contradictory-band")!.evidence).toContain("[30, 45)");
-    expect(findings.filter((f) => f.code === "unit-mismatch")).toHaveLength(1);
+    expect(findings.filter((f) => f.level === "error")).toEqual([]);
   });
 
   it("the pre-amendment rule set has no conflict", () => {
     expect(checkRuleSet(RS_OLD, FM).filter((f) => f.level === "error")).toHaveLength(0);
   });
 
-  it("all 10 rule-set test cases pass", () => {
+  it("all 13 rule-set test cases pass", () => {
     const r = runSuite(RS, SUITE);
     expect(r.cases.filter((c) => !c.ok)).toEqual([]);
   });

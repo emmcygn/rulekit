@@ -27,9 +27,8 @@ export type CriterionResult = {
   trace?: TraceNode;
   /**
    * Set by the workbench's chart-review pass (`./chart-review.ts`) when a human
-   * has confirmed the fact that settles an unmodeled criterion. Core never
-   * produces this; it records a reviewer's decision, not an engine verdict, and
-   * every surface that shows the verdict must show this alongside it.
+   * confirmed a fact used by this criterion. Core never produces this; it
+   * records input provenance alongside the engine's verdict.
    */
   chartReview?: { fact: string; value: string; detail: string };
 };

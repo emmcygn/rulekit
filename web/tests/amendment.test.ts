@@ -109,13 +109,16 @@ describe("amendmentImpact — the headline is the list", () => {
     const groups = groupFlips(impact.flips, criterionOrder(current));
     const named = groups.reduce((n, g) => n + g.flips.length, 0);
     expect(named).toBe(impact.flips.length);
-    expect(impact.flips).toHaveLength(5);
+    expect(impact.flips).toHaveLength(8);
     expect(impact.flips.map((f) => f.patient).sort()).toEqual([
       "SYN-007",
       "SYN-019",
       "SYN-042",
       "SYN-058",
+      "SYN-061",
       "SYN-088",
+      "SYN-104",
+      "SYN-121",
     ]);
   });
 
@@ -123,12 +126,14 @@ describe("amendmentImpact — the headline is the list", () => {
     // Every band that changed size is listed, and the sizes that grew balance
     // the ones that shrank.
     expect(deltaLine(impact)).toBe(
-      "screen fail 2 → 7, not evaluable 1 → 0, pending chart review 7 → 3",
+      "screen fail 2 → 7, not evaluable 1 → 3, pending chart review 7 → 0",
     );
     const grew = impact.moved.reduce((n, b) => n + Math.max(0, impact.after[b] - impact.before[b]), 0);
     const shrank = impact.moved.reduce((n, b) => n + Math.max(0, impact.before[b] - impact.after[b]), 0);
     expect(grew).toBe(shrank);
-    expect(grew).toBe(impact.flips.length);
+    // Net deltas can be smaller than the patient-level transition list when
+    // patients move both into and out of the same band.
+    expect(grew).toBeLessThanOrEqual(impact.flips.length);
   });
 
   it("includes every flip the core engine finds", () => {
@@ -141,7 +146,8 @@ describe("amendmentImpact — the headline is the list", () => {
     const syn088 = impact.flips.find((f) => f.patient === "SYN-088")!;
     expect(syn088.responsible).toContain("anticoag-washout");
     const syn007 = impact.flips.find((f) => f.patient === "SYN-007")!;
-    expect(syn007.responsible).toEqual(["renal-safety"]);
+    expect(syn007.responsible).toEqual(["renal-safety", "nyha-class-iv"]);
+    expect(impact.flips.find((f) => f.patient === "SYN-061")!.responsible).toEqual(["nyha-class-iv"]);
   });
 
   it("says nothing changed when nothing changed", () => {

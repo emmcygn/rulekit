@@ -7,8 +7,8 @@
  *   1. every YAML artifact this repo ships validates against its schema;
  *   2. for a battery of malformed documents, the schema and the reference
  *      parser agree — both reject;
- *   3. the divergences that DO exist are asserted explicitly, so a gap between
- *      spec and implementation is a visible test, not a surprise.
+ *   3. governance constraints such as semantic versions and calendar dates
+ *      are rejected by both implementations.
  *
  * `validator.ts` is the small draft-2020-12 subset validator these use; the
  * negative cases below are also what stop it degenerating into a no-op.
@@ -89,7 +89,6 @@ const BAD_RULESETS: [name: string, yaml: string][] = [
   ["numeric op with a string value", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: "18"}}]`],
   ["empty all", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {all: []}}]`],
   ["empty code value set", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: exclusion, verbatim: v, when: {fact: medications, op: in, codes: {system: rxnorm, values: []}}}]`],
-  ["windowDays 0", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: exclusion, verbatim: v, when: {fact: medications, op: anyWithin, codes: {system: rxnorm, values: [w]}, windowDays: 0}}]`],
   ["exists leaf carrying a value", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: lvef, op: exists, value: 3}}]`],
   ["unknown top-level key", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\nowner: me\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
 ];
@@ -174,15 +173,17 @@ describe("source provenance is registry-agnostic", () => {
   });
 });
 
-describe("documented divergences: schema stricter than the reference parser", () => {
+describe("schema and reference parser agree on governance constraints", () => {
   const cases: [name: string, yaml: string][] = [
-    ["rulesetVersion must be semver (parser takes any string)", `ruleset: x\nrulesetVersion: "1.0"\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
-    ["code values must be strings (parser coerces numbers)", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: exclusion, verbatim: v, when: {fact: conditions, op: in, codes: {system: snomed, values: [88805009]}}}]`],
+    ["rulesetVersion must be semver", `ruleset: x\nrulesetVersion: "1.0"\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
+    ["effective must be a real date", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\neffective: 2026-99-99\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
+    ["source must not be empty", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\nsource: {}\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
+    ["code values must be strings", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: exclusion, verbatim: v, when: {fact: conditions, op: in, codes: {system: snomed, values: [88805009]}}}]`],
   ];
 
   it.each(cases)("%s", (_name, yaml) => {
     expect(validate(RULESET, parseYaml(yaml)).length).toBeGreaterThan(0);
-    expect(() => parseRuleSet(yaml)).not.toThrow();
+    expect(() => parseRuleSet(yaml)).toThrow();
   });
 
   it("the parser enforces uniqueness of criterion ids; JSON Schema cannot", () => {

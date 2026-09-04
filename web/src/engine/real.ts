@@ -9,13 +9,14 @@
  *     *is* the rule set. Core speaks parsed `RuleSet` objects. This file parses.
  *  2. Parsing is memoized. Dragging a threshold re-evaluates the whole cohort on
  *     every pointer move, which would otherwise re-parse the document per tick.
- *  3. A rule set the author is mid-keystroke on does not parse. The CLI is
+ *  3. A rule set the author is mid-keystroke on may not parse. The CLI is
  *     allowed to exit non-zero; a live editor is not, so a parse failure becomes
  *     a `Finding` the checks panel can render instead of an exception.
  *
  * Core's own `Finding.code` values are the ones the panel keys on:
  * `unknown-fact`, `type-mismatch`, `unit-mismatch`, `unknown-code-system`,
- * `unmodeled-criterion`, `contradictory-band`, `unsatisfiable-criterion`. The
+ * `unmodeled-criterion`, `analysis-incomplete`, `unsatisfiable-ruleset`,
+ * `unsatisfiable-criterion`. The
  * two codes below (`schema`, `fact-model-schema`) are this wrapper's, for the
  * failure core has no finding for because it never sees unparsed text.
  */

@@ -8,7 +8,7 @@ describe("interval arithmetic", () => {
     expect(fromLeaf("eq", 5)).toEqual({ lo: 5, hi: 5, loOpen: false, hiOpen: false });
   });
 
-  it("the spec's contradictory band: [30, ∞) ∩ (−∞, 45) = [30, 45), non-empty", () => {
+  it("ordinary inclusion/exclusion overlap: [30, ∞) ∩ (−∞, 45) = [30, 45), non-empty", () => {
     const band = intersect(fromLeaf("gte", 30), fromLeaf("lt", 45));
     expect(band).toEqual({ lo: 30, hi: 45, loOpen: false, hiOpen: true });
     expect(isEmpty(band)).toBe(false);

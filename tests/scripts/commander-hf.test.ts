@@ -103,7 +103,7 @@ describe("CI coverage", () => {
     const dogfood = pkg.scripts["dogfood"] ?? "";
     expect(dogfood).toContain("check rules/trials/commander-hf/ruleset.yaml");
     expect(dogfood).toContain("test rules/trials/commander-hf");
-    expect(dogfood).toContain("check rules/trials/demo-hf-001/ruleset@1.0.0.yaml");
+    expect(dogfood).toContain("check rules/trials/demo-hf-001/ruleset.yaml");
     expect(dogfood).toContain("test rules/trials/demo-hf-001");
   });
 });

@@ -38,6 +38,7 @@ vi.mock("../src/editor/RuleEditor.js", () => ({
 }));
 
 import { App } from "../src/App.js";
+import { DEMO_RULESET_CURRENT } from "../src/data/index.js";
 
 const tab = (name: string) => screen.getByRole("tab", { name: new RegExp(`^${name}`) });
 const editor = () => screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -49,7 +50,7 @@ describe("workbench shell", () => {
     expect(screen.getByText(/cohort n = 10/)).toBeDefined();
     const totals = screen.getByTestId("funnel-totals");
     expect(within(totals).getByText(/^7 screen fail$/)).toBeDefined();
-    expect(within(totals).getByText(/^3 pending chart review$/)).toBeDefined();
+    expect(within(totals).getByText(/^3 not evaluable$/)).toBeDefined();
     expect(within(totals).getByText(/^0 potentially eligible$/)).toBeDefined();
   });
 
@@ -86,54 +87,57 @@ describe("workbench shell", () => {
     render(<App />);
     fireEvent.click(tab("Amendment"));
     expect(screen.getByRole("heading", { name: "Amendment impact" })).toBeDefined();
-    expect(screen.getByTestId("amendment-headline").textContent).toContain("5 of 10");
+    expect(screen.getByTestId("amendment-headline").textContent).toContain("8 of 10");
     expect(screen.getByText(/renal-safety — 4 flips/)).toBeDefined();
     expect(screen.getByText(/anticoag-washout — 1 flip/)).toBeDefined();
+    expect(screen.getByText(/nyha-class-iv — 3 flips/)).toBeDefined();
     expect(screen.getByText(/Already enrolled/)).toBeDefined();
     expect(screen.getByText(/002-0041/)).toBeDefined();
   });
 
-  it("renders the checks tab with the seeded conflict and its evidence", () => {
+  it("renders explicit incomplete-analysis findings without inventing a conflict", () => {
     render(<App />);
     fireEvent.click(tab("Checks"));
-    expect(screen.getByText("contradictory band")).toBeDefined();
-    // Core's evidence string, rendered verbatim — including U+2212 and ∞.
-    expect(
-      screen.getByText(
-        "egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)",
-      ),
-    ).toBeDefined();
-    expect(screen.getByText(/1 conflict blocks release/)).toBeDefined();
+    expect(screen.getAllByText("analysis incomplete")).toHaveLength(2);
+    expect(screen.getByText(/nothing blocks release/)).toBeDefined();
   });
 
-  it("titles every finding the real engine emits, and counts them in the status bar", () => {
+  it("does not count informational scope findings as release problems", () => {
     render(<App />);
     fireEvent.click(tab("Checks"));
-    expect(screen.getByText("unit mismatch")).toBeDefined();
-    expect(screen.getByText("unmodeled criterion")).toBeDefined();
-    expect(screen.queryByText("unmodeled-criterion")).toBeNull();
-    expect(screen.getByText(/✕ 1 conflict$/)).toBeDefined();
-    expect(screen.getByText(/! 1 warning$/)).toBeDefined();
+    expect(screen.getAllByText("analysis incomplete")).toHaveLength(2);
+    expect(screen.queryByText(/✕ \d+ conflict/)).toBeNull();
+    expect(screen.queryByText(/! \d+ warning/)).toBeNull();
   });
 
   it("flags every tab as stale when the document stops parsing, and does not count down", async () => {
     render(<App />);
     const badge = () => Number(tab("Checks").textContent!.replace(/\D/g, "")) || 0;
     const before = badge();
-    expect(before).toBe(2);
+    expect(before).toBe(0);
 
     fireEvent.change(editor(), { target: { value: ":::: not yaml [ { unclosed" } });
     expect(screen.getByTestId("stale-banner")).toBeDefined();
 
     fireEvent.click(tab("Checks"));
-    // The parse error is added to the last valid version's findings — the badge
-    // goes UP. The shipped build dropped 2 → 1 when the file broke (operator M6).
+    // The live parse error is shown alongside retained findings for the last
+    // valid version, so quantitative panels never evaluate malformed input.
     expect(await screen.findByText("rule set does not parse")).toBeDefined();
-    expect(badge()).toBeGreaterThanOrEqual(before);
-    expect(screen.getByText("contradictory band")).toBeDefined();
+    expect(badge()).toBeGreaterThan(before);
+    expect(screen.getAllByText("analysis incomplete")).toHaveLength(2);
     expect(screen.getAllByText(/\(last valid version\)/).length).toBeGreaterThan(0);
     // …and the header no longer claims a version the document does not have.
     expect(screen.queryByText(/static analysis of ruleset v/)).toBeNull();
+  });
+
+  it("keeps the last valid results when a parsed edit fails a hard engine check", async () => {
+    render(<App />);
+    fireEvent.change(editor(), {
+      target: { value: DEMO_RULESET_CURRENT.replace("value: 30, unit: mL/min/1.73m2", "value: 30, unit: mL/min") },
+    });
+    expect(screen.getByTestId("stale-banner").textContent).toContain("not valid");
+    fireEvent.click(tab("Checks"));
+    expect(await screen.findByText("unit mismatch")).toBeDefined();
   });
 
   it("keeps the stale banner on the quantitative tabs too", () => {
@@ -215,12 +219,12 @@ describe("workbench shell", () => {
     fireEvent.click(tab("Screening funnel"));
     const totals = screen.getByTestId("funnel-totals");
     expect(within(totals).getByText(/^6 screen fail$/)).toBeDefined();
-    expect(within(totals).getByText(/^4 pending chart review$/)).toBeDefined();
+    expect(within(totals).getByText(/^4 not evaluable$/)).toBeDefined();
 
     // The drill-down badge agrees with the totals it sits under.
     fireEvent.click(screen.getByText("nyha-class-iv"));
     fireEvent.click(screen.getByRole("button", { name: /SYN-019/ }));
-    expect(screen.getByTestId("drill-band").textContent).toContain("pending chart review");
+    expect(screen.getByTestId("drill-band").textContent).toContain("not evaluable");
   });
 
   it("settles the chart review from a confirmed NYHA, and the funnel moves (cluster C)", () => {
@@ -232,7 +236,7 @@ describe("workbench shell", () => {
     fireEvent.click(tab("Screening funnel"));
     const totals = screen.getByTestId("funnel-totals");
     expect(within(totals).getByText(/^1 potentially eligible$/)).toBeDefined();
-    expect(within(totals).getByText(/^3 pending chart review$/)).toBeDefined();
+    expect(within(totals).getByText(/^3 not evaluable$/)).toBeDefined();
   });
 
   it("excludes the patient when the reviewer records NYHA class IV", () => {

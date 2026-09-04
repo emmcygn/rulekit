@@ -86,11 +86,10 @@ describe("computeAttrition — per-criterion columns", () => {
     for (const r of a.rows) expect(r.failsAlone).toBeGreaterThanOrEqual(r.removedSequential);
   });
 
-  it("soleReason counts only patients every other MODELED criterion passes", () => {
-    expect(row("adult").soleReason).toBe(1); // P1
-    expect(row("renal").soleReason).toBe(1); // P3
-    // P2 fails both, so relaxing either one alone would not admit them.
-    expect(a.rows.reduce((n, r) => n + r.soleReason, 0)).toBe(2);
+  it("soleReason does not claim eligibility while another criterion is unknown", () => {
+    expect(row("adult").soleReason).toBe(0);
+    expect(row("renal").soleReason).toBe(0);
+    expect(a.rows.reduce((n, r) => n + r.soleReason, 0)).toBe(0);
   });
 
   it("an unmodeled criterion drains nobody — it is parked in chart review", () => {

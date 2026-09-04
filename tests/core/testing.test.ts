@@ -25,6 +25,16 @@ cases:
     expect(r.ok).toBe(false);
   });
 
+  it("cannot pass vacuously when a programmatic suite omits overall", () => {
+    const r = runSuite(RS, { cases: [{ name: "empty expectation", facts: { age: 40, egfr: 60 }, expect: {} }] });
+    expect(r.ok).toBe(false);
+    expect(r.cases[0]!.mismatches[0]).toMatchObject({ key: "overall", expected: "(required)" });
+  });
+
+  it("the parser rejects a suite without an overall assertion", () => {
+    expect(() => parseTestSuite(`cases:\n  - { name: empty, facts: { age: 40 }, expect: {} }`)).toThrow(/must assert `overall`/);
+  });
+
   it("coverage counts verdict directions and flags one-sided criteria", () => {
     const suite = parseTestSuite(`
 cases:
@@ -49,7 +59,7 @@ describe("deadRules", () => {
       { patient: "P1", facts: { age: 40, egfr: 60 } },
       { patient: "P2", facts: { age: 12, egfr: 80 } },
     ];
-    expect(deadRules(RS, corpus)).toEqual([{ criterion: "renal-safety", reason: "never fires on the corpus (0 of 2 patients)" }]);
+    expect(deadRules(RS, corpus)).toEqual([{ criterion: "renal-safety", reason: "never fires on the corpus (0 of 2 patients; 0 unknown)" }]);
   });
 
   it("an inclusion that never fails on the corpus is dead", () => {
@@ -57,7 +67,7 @@ describe("deadRules", () => {
       { patient: "P1", facts: { age: 40, egfr: 30 } },
       { patient: "P2", facts: { age: 70, egfr: 80 } },
     ];
-    expect(deadRules(RS, corpus)).toEqual([{ criterion: "age-min", reason: "never fails on the corpus (0 of 2 patients)" }]);
+    expect(deadRules(RS, corpus)).toEqual([{ criterion: "age-min", reason: "never fails on the corpus (0 of 2 patients; 0 unknown)" }]);
   });
 
   it("nothing dead when both directions occur", () => {

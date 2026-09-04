@@ -1,9 +1,8 @@
 /**
  * Adversarial probes — Kleene edge interactions (attack surface 1).
  *
- * These tests assert what the engine ACTUALLY does. Where the behaviour is
- * wrong or misleading the assertion is annotated `BUG:` / `MISLEADS:` with the
- * clinical reading that goes wrong. Nothing in src/ is modified.
+ * These tests pin the repaired engine behavior and retain one explicit
+ * closed-world-list limitation so its clinical interpretation stays visible.
  */
 import { describe, it, expect } from "vitest";
 import { evalCondition, evalPatient } from "../../src/core/evaluator.js";
@@ -23,11 +22,10 @@ const FM: FactModel = {
   },
 };
 
-describe("A1 — `exists` is two-valued, so it launders a missing safety lab into a definite verdict", () => {
+describe("A1 — `exists` preserves uncertainty for missing data", () => {
   // Spec §5, verbatim: "a leaf condition over a missing fact evaluates `unknown`."
-  // `exists` does not. That is defensible in isolation, but it lets an author
-  // write the guard idiom below and get `eligible` for a patient whose renal
-  // function nobody measured.
+  // The guard idiom below must not turn an unmeasured renal fact into an
+  // eligible outcome.
   const rs: RuleSet = {
     ruleset: "renal-guard",
     rulesetVersion: "1.0.0",
@@ -44,11 +42,10 @@ describe("A1 — `exists` is two-valued, so it launders a missing safety lab int
     ],
   };
 
-  it("missing eGFR yields `eligible`, not `undetermined`", () => {
+  it("missing eGFR yields `undetermined`, never eligible", () => {
     const noLab = evalPatient(rs, patient({ age: 70 }, "NO-EGFR"));
-    expect(noLab.results.find((r) => r.id === "severe-renal-impairment")!.verdict).toBe("pass");
-    // MISLEADS: the patient has no kidney function on file at all.
-    expect(noLab.overall).toBe("eligible");
+    expect(noLab.results.find((r) => r.id === "severe-renal-impairment")!.verdict).toBe("unknown");
+    expect(noLab.overall).toBe("undetermined");
 
     // Drop the guard and the same patient is correctly undetermined.
     const unguarded: RuleSet = {
@@ -58,15 +55,14 @@ describe("A1 — `exists` is two-valued, so it launders a missing safety lab int
     expect(evalPatient(unguarded, patient({ age: 70 }, "NO-EGFR")).overall).toBe("undetermined");
   });
 
-  it("spec §5's blanket rule ('leaf over a missing fact → unknown') is false for exists", () => {
-    expect(evalCondition({ fact: "egfr", op: "exists" }, patient({})).result).toBe("false");
+  it("the blanket missing-fact rule applies to exists too", () => {
+    expect(evalCondition({ fact: "egfr", op: "exists" }, patient({})).result).toBe("unknown");
     expect(evalCondition({ fact: "egfr", op: "lt", value: 30 }, patient({})).result).toBe("unknown");
   });
 });
 
-describe("A2 — `exists` escapes the type lint entirely", () => {
-  // lint.ts only type-checks NUMERIC_OPS and CODE_OPS. `exists` is in neither
-  // set, so it is legal on any fact of any type and nothing warns.
+describe("A2 — `exists` cannot masquerade as boolean equality", () => {
+  // Presence is not boolean truth; lint must force authors to say `eq: true`.
   const rs: RuleSet = {
     ruleset: "exists-lint",
     rulesetVersion: "1.0.0",
@@ -81,13 +77,13 @@ describe("A2 — `exists` escapes the type lint entirely", () => {
     ],
   };
 
-  it("`exists` on a boolean fact recorded as false fires the exclusion, silently", () => {
-    expect(lintRuleSet(rs, FM)).toEqual([]); // no finding at all
-    const p = evalPatient(rs, patient({ on_anticoagulant: false }, "NOT-ON-DOAC"));
-    // BUG (authoring trap): the record explicitly says "not on an anticoagulant"
-    // and the engine excludes them for it.
-    expect(p.results[0]!.verdict).toBe("fail");
-    expect(p.overall).toBe("ineligible");
+  it("lint blocks exists on a boolean and eq true expresses the intended rule", () => {
+    expect(lintRuleSet(rs, FM).find((f) => f.code === "exists-value-type")?.level).toBe("error");
+    const corrected: RuleSet = { ...rs, criteria: [{ ...rs.criteria[0]!, when: { fact: "on_anticoagulant", op: "eq", value: true } }] };
+    expect(lintRuleSet(corrected, FM)).toEqual([]);
+    const p = evalPatient(corrected, patient({ on_anticoagulant: false }, "NOT-ON-DOAC"));
+    expect(p.results[0]!.verdict).toBe("pass");
+    expect(p.overall).toBe("eligible");
   });
 });
 
@@ -198,7 +194,7 @@ describe("A5 — anyWithin window arithmetic", () => {
     expect(evalCondition(mk(90), p).result).toBe("true");
   });
 
-  it("windowDays: 0 is rejected by the schema — 'administered today' is inexpressible", () => {
+  it("windowDays: 0 expresses an event administered today", () => {
     const yaml = `
 ruleset: w0
 rulesetVersion: 1.0.0
@@ -209,6 +205,6 @@ criteria:
     verbatim: "IV inotropes today"
     when: { fact: medications, op: anyWithin, codes: { system: rxnorm, values: ["855332"] }, windowDays: 0 }
 `;
-    expect(() => parseRuleSet(yaml)).toThrow(/greater than 0|positive|>0/i);
+    expect(() => parseRuleSet(yaml)).not.toThrow();
   });
 });

@@ -65,13 +65,13 @@ function targetsIn(
     fact: c.fact,
     op: c.op,
   };
-  if ("value" in c) {
+  if ("value" in c && typeof c.value === "number") {
     const sym = symbolOf(c.op);
     out.push({
       ...common,
       knob: "value",
       value: c.value,
-      unit: c.unit,
+      unit: "unit" in c ? c.unit : undefined,
       path: [...base, "value"],
       label: `${label(c.fact)} ${sym} ${c.value}`,
     });

@@ -11,7 +11,8 @@
  *
  * Supported: $ref (local pointers), type (incl. arrays and `integer`), enum,
  * const, properties, required, additionalProperties, propertyNames, items,
- * minItems, minLength, minimum, maximum, exclusiveMinimum, pattern, oneOf,
+ * minItems, minLength, minProperties, minimum, maximum, exclusiveMinimum,
+ * pattern, format=date, oneOf,
  * anyOf, allOf, not, if/then/else. Anything else in a schema is ignored, so
  * keep the schema files inside this set.
  */
@@ -70,6 +71,17 @@ export function validate(schema: Schema, data: unknown, root: Schema = schema, p
   if (typeof data === "string") {
     if (typeof schema.minLength === "number" && data.length < schema.minLength) fail(`shorter than minLength ${schema.minLength}`);
     if (typeof schema.pattern === "string" && !new RegExp(schema.pattern).test(data)) fail(`does not match ${schema.pattern}`);
+    if (schema.format === "date") {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+      const valid = match !== null && (() => {
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const parsed = new Date(Date.UTC(year, month - 1, day));
+        return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+      })();
+      if (!valid) fail("is not a real ISO-8601 calendar date");
+    }
   }
   if (typeof data === "number") {
     if (typeof schema.minimum === "number" && data < schema.minimum) fail(`below minimum ${schema.minimum}`);
@@ -84,6 +96,7 @@ export function validate(schema: Schema, data: unknown, root: Schema = schema, p
   }
   if (typeMatches(data, "object")) {
     const obj = data as Record<string, unknown>;
+    if (typeof schema.minProperties === "number" && Object.keys(obj).length < schema.minProperties) fail(`fewer than minProperties ${schema.minProperties}`);
     const props = (schema.properties ?? {}) as Record<string, Schema>;
     for (const key of (schema.required ?? []) as string[]) {
       if (!(key in obj)) fail(`missing required property "${key}"`);

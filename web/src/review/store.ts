@@ -189,7 +189,7 @@ function factsIn(c: Condition, out: Set<string>): void {
 
 /**
  * Facts this rule set can actually act on: every fact a criterion's condition
- * reads, plus the facts that settle one of its unmodeled criteria by chart
+ * reads, plus any legacy facts that settle an unmodeled criterion by chart
  * review. Anything else in the queue is a chart-review note, not a decision the
  * funnel will ever reflect — and the card says so instead of implying impact.
  */

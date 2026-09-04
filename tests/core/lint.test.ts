@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { lintRuleSet } from "../../src/core/lint.js";
+import { lintPatient, lintRuleSet } from "../../src/core/lint.js";
 import { parseRuleSet, parseFactModel } from "../../src/core/schema.js";
 
 const FM = parseFactModel(`
@@ -8,6 +8,8 @@ facts:
   age: { type: number, unit: years }
   egfr: { type: number, unit: mL/min/1.73m2 }
   medications: { type: code, systems: [rxnorm, rxnorm-class] }
+  sex: { type: enum, values: [female, male] }
+  consented: { type: boolean }
 `);
 
 const rs = (body: string) => parseRuleSet(`
@@ -19,7 +21,7 @@ ${body}`);
 
 describe("lintRuleSet", () => {
   it("clean rule set → no error findings", () => {
-    const r = rs(`  - { id: a, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 18 } }`);
+    const r = rs(`  - { id: a, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 18, unit: years } }`);
     expect(lintRuleSet(r, FM).filter((f) => f.level === "error")).toHaveLength(0);
   });
 
@@ -30,10 +32,10 @@ describe("lintRuleSet", () => {
     expect(f?.criteria).toEqual(["a"]);
   });
 
-  it("unit mismatch → warning naming both units", () => {
+  it("unit mismatch → blocking error naming both units", () => {
     const r = rs(`  - { id: a, kind: inclusion, verbatim: v, when: { fact: egfr, op: gte, value: 30, unit: mL/min } }`);
     const f = lintRuleSet(r, FM).find((x) => x.code === "unit-mismatch");
-    expect(f?.level).toBe("warning");
+    expect(f?.level).toBe("error");
     expect(f?.message).toContain("mL/min");
     expect(f?.message).toContain("mL/min/1.73m2");
   });
@@ -50,5 +52,37 @@ describe("lintRuleSet", () => {
     const out = lintRuleSet(r, FM);
     expect(out.find((x) => x.code === "type-mismatch")?.level).toBe("error");
     expect(out.find((x) => x.code === "unmodeled-criterion")?.level).toBe("info");
+  });
+
+  it("rejects a rule set bound to a different fact model", () => {
+    const r = { ...rs(`  - { id: a, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 18, unit: years } }`), factModel: "other/v1" };
+    expect(lintRuleSet(r, FM).find((x) => x.code === "fact-model-mismatch")?.level).toBe("error");
+  });
+
+  it("validates enum/boolean equality and enum membership", () => {
+    const good = rs(`
+  - { id: a, kind: inclusion, verbatim: v, when: { fact: sex, op: eq, value: female } }
+  - { id: b, kind: inclusion, verbatim: v, when: { fact: consented, op: eq, value: true } }`);
+    expect(lintRuleSet(good, FM).filter((f) => f.level === "error")).toEqual([]);
+    const bad = rs(`  - { id: a, kind: inclusion, verbatim: v, when: { fact: sex, op: eq, value: unknown } }`);
+    expect(lintRuleSet(bad, FM).some((f) => f.code === "unknown-enum-value")).toBe(true);
+  });
+
+  it("rejects presence-only checks for enum and boolean facts", () => {
+    const r = rs(`  - { id: a, kind: inclusion, verbatim: v, when: { fact: consented, op: exists } }`);
+    expect(lintRuleSet(r, FM).some((f) => f.code === "exists-value-type")).toBe(true);
+  });
+});
+
+describe("lintPatient", () => {
+  it("catches declared type, enum, and code-system violations", () => {
+    const out = lintPatient({ patient: "P", facts: {
+      age: "old",
+      sex: "unknown",
+      consented: "yes",
+      medications: [{ system: "atc", code: "B01" }],
+    } }, FM);
+    expect(out).toHaveLength(4);
+    expect(out.every((f) => f.code === "invalid-patient-fact" && f.level === "error")).toBe(true);
   });
 });

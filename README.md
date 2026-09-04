@@ -71,22 +71,18 @@ repo: the grounding gate, the review pane, and the eval suite wired into CI.
 A substantial protocol amendment carries a **median direct cost of $141K in
 Phase II and $535K in Phase III**, and roughly **45% of substantial amendments
 are judged avoidable** (Tufts CSDD, *Impact of Protocol Amendments on Clinical
-Trial Performance and Cost*). Eligibility criteria are a recurring cause: a
-threshold that contradicts another threshold, a criterion nobody realised
+Trial Performance and Cost*). Eligibility criteria are a recurring cause: two
+requirements no patient can satisfy together, a criterion nobody realised
 excluded a third of the screening pool, a change whose effect on already-randomised
 participants surfaces only after it ships.
 
-Two of those are catchable before the protocol leaves the building, by a tool
-that can read the criteria as logic:
+Two of those are catchable before the protocol leaves the building. For
+example, two inclusions requiring `age >= 65` and `age <= 40` produce:
 
-```console
-$ npm run rules -- check rules/trials/demo-hf-001/ruleset.yaml \
-    --fact-model packs/trials/fact-model.yaml
-
-✕ ERROR contradictory-band [egfr-min, renal-safety] every patient with egfr in [30, 45) passes inclusion and is then excluded by "renal-safety" — for all inputs, not just a test corpus
-    egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)
+```text
+✕ ERROR contradictory-inclusions [older-adult, young-adult] no patient can pass:
+  the inclusion constraints on age intersect to the empty set
 ```
-<sub>Abridged — the full output is in the quickstart below.</sub>
 
 The third one — who is already enrolled and now fails — is what the behavioural
 diff and the workbench's Amendment view are for.
@@ -149,17 +145,16 @@ npm ci
 ```console
 $ npm run rules -- check rules/trials/demo-hf-001/ruleset.yaml \
     --fact-model packs/trials/fact-model.yaml
-✕ ERROR contradictory-band [egfr-min, renal-safety] every patient with egfr in [30, 45) passes inclusion and is then excluded by "renal-safety" — for all inputs, not just a test corpus
-    egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)
-! WARNING unit-mismatch [egfr-min] "egfr-min" compares in mL/min; the fact model declares "egfr" in mL/min/1.73m2. Values are compared as-is — declare the same unit or add a conversion.
-1 conflict(s), 1 warning(s)
+i INFO analysis-incomplete [anticoag-washout] ... this criterion is not proven conflict-free
+i INFO analysis-incomplete [nyha-class-iv] ... this criterion is not proven conflict-free
+0 conflict(s), 0 warning(s) — static analysis is not a proof of consistency.
 $ echo $?
-1
+0
 ```
-<sub>Abridged: INFO-level lines omitted.</sub>
+<sub>Abridged: long INFO-level messages are trimmed.</sub>
 
-Non-zero exit — this is a CI gate. `DEMO-HF-001` is the teaching pack and its
-v1.1.0 has the contradiction seeded on purpose. The real pack is clean:
+Hard lint and proven contradiction findings exit non-zero, so this is a CI
+gate. The real COMMANDER HF pack is clean too:
 
 ```console
 $ npm run rules -- check rules/trials/commander-hf/ruleset.yaml \
@@ -170,26 +165,28 @@ i INFO unmodeled-criterion [medically-stable] "Must be medically stable in terms
 <sub>Abridged: the real output prints all four unmodeled criteria, in protocol
 order, each with its full verbatim text. One is shown here.</sub>
 
-Scope, stated so the green result is not over-read: the conflict passes are
-interval arithmetic over single-fact constraints. Within that scope the finding
-holds *for all inputs*; outside it (cross-fact contradictions, code-set
-overlaps, conditions containing `any`/`not`) nothing is claimed. See
+Scope, stated so the green result is not over-read: the conflict passes prove
+numeric interval contradictions and directly incompatible code-set constraints
+reachable through `all`. Conditions containing `any`/`not` and other unsupported
+logic emit `analysis-incomplete`; cross-fact implications are not solved. See
 [FORMAT.md §4](FORMAT.md#4-static-analysis-and-its-scope).
 
 ### 2. Run the rule-set tests, with firing coverage
 
 ```console
 $ npm run rules -- test rules/trials/demo-hf-001 \
-    --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients
-10/10 cases pass
+    --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients --coverage
+13/13 cases pass
 coverage (pass/fail/unknown):
-  age-min: 9/1/0
-  lvef-max: 9/1/0
-  egfr-min: 9/0/1  ⚠ never fails
-  anticoag-washout: 8/1/1
-  renal-safety: 8/1/1
-  ...
-⚠ dead rule: egfr-min — never fails on the corpus (0 of 10 patients)
+  age-min: 12/1/0
+  lvef-max: 12/1/0
+  egfr-min: 11/1/1
+  anticoag-washout: 11/1/1
+  renal-safety: 10/2/1
+  nyha-class-iv: 1/1/11
+corpus dead-rule scan (10 patients):
+⚠ dead rule: egfr-min — never fails on the corpus (0 of 10 patients; 0 unknown)
+⚠ dead rule: nyha-class-iv — always unknown on the corpus (10 of 10 patients); the required fact may be absent or invalid
 ```
 
 Coverage here means *firing* coverage: a criterion that never fails on realistic
@@ -199,9 +196,14 @@ data is a criterion nobody has actually tested, and it gets flagged.
 
 ```console
 $ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.0.yaml \
-    rules/trials/demo-hf-001/ruleset.yaml --corpus fixtures/patients
+    rules/trials/demo-hf-001/ruleset.yaml \
+    --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients
+rulesetVersion 1.0.0 → 1.2.0
 + added renal-safety
 ~ changed anticoag-washout
+~ changed nyha-class-iv
+~ metadata protocol
+~ metadata effective
 5 patient(s) flip:
   SYN-007: undetermined → ineligible  (renal-safety)
   SYN-019: undetermined → ineligible  (renal-safety)
@@ -209,6 +211,7 @@ $ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.0.yaml \
   SYN-058: undetermined → ineligible  (renal-safety)
   SYN-088: undetermined → ineligible  (anticoag-washout)
 ```
+<sub>Abridged: INFO-level scope findings are omitted.</sub>
 
 Structural diff on top, behavioural diff underneath — *which patients change
 answer, and which criterion did it*. That is the amendment question.
@@ -217,7 +220,7 @@ answer, and which criterion did it*. That is the amendment question.
 
 ```console
 $ npm run rules -- screen rules/trials/commander-hf/ruleset.yaml \
-    --corpus corpus/normalized --out screen.json
+    --fact-model packs/trials/fact-model.yaml --corpus corpus/normalized --out screen.json
 screened 100: 0 eligible · 97 ineligible · 3 undetermined
 ```
 
@@ -355,13 +358,13 @@ Whole pipeline is reproducible byte-for-byte from a seed. Nothing calls
 
 ## Known limitations
 
-- **Static analysis is single-fact and `all`-only.** Cross-fact contradictions,
-  code-set overlaps, and criteria containing `any`/`not` are outside the
-  conflict passes. Interval arithmetic, explicitly not an SMT solver.
-- **`exists` cannot distinguish "never measured" from "measured and
-  quarantined".** It returns `false` for an absent fact, and the normalize stage
-  deliberately omits values it cannot trust. Do not read `exists` as "was this
-  test performed". ([FORMAT.md §8](FORMAT.md#8-known-limitations).)
+- **Static analysis is deliberately incomplete.** It proves interval and simple
+  code-set contradictions through `all` chains. Cross-fact implications and
+  complete reasoning through `any`/`not` remain outside scope; those constructs
+  produce an explicit `analysis-incomplete` finding.
+- **`exists` means a usable value is present, not “a test was performed.”** A
+  missing or quarantined value evaluates `unknown`, preserving the distinction
+  between known presence and missing evidence. ([FORMAT.md §8](FORMAT.md#8-known-limitations).)
 - **Unmodeled criteria need chart review.** 4 of COMMANDER HF's 12 criteria are
   carried as text and always evaluate `unknown`. A rule set is not a screening
   decision, and `undetermined` is a first-class outcome for exactly this reason.
@@ -394,7 +397,7 @@ required.
    deleting it is the one unforgivable move. Set `ruleset`, `rulesetVersion:
    1.0.0`, `factModel: patient-facts/v1`, and `source.registry` / `source.id` / `source.url` if
    it is a registered study (any registry: clinicaltrials.gov, isrctn.com, ...). [FORMAT.md](FORMAT.md) is the reference; the
-   condition language is four leaf forms and three combinators, and that is all.
+   condition language is five leaf forms and three combinators, and that is all.
 
 3. **Declare any new facts.** If your protocol screens on something
    `packs/trials/fact-model.yaml` does not declare, add it there with a type and
@@ -407,8 +410,8 @@ required.
      --fact-model packs/trials/fact-model.yaml
    ```
 
-   Fix errors. Warnings are advisory but `unit-mismatch` almost always means a
-   real bug.
+   Fix errors. Missing and mismatched units are blocking errors because the
+   engine never guesses a conversion.
 
 5. **Write the tests.** `tests.yaml` next to the rule set: one case per
    interesting patient shape, each a compact facts object plus the expected
@@ -427,7 +430,7 @@ required.
 
    ```bash
    npm run rules -- test rules/trials/my-trial \
-     --fact-model packs/trials/fact-model.yaml --corpus corpus/normalized
+     --fact-model packs/trials/fact-model.yaml --corpus corpus/normalized --coverage
    ```
 
    Aim for no `⚠ never fails` lines. A criterion that never fires on realistic

@@ -92,7 +92,7 @@ export function AmendmentView({
           }`,
       ),
       "",
-      `In the future screening pool, ${impact.flips.length} of ${cohort.length} change outcome (${deltaLine(impact)}).`,
+      `In the future screening pool, ${impact.flips.length} of ${cohort.length} change displayed screening band (${deltaLine(impact)}).`,
       "",
       ...groups.flatMap((g) => [
         `${refOf(g.criterionId)} ${g.criterionId} — ${g.flips.length} flip${g.flips.length === 1 ? "" : "s"}`,
@@ -182,7 +182,7 @@ export function AmendmentView({
         <b>
           {impact.flips.length} of {cohort.length}
         </b>{" "}
-        change outcome <span className="ink2">({deltaLine(impact)})</span>.
+        change displayed screening band <span className="ink2">({deltaLine(impact)})</span>.
         <div className="ink3" style={{ fontSize: 11.5, marginTop: 2 }}>
           every patient named below is one of those {impact.flips.length} · {asOf}
         </div>

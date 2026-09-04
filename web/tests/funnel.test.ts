@@ -137,11 +137,11 @@ describe("computeFunnel — bundled demo cohort", () => {
     expect(f.n).toBe(10);
     expect(f.bands).toEqual({
       "screen-fail": 7,
-      "not-evaluable": 0,
-      "pending-chart-review": 3,
+      "not-evaluable": 3,
+      "pending-chart-review": 0,
       "potentially-eligible": 0,
     });
-    expect(summaryLine(f.bands)).toBe("7 screen fail · 3 pending chart review");
+    expect(summaryLine(f.bands)).toBe("7 screen fail · 3 not evaluable");
   });
 
   it("reconciles the waterfall's removals with the screen-fail band", () => {
@@ -149,11 +149,8 @@ describe("computeFunnel — bundled demo cohort", () => {
     expect(removed).toBe(f.bands["screen-fail"]);
   });
 
-  it("shows the amendment's renal exclusion as the biggest sole-reason bucket", () => {
-    const renal = f.rows.find((r) => r.id === "renal-safety")!;
-    const others = f.rows.filter((r) => r.id !== "renal-safety");
-    expect(renal.soleReason).toBeGreaterThan(0);
-    for (const row of others) expect(row.soleReason).toBeLessThanOrEqual(renal.soleReason);
+  it("does not claim any sole reason while NYHA remains unknown", () => {
+    expect(f.rows.every((row) => row.soleReason === 0)).toBe(true);
   });
 
   it("excludes SYN-042 from renal-safety's sole reason: their washout is unknown", () => {
@@ -169,12 +166,13 @@ describe("computeFunnel — bundled demo cohort", () => {
     // leave SYN-042 undetermined on the washout, not eligible.
     const renal = f.rows.find((r) => r.id === "renal-safety")!;
     expect(renal.patients.fail).toHaveLength(4);
-    expect(renal.soleReason).toBe(3);
+    expect(renal.soleReason).toBe(0);
   });
 
-  it("never drains the pool at the unmodeled criterion", () => {
+  it("never drains the pool at the missing enum criterion", () => {
     const nyha = f.rows.find((r) => r.id === "nyha-class-iv")!;
     expect(nyha.removedSequential).toBe(0);
-    expect(nyha.chartReview).toBe(f.bands["pending-chart-review"]);
+    expect(nyha.unknown).toBe(3);
+    expect(nyha.chartReview).toBe(0);
   });
 });

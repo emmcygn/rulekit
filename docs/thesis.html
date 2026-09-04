@@ -397,7 +397,7 @@
           <div class="cl" data-step="2+" data-hl="2"><span class="n">2</span><span>  <span class="k">ref</span>: I3</span></div>
           <div class="cl" data-step="2+" data-hl="2"><span class="n">3</span><span>  <span class="k">kind</span>: inclusion</span></div>
           <div class="cl" data-step="3+" data-hl="3"><span class="n">4</span><span>  <span class="k">verbatim</span>: <span class="s">"eGFR at least 30 mL/min/1.73m²"</span></span></div>
-          <div class="cl" data-step="4+" data-hl="4"><span class="n">5</span><span>  <span class="k">when</span>: { <span class="k">fact</span>: egfr, <span class="k">op</span>: gte, <span class="k">value</span>: 30 }</span></div>
+          <div class="cl" data-step="4+" data-hl="4"><span class="n">5</span><span>  <span class="k">when</span>: { <span class="k">fact</span>: egfr, <span class="k">op</span>: gte, <span class="k">value</span>: 30, <span class="k">unit</span>: mL/min/1.73m2 }</span></div>
         </div>
       </figure>
       <div class="pc-notes">
@@ -418,7 +418,7 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">03</span>the engine</p>
     <h2 data-reveal>A condition language you can hold in your head</h2>
-    <p class="lede" data-reveal>Rules compose through exactly three combinators — <span class="mono">all</span>, <span class="mono">any</span>, <span class="mono">not</span> — over four families of leaf. Nothing else. No arbitrary expressions, ever.</p>
+    <p class="lede" data-reveal>Rules compose through exactly three combinators — <span class="mono">all</span>, <span class="mono">any</span>, <span class="mono">not</span> — over five families of leaf. Nothing else. No arbitrary expressions, ever.</p>
   </div>
   <div class="wrap-wide">
     <figure class="fig" id="tree-fig" data-reveal="fade" role="group" aria-label="A condition tree: an all node over a numeric leaf, an any node with two leaves, and a not node with one leaf">
@@ -470,7 +470,7 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">The whole language: <span class="mono">all</span>/<span class="mono">any</span>/<span class="mono">not</span> nesting over numeric comparison, code-set membership, presence (<span class="mono">exists</span>), and one temporal window (<span class="mono">anyWithin</span>, days only). That closure is a design choice — general-purpose rule engines can only be understood by running them; this one can be analysed statically, which is what chapter 04 cashes in.</figcaption>
+      <figcaption class="fig-cap">The whole language: <span class="mono">all</span>/<span class="mono">any</span>/<span class="mono">not</span> nesting over numeric comparison, enum/boolean equality, code-set membership, presence (<span class="mono">exists</span>), and one temporal window (<span class="mono">anyWithin</span>, days only). That closure is a design choice — general-purpose rule engines can only be understood by running them; this one can be analysed statically, which is what chapter 04 cashes in.</figcaption>
     </figure>
   </div>
   <div class="wrap">
@@ -638,8 +638,8 @@
 <section class="sec" id="conflicts-intro" data-section data-title="Conflict detection">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">04</span>conflict detection</p>
-    <h2 data-reveal>Proving two criteria contradict — with no patients at all</h2>
-    <p class="lede" data-reveal>Because the language is closed, <span class="mono">rules check</span> can do interval arithmetic on the criteria themselves. What follows is the seeded contradiction in the teaching pack, exactly as the tool reports it. It is also a story about a claim that once went too far.</p>
+    <h2 data-reveal>Proving contradictions without inventing them</h2>
+    <p class="lede" data-reveal>Because the language is closed, <span class="mono">rules check</span> can do interval arithmetic on the criteria themselves. What follows is ordinary inclusion/exclusion overlap — and why treating it as a contradiction was a dangerous false positive.</p>
   </div>
 </section>
 
@@ -660,9 +660,9 @@
       </div>
 
       <div class="cf-figwrap">
-        <figure class="fig" role="group" aria-label="Number line showing the inclusion interval from 30 up, the exclusion interval below 45, and their contradictory overlap from 30 to 45" style="margin:0">
+        <figure class="fig" role="group" aria-label="Number line showing the inclusion interval from 30 up, the exclusion interval below 45, and their ordinary overlap from 30 to 45" style="margin:0">
           <div class="fig-scroll">
-          <svg viewBox="0 0 960 250" style="min-width:620px" role="img" aria-label="Number line for egfr. Inclusion bar slides in covering 30 to infinity, exclusion bar slides in covering everything below 45, and their intersection from 30 inclusive to 45 exclusive is highlighted as the contradictory band.">
+          <svg viewBox="0 0 960 250" style="min-width:620px" role="img" aria-label="Number line for egfr. Inclusion bar covers 30 to infinity, exclusion bar covers everything below 45, and their intersection from 30 inclusive to 45 exclusive is highlighted as an ordinary excluded band.">
             <g data-step="3+">
               <rect x="345" y="46" width="142.5" height="156" fill="#A6431E" fill-opacity=".12" class="cf-band-pulse"/>
               <line x1="345" y1="46" x2="345" y2="202" stroke="#A6431E" stroke-width="1.5"/>
@@ -705,9 +705,8 @@
         </div>
         <div data-step="3">
           <div>
-            <div class="evidence" aria-label="rules check output, verbatim">✕ ERROR contradictory-band [egfr-min, renal-safety] every patient with egfr in [30, 45) passes inclusion and is then excluded by "renal-safety" — for all inputs, not just a test corpus
-    egfr: inclusion admits [30, ∞) ∩ exclusion fires (−∞, 45) → contradictory band [30, 45)</div>
-            <div class="cf-note" style="margin-top:10px"><span class="nt">the flagship finding</span>That is the engine's output, verbatim. Not “a test patient hit a weird case” — a proof over the intervals themselves: <em>every possible patient</em> with eGFR in [30, 45) passes inclusion and is then excluded. <span class="mono">rules check</span> exits non-zero, so in CI this contradiction fails the build instead of failing the trial.</div>
+            <div class="evidence" aria-label="rules check output, verbatim">0 conflict(s), 0 warning(s) — static analysis covers interval and direct code-set proofs; incomplete criteria are labeled above.</div>
+            <div class="cf-note" style="margin-top:10px"><span class="nt">the corrected finding</span>Passing an inclusion and then firing an exclusion is exactly how eligibility logic works. The overlap identifies patients E3 removes; it does not prove the rule set admits nobody. CI blocks only when inclusions are mutually impossible or an exclusion covers the entire admitted domain.</div>
           </div>
         </div>
         <div data-step="4">
@@ -720,10 +719,10 @@
               </div>
               <div class="panel" style="display:flex;flex-direction:column;gap:10px;justify-content:center;align-items:flex-start">
                 <span class="stamp">no band claim</span>
-                <p style="font-size:13.5px;line-height:1.55;color:var(--ink2)">The checker stays silent — skipped, not downgraded.</p>
+                <p style="font-size:13.5px;line-height:1.55;color:var(--ink2)">The checker emits <span class="mono">analysis-incomplete</span>, not a false proof.</p>
               </div>
             </div>
-            <div class="cf-note" style="margin-top:10px"><span class="nt">the honesty beat — a true story</span>“For all inputs” is a sentence that must never be wrong. In adversarial review, an earlier checker claimed a band against an exclusion like this one — but an 85-year-old only fires it if the <em>second</em> conjunct also holds, and interval arithmetic can't show that it ever does. The claim was false. The fix: an exclusion whose <span class="mono">all</span>-chain touches more than one fact makes <strong>no claim at all</strong>. That false positive is now pinned as regression test B1 in <span class="mono">tests/adversarial/conflicts.test.ts</span>. The scope is stated just as plainly: single-fact constraints through <span class="mono">all</span> chains, interval arithmetic — explicitly not an SMT solver. A clean run means “no conflicts <em>within that scope</em>”, and the CLI prints the scope next to the clean result.</div>
+            <div class="cf-note" style="margin-top:10px"><span class="nt">the honesty beat</span>“For all inputs” is a sentence that must never be wrong. Necessary constraints outside opaque <span class="mono">any</span>/<span class="mono">not</span> branches are still checked, but unsupported logic receives an explicit scope finding. The checker uses interval and direct code-set proofs — explicitly not an SMT solver.</div>
           </div>
         </div>
       </div>
@@ -1047,13 +1046,13 @@
   </div>
 </section>
 
-<!-- Case 2: SYN-042 in the contradictory band -->
+<!-- Case 2: SYN-042 in the ordinary exclusion overlap -->
 <section class="scrub" id="b-case-042" data-scrub data-steps="6" style="height: 700vh">
   <div class="scrub-stage">
     <div class="b-stage-inner" style="max-width: 760px;">
-      <p class="b-kicker">case 2 · inside the band</p>
-      <h3>SYN-042 — the contradiction, worn by a person</h3>
-      <p class="b-stage-sub">The previous chapter found the band [30,&#8202;45) by interval arithmetic, for all inputs. This is what it looks like with someone standing in it.</p>
+      <p class="b-kicker">case 2 · inside an excluded band</p>
+      <h3>SYN-042 — an exclusion doing its job</h3>
+      <p class="b-stage-sub">The patient passes the minimum renal inclusion and then fires a stricter safety exclusion. That is an ineligible trace, not a contradiction.</p>
 
       <div class="b-pcard" data-step="0+">
         <div class="b-pcard-top">
@@ -1087,9 +1086,9 @@
         </div>
       </div>
 
-      <figure class="fig" role="group" aria-label="Number line showing the contradictory eGFR band from 30 to 45, with SYN-042 at 41 inside it" data-step="3+" style="margin-top: 16px;">
+      <figure class="fig" role="group" aria-label="Number line showing the ordinary excluded eGFR overlap from 30 to 45, with SYN-042 at 41 inside it" data-step="3+" style="margin-top: 16px;">
         <div class="fig-scroll">
-        <svg viewBox="0 0 640 158" role="img" aria-label="I3 admits eGFR of 30 and above; E3 fires below 45; the overlap from 30 to 45 traps SYN-042 at eGFR 41" style="width: 100%; min-width: 500px; height: auto; display: block;">
+        <svg viewBox="0 0 640 158" role="img" aria-label="I3 admits eGFR of 30 and above; E3 fires below 45; the overlap from 30 to 45 excludes SYN-042 at eGFR 41" style="width: 100%; min-width: 500px; height: auto; display: block;">
           <defs>
             <pattern id="b-hatch-band" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
               <line x1="0" y1="0" x2="0" y2="6" stroke="#A6431E" stroke-width="1.4" opacity="0.55"/>
@@ -1183,7 +1182,7 @@
   <div class="scrub-stage">
     <div class="b-stage-inner" style="max-width: 860px;">
       <h3>The screening funnel, live</h3>
-      <p class="b-stage-sub">10 synthetic fixture patients &#183; DEMO-HF-001 v3.0 &#183; ruleset v1.1.0</p>
+      <p class="b-stage-sub">10 synthetic fixture patients &#183; DEMO-HF-001 v3.0 &#183; ruleset v1.2.0</p>
 
       <div class="b-gauntlet" data-step="1+">
         <span class="b-gchip">I1 age-min</span>
@@ -1246,7 +1245,7 @@
             <span class="b-ui-logo"><i></i>rulekit</span>
             <span class="b-ui-pill">DEMO-HF-001</span>
             <span class="b-ui-pill">v3.0 &#183; Amd 2 &#183; effective 04-Aug-2026</span>
-            <span class="b-ui-pill">ruleset v1.1.0</span>
+            <span class="b-ui-pill">ruleset v1.2.0</span>
           </div>
           <div class="b-ui-tabs">
             <span class="b-ui-tab b-on">Screening funnel</span>
@@ -1312,8 +1311,8 @@
               <div class="b-strow"><i class="mk mk-pass"></i>I2 lvef-max &#8212; lvef = 38, required &lt;= 40</div>
               <div class="b-strow"><i class="mk mk-pass"></i>I3 egfr-min &#8212; egfr = 41, required &gt;= 30</div>
               <div class="b-strow"><i class="mk mk-unknown"></i>E1 anticoag-washout &#8212; medications missing &#8594; unknown</div>
-              <div class="b-strow"><i class="mk mk-fail"></i>E3 renal-safety &#8212; egfr = 41, required &lt; 45 <span style="color: var(--ink2);">(in contradictory band [30, 45) &#8212; see Checks)</span></div>
-              <div class="b-strow"><i class="mk mk-unknown"></i>E4 nyha-class-iv &#8212; unmodeled, chart review</div>
+              <div class="b-strow"><i class="mk mk-fail"></i>E3 renal-safety &#8212; egfr = 41, required &lt; 45</div>
+              <div class="b-strow"><i class="mk mk-unknown"></i>E4 nyha-class-iv &#8212; nyha_class missing &#8594; unknown</div>
             </div>
           </div>
         </div>
@@ -1344,7 +1343,7 @@
       <div class="b-vpills" data-step="0+">
         <span class="b-vpill">Protocol v2.0 &#183; ruleset v1.0.0</span>
         <span style="color: var(--ink2);">&#8594;</span>
-        <span class="b-vpill b-vpill-on">Protocol v3.0 (Amendment 2) &#183; ruleset v1.1.0</span>
+        <span class="b-vpill b-vpill-on">Protocol v3.0 (Amendment 2) &#183; ruleset v1.2.0</span>
         <span style="font-size: 11.5px; color: var(--ink2);">site-effective 04-Aug-2026</span>
       </div>
 
@@ -1399,10 +1398,11 @@
     <h3 data-reveal>The diff is a command, and a view</h3>
     <div class="prose" data-reveal><p>From the CLI, over the fixtures, verbatim:</p></div>
     <div class="evidence" data-reveal>$ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.0.yaml \
-    rules/trials/demo-hf-001/ruleset.yaml --corpus fixtures/patients
-rulesetVersion 1.0.0 &#8594; 1.1.0
+    rules/trials/demo-hf-001/ruleset.yaml --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients
+rulesetVersion 1.0.0 &#8594; 1.2.0
 + added renal-safety
 ~ changed anticoag-washout
+~ changed nyha-class-iv
 5 patient(s) flip:
   SYN-007: undetermined &#8594; ineligible  (renal-safety)
   SYN-019: undetermined &#8594; ineligible  (renal-safety)
@@ -1416,7 +1416,7 @@ rulesetVersion 1.0.0 &#8594; 1.1.0
             <span class="b-ui-logo"><i></i>rulekit</span>
             <span class="b-ui-pill">DEMO-HF-001</span>
             <span class="b-ui-pill">v3.0 &#183; Amd 2 &#183; effective 04-Aug-2026</span>
-            <span class="b-ui-pill">ruleset v1.1.0</span>
+            <span class="b-ui-pill">ruleset v1.2.0</span>
           </div>
           <div class="b-ui-tabs">
             <span class="b-ui-tab">Screening funnel</span>
@@ -1432,15 +1432,16 @@ rulesetVersion 1.0.0 &#8594; 1.1.0
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9.5 4.5L13 8l-3.5 3.5" stroke="#6B655C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <span class="b-ui-pill" style="font-size: 12px; height: 24px; color: var(--ink); border-color: var(--rule);">Protocol v3.0 (Amendment 2)</span>
               <span style="font-size: 11.5px; color: var(--ink2);">sponsor-issued 14-Jul-2026 &#183; IRB-approved 28-Jul-2026 &#183; site-effective 04-Aug-2026</span>
-              <span class="mono" style="margin-left: auto; font-size: 11px; color: var(--ink3);">ruleset v1.0.0 &#8594; v1.1.0</span>
+              <span class="mono" style="margin-left: auto; font-size: 11px; color: var(--ink3);">ruleset v1.0.0 &#8594; v1.2.0</span>
             </div>
             <div class="mono" style="font-size: 12px; line-height: 22px; padding: 10px 12px; background: var(--paper-alt); border-radius: 2px;">
               <div><b>+ added</b>&#160;&#160;exclusion <b>renal-safety</b> [E3] <span style="color: var(--ink2);">&#8212; &#8220;eGFR below 45 at screening&#8221;</span></div>
               <div><b>~ changed</b> <b>anticoag-washout</b> [E1] <span style="color: var(--ink2);">windowDays 14 &#8594; 30</span></div>
             </div>
-            <div style="font-size: 13px;"><b>5 of 10</b> fixtures flip undetermined &#8594; screen fail <span style="color: var(--ink2);">(3 remain not evaluable, was 8)</span>. All 5 flips are in that direction.</div>
+            <div style="font-size: 13px;"><b>8 of 10</b> fixtures change displayed screening band: 5 become screen fail, while 3 move from pending chart review to not evaluable now that E4 is modeled.</div>
             <div>
               <div class="b-agroup">E3 renal-safety &#8212; 4 flips</div>
+              <div class="b-agroup">E4 nyha-class-iv &#8212; 3 band reclassifications</div>
               <div class="b-arow"><span class="b-aid">SYN-007</span><span class="b-ameta">M &#183; 61y</span><span class="b-awhy">eGFR = 38 &#60; 45</span></div>
               <div class="b-arow"><span class="b-aid">SYN-019</span><span class="b-ameta">F &#183; 64y</span><span class="b-awhy">eGFR = 42 &#60; 45</span></div>
               <div class="b-arow"><span class="b-aid">SYN-042</span><span class="b-ameta">F &#183; 63y</span><span class="b-awhy">eGFR = 41 &#60; 45</span></div>
@@ -1561,7 +1562,7 @@ rulesetVersion 1.0.0 &#8594; 1.1.0
 
       <div class="b-e4frag" data-step="2+">
         <span class="b-swap"><i class="mk mk-unknown b-before"></i><i class="mk mk-pass b-after"></i></span>
-        <span>E4 nyha-class-iv &#8212; <span class="b-swap"><span class="b-before">unknown &#183; chart review pending</span><span class="b-after">resolved: class III is not class IV &#8212; the exclusion cannot fire</span></span></span>
+        <span>E4 nyha-class-iv &#8212; <span class="b-swap"><span class="b-before">unknown &#183; fact pending review</span><span class="b-after">engine: class III is not class IV &#8212; the exclusion does not fire</span></span></span>
       </div>
 
       <div class="b-caption-slot">
