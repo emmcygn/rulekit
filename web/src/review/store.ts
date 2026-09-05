@@ -15,14 +15,22 @@
  * explicit override, and the card says so with both numbers on screen before
  * the click (`structured` / `value` on ProposedFactCard).
  *
- * Decisions persist to localStorage and can be exported as stamped facts files
- * (`decisionsYaml`), so two coordinators can tell why their numbers differ.
+ * Decisions persist to validated localStorage state and can be exported as an
+ * explicitly non-authoritative review manifest (`decisionsYaml`). The manifest
+ * is intentionally not shaped like a replacement patient facts file.
  *
  * Pure: no React, no filesystem. `web/src/review/ReviewView.tsx` holds the state
  * and this module computes with it.
  */
 import { stringify } from "yaml";
-import { parseRuleSet, type Condition, type PatientFacts, type FactValue } from "../../../src/core/schema.js";
+import {
+  parseFactModel,
+  parseRuleSet,
+  type Condition,
+  type FactDecl,
+  type PatientFacts,
+  type FactValue,
+} from "../../../src/core/schema.js";
 import type { FactEntry, FactsFile } from "../../../src/extract/schema.js";
 import { CHART_REVIEW_RULES } from "../engine/chart-review.js";
 import { displayBandOf, BAND_LABEL, type DisplayBand } from "../funnel/bands.js";
@@ -31,8 +39,15 @@ import type { Engine } from "../engine/api.js";
 
 export type Decision = "pending" | "confirmed" | "rejected";
 
-/** A decision plus, when the reviewer corrected the value, what they typed. */
-export type ReviewDecision = { decision: Decision; value?: FactValue; at?: string };
+export type CorrectionProvenance = { reason: string; source: string };
+
+/** A decision plus the typed value and replacement provenance for a correction. */
+export type ReviewDecision = {
+  decision: Decision;
+  value?: FactValue;
+  at?: string;
+  correction?: CorrectionProvenance;
+};
 
 /** cardId -> decision. Absent means pending. */
 export type ReviewState = Record<string, ReviewDecision>;
@@ -58,9 +73,19 @@ export function decide(
   decision: Decision,
   editedValue?: FactValue,
   at: string = new Date().toISOString(),
+  correction?: CorrectionProvenance,
 ): ReviewState {
+  if (editedValue !== undefined) {
+    if (decision !== "confirmed") throw new Error("only a confirmed decision can carry a corrected value");
+    if (!correction?.reason.trim() || !correction.source.trim()) {
+      throw new Error("a corrected value needs a reason and the source the reviewer checked");
+    }
+  }
   const next: ReviewDecision = { decision, at };
-  if (editedValue !== undefined) next.value = editedValue;
+  if (editedValue !== undefined) {
+    next.value = editedValue;
+    next.correction = { reason: correction!.reason.trim(), source: correction!.source.trim() };
+  }
   return { ...state, [id]: next };
 }
 
@@ -135,11 +160,12 @@ export const checkCardEdit = (
  * chart-review criterion.
  */
 export function allowedValues(fact: string, factModelYaml: string): string[] | undefined {
-  const match = new RegExp(`^\\s*${fact}:\\s*\\{\\s*type:\\s*enum,\\s*values:\\s*\\[([^\\]]*)\\]`, "m").exec(
-    factModelYaml,
-  );
-  if (!match) return undefined;
-  return match[1]!.split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+  try {
+    const decl = parseFactModel(factModelYaml).facts[fact];
+    return decl?.type === "enum" ? [...decl.values] : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /* ------------------------------------------------------------ engine input */
@@ -189,7 +215,7 @@ function factsIn(c: Condition, out: Set<string>): void {
 
 /**
  * Facts this rule set can actually act on: every fact a criterion's condition
- * reads, plus the facts that settle one of its unmodeled criteria by chart
+ * reads, plus any legacy facts that settle an unmodeled criterion by chart
  * review. Anything else in the queue is a chart-review note, not a decision the
  * funnel will ever reflect — and the card says so instead of implying impact.
  */
@@ -273,15 +299,83 @@ export function pendingCount(files: readonly FactsFile[], state: ReviewState): n
 
 /* ------------------------------------------------------------ persistence */
 
-export const STORAGE_KEY = "rulekit.review.v1";
+export const STORAGE_KEY = "rulekit.review.v2";
+export const LEGACY_STORAGE_KEY = "rulekit.review.v1";
 
-export function loadReviewState(storage: Pick<Storage, "getItem"> | undefined): ReviewState {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const validTimestamp = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0 && Number.isFinite(Date.parse(value));
+
+function normalizedPersistedValue(raw: unknown, decl: FactDecl | undefined, original: FactEntry): FactValue | undefined {
+  const type = decl?.type ?? (Array.isArray(original.value) ? "code" : typeof original.value);
+  if (type === "number") {
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string" && /^-?\d+(\.\d+)?$/.test(raw.trim())) return Number(raw.trim());
+    return undefined;
+  }
+  if (type === "boolean") {
+    if (typeof raw === "boolean") return raw;
+    if (raw === "true") return true;
+    if (raw === "false") return false;
+    return undefined;
+  }
+  if (type === "enum") {
+    return typeof raw === "string" && decl?.type === "enum" && decl.values.includes(raw) ? raw : undefined;
+  }
+  if (type === "string") return typeof raw === "string" ? raw : undefined;
+  // Code arrays are deterministic and cannot be corrected in this UI.
+  return undefined;
+}
+
+export function loadReviewState(
+  storage: Pick<Storage, "getItem"> | undefined,
+  files: readonly FactsFile[] = [],
+  factModelYaml?: string,
+): ReviewState {
   try {
-    const raw = storage?.getItem(STORAGE_KEY);
+    const raw = storage?.getItem(STORAGE_KEY) ?? storage?.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
-    if (parsed === null || typeof parsed !== "object") return {};
-    return parsed as ReviewState;
+    if (!isRecord(parsed)) return {};
+
+    const entries = new Map<string, FactEntry>();
+    for (const file of files) {
+      for (const entry of reviewableEntries(file)) entries.set(cardId(file.patient, entry.fact), entry);
+    }
+    let model;
+    try {
+      model = factModelYaml === undefined ? undefined : parseFactModel(factModelYaml);
+    } catch {
+      return {};
+    }
+
+    const clean: ReviewState = {};
+    for (const [id, rawDecision] of Object.entries(parsed)) {
+      const entry = entries.get(id);
+      if (entry === undefined || !isRecord(rawDecision)) continue;
+      const decision = rawDecision["decision"];
+      if (decision !== "confirmed" && decision !== "rejected") continue;
+      if (!validTimestamp(rawDecision["at"])) continue;
+
+      const next: ReviewDecision = { decision, at: rawDecision["at"] };
+      if (Object.hasOwn(rawDecision, "value")) {
+        if (decision !== "confirmed") continue;
+        const value = normalizedPersistedValue(rawDecision["value"], model?.facts[entry.fact], entry);
+        const correction = rawDecision["correction"];
+        if (value === undefined || !isRecord(correction)) continue;
+        if (typeof correction["reason"] !== "string" || correction["reason"].trim().length === 0) continue;
+        if (typeof correction["source"] !== "string" || correction["source"].trim().length === 0) continue;
+        next.value = value;
+        next.correction = {
+          reason: correction["reason"].trim(),
+          source: correction["source"].trim(),
+        };
+      }
+      clean[id] = next;
+    }
+    return clean;
   } catch {
     return {};
   }
@@ -298,58 +392,103 @@ export function saveReviewState(
   }
 }
 
-export const REVIEWER = "workbench-user";
-
 /**
- * The decisions as facts files — one YAML document per patient, in the shape
- * `src/extract/schema.ts` parses, with `reviewedBy`/`reviewedAt` on every entry
- * the reviewer touched. This is what makes the audit-trail claim producible:
- * the file that comes out is the file that would go back into `corpus/facts/`.
+ * Export a single review manifest, deliberately not a `FactsFile`. It is a
+ * self-asserted, local demo artifact: an integration must verify and apply the
+ * decisions to its authoritative store rather than replacing a patient file.
+ * Each touched patient's complete source snapshot is embedded so pending and
+ * previously reviewed history cannot be lost.
  */
 export function decisionsYaml(
   files: readonly FactsFile[],
   state: ReviewState,
-  now: string = new Date().toISOString(),
+  options: {
+    reviewer: string;
+    now?: string;
+    cohort?: readonly PatientFacts[];
+  },
 ): string {
-  const docs: string[] = [];
+  const now = options.now ?? new Date().toISOString();
+  const reviewer = options.reviewer.trim();
+  const patients: Record<string, unknown>[] = [];
   for (const file of files) {
     const touched = reviewableEntries(file).filter(
       (e) => decisionFor(state, cardId(file.patient, e.fact)).decision !== "pending",
     );
     if (touched.length === 0) continue;
 
-    const facts = touched.map((entry) => {
+    const decisions = touched.map((entry) => {
       const d = decisionFor(state, cardId(file.patient, entry.fact));
-      const out: Record<string, unknown> = {
+      const corrected = d.value !== undefined;
+      if (corrected && d.correction === undefined) {
+        throw new Error(`${file.patient}:${entry.fact}: corrected value has no reason or source`);
+      }
+      const recordedBefore = structuredValueOf(options.cohort ?? [], file.patient, entry.fact);
+      const after: Record<string, unknown> = {
         fact: entry.fact,
         value: d.value ?? entry.value,
         ...(entry.unit === undefined ? {} : { unit: entry.unit }),
         status: d.decision === "confirmed" ? "confirmed" : "rejected",
-        ...(entry.confidence === undefined ? {} : { confidence: entry.confidence }),
-        extractedBy: d.value === undefined ? entry.extractedBy : "human",
-        ...(entry.source === undefined ? {} : { source: { doc: entry.source.doc, quote: entry.source.quote } }),
-        reviewedBy: REVIEWER,
+        extractedBy: corrected ? "human" : entry.extractedBy,
+        ...(corrected
+          ? { source: { type: "reviewer-attestation", detail: d.correction!.source } }
+          : entry.source === undefined
+            ? {}
+            : { source: structuredClone(entry.source) }),
+        reviewedBy: reviewer,
         reviewedAt: d.at ?? now,
       };
-      return out;
+      return {
+        fact: entry.fact,
+        decision: d.decision,
+        reviewedBy: reviewer,
+        reviewedAt: d.at ?? now,
+        before: {
+          proposal: structuredClone(entry),
+          ...(recordedBefore === undefined ? {} : { recordedValue: structuredClone(recordedBefore) }),
+        },
+        after,
+        ...(corrected
+          ? {
+              correction: {
+                reason: d.correction!.reason,
+                source: d.correction!.source,
+              },
+            }
+          : {}),
+      };
     });
 
-    docs.push(
-      `# ${file.patient} — decisions exported from the rulekit workbench at ${now}.\n` +
-        `# Reviewer: ${REVIEWER}. Drop this over corpus/facts/${file.patient}.yaml to keep them.\n` +
-        stringify({ patient: file.patient, ...(file.asOf === undefined ? {} : { asOf: file.asOf }), facts }),
-    );
+    patients.push({
+      patient: file.patient,
+      sourceSnapshot: structuredClone(file),
+      decisions,
+    });
   }
-  if (docs.length === 0) {
+  if (patients.length === 0) {
     return `# No decisions to export — nothing has been confirmed or rejected yet.\n`;
   }
-  return docs.join("---\n");
+  if (reviewer.length === 0) throw new Error("enter a reviewer identity before exporting decisions");
+  return (
+    "# Review manifest only — do not replace a facts file with this artifact.\n" +
+    stringify({
+      kind: "rulekit-review-manifest",
+      version: 1,
+      authoritative: false,
+      intendedUse: "synthetic-data demonstration only",
+      limitation:
+        "Local browser state and self-entered identity are not authenticated or tamper-evident. An authorized system must verify and apply these decisions.",
+      exportedAt: now,
+      reviewer: { identity: reviewer, authentication: "self-asserted" },
+      patients,
+    })
+  );
 }
 
 /* ------------------------------------------------------------------ cards */
 
-const formatValue = (v: FactValue): string =>
-  typeof v === "string" || typeof v === "number" || typeof v === "boolean" ? String(v) : "—";
+const cardValue = (v: FactValue): string | number | boolean =>
+  typeof v === "string" || typeof v === "number" || typeof v === "boolean" ? v : "—";
 
 export type BuildCardsInput = {
   cohort: readonly PatientFacts[];
@@ -405,7 +544,7 @@ export function buildCards({
         id,
         patient: patient.patient,
         fact: entry.fact,
-        value: formatValue(entry.value),
+        value: cardValue(entry.value),
         confidence: entry.confidence ?? 0,
         doc: entry.source?.doc ?? "—",
         quote: entry.source?.quote ?? "",
@@ -414,7 +553,7 @@ export function buildCards({
         usedByRules: read.has(entry.fact),
       };
       if (entry.unit !== undefined) card.unit = entry.unit;
-      if (structured !== undefined) card.structured = formatValue(structured);
+      if (structured !== undefined) card.structured = cardValue(structured);
       if (after !== before) card.impact = `${outcomeLabel(before)} → ${outcomeLabel(after)}`;
       cards.push(card);
     }

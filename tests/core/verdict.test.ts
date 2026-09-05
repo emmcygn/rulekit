@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { evalPatient, evalCriterion } from "../../src/core/evaluator.js";
+import { evalPatientUnsafe as evalPatient, evalCriterion } from "../../src/core/evaluator.js";
 import { parseRuleSet } from "../../src/core/schema.js";
 
 const RS = parseRuleSet(`

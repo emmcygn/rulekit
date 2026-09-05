@@ -6,10 +6,11 @@
  * the author explicitly copies a threshold back.
  */
 import { parseDocument } from "yaml";
-import { parseRuleSet, type Condition, type Criterion, type PatientFacts } from "../../../src/core/schema.js";
-import type { Engine } from "../engine/api.js";
+import { evalCriterion } from "../../../src/core/evaluator.js";
+import { parseRuleSet, type Condition, type Criterion, type PatientFacts, type RuleSet } from "../../../src/core/schema.js";
+import type { Engine, Evaluation } from "../engine/api.js";
 import { symbolOf } from "../engine/ops.js";
-import { cohortCounts } from "../funnel/compute.js";
+import { displayBandCounts, type DisplayBandCounts } from "../funnel/bands.js";
 
 /** Display names for the facts the demo pack declares. */
 const FACT_LABEL: Record<string, string> = {
@@ -36,6 +37,8 @@ export type Target = {
   codes?: { system: string; values: string[] };
   /** Path into the YAML document, for `setKnob`. */
   path: (string | number)[];
+  /** Criterion position in the parsed rule set and its evaluation results. */
+  criterionIndex: number;
   /** "eGFR < 45" / "medications within 30d". */
   label: string;
 };
@@ -44,18 +47,19 @@ function targetsIn(
   c: Condition,
   base: (string | number)[],
   criterion: Criterion,
+  criterionIndex: number,
   out: Target[],
 ): void {
   if ("all" in c) {
-    c.all.forEach((child, i) => targetsIn(child, [...base, "all", i], criterion, out));
+    c.all.forEach((child, i) => targetsIn(child, [...base, "all", i], criterion, criterionIndex, out));
     return;
   }
   if ("any" in c) {
-    c.any.forEach((child, i) => targetsIn(child, [...base, "any", i], criterion, out));
+    c.any.forEach((child, i) => targetsIn(child, [...base, "any", i], criterion, criterionIndex, out));
     return;
   }
   if ("not" in c) {
-    targetsIn(c.not, [...base, "not"], criterion, out);
+    targetsIn(c.not, [...base, "not"], criterion, criterionIndex, out);
     return;
   }
   const common = {
@@ -64,14 +68,15 @@ function targetsIn(
     criterionKind: criterion.kind,
     fact: c.fact,
     op: c.op,
+    criterionIndex,
   };
-  if ("value" in c) {
+  if ("value" in c && typeof c.value === "number") {
     const sym = symbolOf(c.op);
     out.push({
       ...common,
       knob: "value",
       value: c.value,
-      unit: c.unit,
+      unit: "unit" in c ? c.unit : undefined,
       path: [...base, "value"],
       label: `${label(c.fact)} ${sym} ${c.value}`,
     });
@@ -88,14 +93,17 @@ function targetsIn(
 }
 
 /** Every numeric knob in the rule set, in document order. */
-export function numericTargets(rulesetYaml: string): Target[] {
-  const rs = parseRuleSet(rulesetYaml);
+export function numericTargetsFromRuleSet(rs: RuleSet): Target[] {
   const out: Target[] = [];
   rs.criteria.forEach((c, i) => {
     if (!c.when) return;
-    targetsIn(c.when, ["criteria", i, "when"], c, out);
+    targetsIn(c.when, ["criteria", i, "when"], c, i, out);
   });
   return out;
+}
+
+export function numericTargets(rulesetYaml: string): Target[] {
+  return numericTargetsFromRuleSet(parseRuleSet(rulesetYaml));
 }
 
 /**
@@ -146,6 +154,122 @@ export type Yield = {
   target: Target;
 };
 
+type PreparedPatient = {
+  facts: PatientFacts;
+  results: { id: string; verdict: Evaluation["results"][number]["verdict"]; unmodeled: boolean }[];
+  failCount: number;
+  modeledUnknownCount: number;
+  parkedUnknownCount: number;
+};
+
+export type PreparedSensitivity = {
+  ruleset: RuleSet;
+  targets: Target[];
+  before: DisplayBandCounts;
+  patients: PreparedPatient[];
+};
+
+function replaceAt(value: unknown, path: readonly (string | number)[], replacement: number): unknown {
+  if (path.length === 0) return replacement;
+  const [head, ...tail] = path;
+  if (head === undefined) return replacement;
+  if (Array.isArray(value)) {
+    const copy = [...value];
+    copy[head as number] = replaceAt(copy[head as number], tail, replacement);
+    return copy;
+  }
+  const object = value as Record<string, unknown>;
+  return { ...object, [head]: replaceAt(object[head], tail, replacement) };
+}
+
+const parked = (r: { unmodeled: boolean; verdict: Evaluation["results"][number]["verdict"] }): boolean =>
+  r.unmodeled && r.verdict === "unknown";
+
+/** Prepare one baseline evaluation; every knob then re-evaluates one criterion. */
+export function prepareSensitivity(
+  ruleset: RuleSet,
+  cohort: readonly PatientFacts[],
+  evaluations: readonly Evaluation[],
+): PreparedSensitivity {
+  if (cohort.length !== evaluations.length) {
+    throw new Error("sensitivity baseline must contain one evaluation per patient");
+  }
+  const patients = cohort.map((facts, index) => {
+    const evaluation = evaluations[index]!;
+    return {
+      facts,
+      results: evaluation.results.map(({ id, verdict, unmodeled }) => ({ id, verdict, unmodeled })),
+      failCount: evaluation.results.filter((r) => r.verdict === "fail").length,
+      modeledUnknownCount: evaluation.results.filter((r) => r.verdict === "unknown" && !r.unmodeled).length,
+      parkedUnknownCount: evaluation.results.filter(parked).length,
+    };
+  });
+  return {
+    ruleset,
+    targets: numericTargetsFromRuleSet(ruleset),
+    before: displayBandCounts(evaluations),
+    patients,
+  };
+}
+
+/** Display-band counts after changing one numeric knob, in O(N) patient work. */
+export function sensitivityCounts(
+  prepared: PreparedSensitivity,
+  target: Target,
+  value: number,
+): DisplayBandCounts {
+  const baseCriterion = prepared.ruleset.criteria[target.criterionIndex];
+  if (baseCriterion === undefined) throw new Error(`criterion ${target.criterionId} is missing`);
+  const criterion = replaceAt(baseCriterion, target.path.slice(2), value) as Criterion;
+  const counts: DisplayBandCounts = {
+    "screen-fail": 0,
+    "not-evaluable": 0,
+    "pending-chart-review": 0,
+    "potentially-eligible": 0,
+  };
+  for (const patient of prepared.patients) {
+    const old = patient.results[target.criterionIndex];
+    if (old?.id !== target.criterionId) {
+      throw new Error(`sensitivity baseline is not aligned at ${target.criterionId}`);
+    }
+    const next = evalCriterion(criterion, patient.facts);
+    const failCount = patient.failCount - (old.verdict === "fail" ? 1 : 0) + (next.verdict === "fail" ? 1 : 0);
+    if (failCount > 0) {
+      counts["screen-fail"] += 1;
+      continue;
+    }
+    const modeledUnknownCount =
+      patient.modeledUnknownCount - (old.verdict === "unknown" && !old.unmodeled ? 1 : 0) +
+      (next.verdict === "unknown" && !next.unmodeled ? 1 : 0);
+    const parkedUnknownCount =
+      patient.parkedUnknownCount - (parked(old) ? 1 : 0) + (parked(next) ? 1 : 0);
+    if (modeledUnknownCount > 0) counts["not-evaluable"] += 1;
+    else if (parkedUnknownCount > 0) counts["pending-chart-review"] += 1;
+    else counts["potentially-eligible"] += 1;
+  }
+  return counts;
+}
+
+export function yieldsFromPrepared(prepared: PreparedSensitivity): Yield[] {
+  return prepared.targets
+    .map((target): Yield | undefined => {
+      const to = relaxedValue(target.criterionKind, target.op, target.value);
+      if (to === target.value) return undefined;
+      const counts = sensitivityCounts(prepared, target, to);
+      return {
+        criterionId: target.criterionId,
+        ref: target.ref,
+        label: target.label,
+        from: target.value,
+        to,
+        delta: prepared.before["screen-fail"] - counts["screen-fail"],
+        target,
+      };
+    })
+    .filter((value): value is Yield => value !== undefined)
+    .sort((a, b) => b.delta - a.delta);
+}
+
 /**
  * Price every knob: how many patients does relaxing it by one step return?
  *
@@ -160,25 +284,9 @@ export function topYield(
   cohort: readonly PatientFacts[],
   engine: Engine,
 ): Yield[] {
-  const base = cohortCounts(cohort.map((p) => engine.evalPatient(rulesetYaml, p)));
-  return numericTargets(rulesetYaml)
-    .map((t): Yield | undefined => {
-      const to = relaxedValue(t.criterionKind, t.op, t.value);
-      if (to === t.value) return undefined;
-      const yamlText = setKnob(rulesetYaml, t.path, to);
-      const counts = cohortCounts(cohort.map((p) => engine.evalPatient(yamlText, p)));
-      return {
-        criterionId: t.criterionId,
-        ref: t.ref,
-        label: t.label,
-        from: t.value,
-        to,
-        delta: base.screenFail - counts.screenFail,
-        target: t,
-      };
-    })
-    .filter((y): y is Yield => y !== undefined)
-    .sort((a, b) => b.delta - a.delta);
+  const ruleset = parseRuleSet(rulesetYaml);
+  const evaluations = cohort.map((patient) => engine.evalPatient(rulesetYaml, patient));
+  return yieldsFromPrepared(prepareSensitivity(ruleset, cohort, evaluations));
 }
 
 /** Is there a real ordering here, or do the top rows just tie? */

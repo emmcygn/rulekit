@@ -13,8 +13,9 @@
  * re-evaluates from the same decisions.
  */
 import { ReviewQueue } from "./ReviewQueue.js";
-import type { EditCheck, ProposedFactCard } from "./types.js";
-import { allowedValues, asOfLabel, checkCardEdit, REVIEWER, type Decision, type ReviewProgress } from "./store.js";
+import type { FactValue } from "../../../src/core/schema.js";
+import type { EditCheck, ProposedFactCard, ReviewCorrection } from "./types.js";
+import { allowedValues, asOfLabel, checkCardEdit, type Decision, type ReviewProgress } from "./store.js";
 import { BAND_LABEL, type DisplayBandCounts } from "../funnel/bands.js";
 
 export type ReviewViewProps = {
@@ -22,7 +23,9 @@ export type ReviewViewProps = {
   bands: DisplayBandCounts;
   progress: ReviewProgress;
   factModelYaml: string;
-  onDecide: (id: string, decision: Decision, editedValue?: string) => void;
+  reviewer: string;
+  onReviewerChange: (reviewer: string) => void;
+  onDecide: (id: string, decision: Decision, editedValue?: FactValue, correction?: Omit<ReviewCorrection, "value">) => void;
   onDownload: () => void;
   onReset: () => void;
 };
@@ -32,6 +35,8 @@ export function ReviewView({
   bands,
   progress,
   factModelYaml,
+  reviewer,
+  onReviewerChange,
   onDecide,
   onDownload,
   onReset,
@@ -40,7 +45,12 @@ export function ReviewView({
   // reach the engine intact never gets past Save.
   const validate = (item: ProposedFactCard, draft: string): EditCheck => {
     const result = checkCardEdit(item, draft);
-    return result.ok ? { ok: true } : { ok: false, message: result.message };
+    if (!result.ok) return result;
+    // Review cards never expose code arrays for editing; retain that invariant
+    // at the component boundary as well as in parseEdit.
+    return Array.isArray(result.value)
+      ? { ok: false, message: "Code lists cannot be edited here — reject the proposal instead." }
+      : { ok: true, value: result.value };
   };
 
   const optionsFor = (item: ProposedFactCard): string[] | undefined =>
@@ -90,8 +100,21 @@ export function ReviewView({
           </span>
         )}
         <span className="asof-actions">
-          <button className="tbtn" onClick={onDownload} disabled={progress.decided === 0}>
-            Download decisions (YAML)
+          <label>
+            <span className="ink2">Reviewer identity</span>{" "}
+            <input
+              aria-label="Reviewer identity"
+              value={reviewer}
+              onChange={(event) => onReviewerChange(event.target.value)}
+              placeholder="Enter your name or staff ID"
+            />
+          </label>
+          <button
+            className="tbtn"
+            onClick={onDownload}
+            disabled={progress.decided === 0 || reviewer.trim().length === 0}
+          >
+            Download review manifest (YAML)
           </button>
           <button className="tbtn" onClick={onReset} disabled={progress.decided === 0}>
             Clear decisions
@@ -100,9 +123,9 @@ export function ReviewView({
       </div>
 
       <div className="ink3" style={{ fontSize: 11.5 }}>
-        Decisions are kept in this browser (localStorage) and stamped{" "}
-        <span className="mono">reviewedBy: {REVIEWER}</span> on export. Nothing is written back to{" "}
-        <span className="mono">corpus/facts</span> — download the YAML to keep them.
+        Decisions are kept in this browser (localStorage). The export is explicitly non-authoritative:
+        local state and the entered reviewer identity are not authenticated or tamper-evident. It is a
+        review manifest for this synthetic demonstration, never a replacement facts file.
       </div>
 
       <ReviewQueue
@@ -110,7 +133,12 @@ export function ReviewView({
         validate={validate}
         optionsFor={optionsFor}
         onConfirm={(item) => onDecide(item.id, "confirmed")}
-        onEdit={(item, value) => onDecide(item.id, "confirmed", value)}
+        onEdit={(item, correction) =>
+          onDecide(item.id, "confirmed", correction.value, {
+            reason: correction.reason,
+            source: correction.source,
+          })
+        }
         onReject={(item) => onDecide(item.id, "rejected")}
       />
     </div>

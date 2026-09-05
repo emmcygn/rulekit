@@ -24,7 +24,10 @@
 import { parsePatient, type PatientFacts } from "../../../src/core/schema.js";
 import { parseFactsFile, type FactsFile } from "../../../src/extract/schema.js";
 import rulesetV110 from "../../../rules/trials/demo-hf-001/ruleset.yaml?raw";
-import rulesetV100 from "../../../rules/trials/demo-hf-001/ruleset@1.0.0.yaml?raw";
+// 1.0.0 is retained byte-for-byte as historical evidence, including its invalid
+// eGFR unit. The workbench uses the corrected 1.0.1 artifact so checked
+// evaluation never depends on known-invalid history.
+import rulesetV101 from "../../../rules/trials/demo-hf-001/ruleset@1.0.1.yaml?raw";
 import factModelYaml from "../../../packs/trials/fact-model.yaml?raw";
 import testsYaml from "../../../rules/trials/demo-hf-001/tests.yaml?raw";
 import enrolledJson from "./enrolled.json";
@@ -37,7 +40,7 @@ export type EnrolledParticipant = {
 };
 
 export const DEMO_RULESET_CURRENT = rulesetV110;
-export const DEMO_RULESET_PRIOR = rulesetV100;
+export const DEMO_RULESET_PRIOR = rulesetV101;
 export const DEMO_FACT_MODEL = factModelYaml;
 export const DEMO_TESTS = testsYaml;
 

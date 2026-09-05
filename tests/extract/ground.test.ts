@@ -4,6 +4,7 @@ import {
   groundProposedFacts,
   verifyFactEntry,
   quoteAppearsVerbatim,
+  quoteObviouslyNegatesValue,
   normalizeNewlines,
   type ProposedFact,
   type GroundingContext,
@@ -76,6 +77,19 @@ describe("quoteAppearsVerbatim", () => {
   });
 });
 
+describe("obvious semantic negation", () => {
+  it("recognizes a negated enum assertion without pretending to solve general NLP", () => {
+    expect(quoteObviouslyNegatesValue("nyha_class", "IV", "No evidence of NYHA class IV symptoms")).toBe(true);
+    expect(quoteObviouslyNegatesValue("nyha_class", "IV", "Not class III but NYHA class IV today")).toBe(false);
+  });
+
+  it("treats negation as support for false, not true, on a boolean fact", () => {
+    const quote = "There has been no anticoagulant use since the GI bleed";
+    expect(quoteObviouslyNegatesValue("on_anticoagulant", true, quote)).toBe(true);
+    expect(quoteObviouslyNegatesValue("on_anticoagulant", false, quote)).toBe(false);
+  });
+});
+
 describe("groundProposedFacts — the happy path", () => {
   it("admits a well-grounded enum fact as proposed, never confirmed", () => {
     const r = groundProposedFacts([p({})], OPTS);
@@ -132,6 +146,25 @@ describe("groundProposedFacts — hostile fixtures", () => {
     expect(r.grounded).toEqual([]);
     expect(r.rejected[0]!.reasons).toContain("quote-not-found");
     expect(r.rejected[0]!.detail).toMatch(/verbatim/i);
+  });
+
+  it("rejects an enum value contradicted by obvious negation in its exact quote", () => {
+    const note = "No evidence of NYHA class IV symptoms on today's examination.";
+    const result = groundProposedFacts(
+      [p({ value: "IV", quote: note })],
+      { ...OPTS, ctx: { ...ctx, documents: { "echo-x": { text: note } } } },
+    );
+    expect(result.grounded).toEqual([]);
+    expect(result.rejected[0]!.reasons).toContain("contradictory-negation");
+  });
+
+  it("rejects true when the cited phrase explicitly negates the boolean fact", () => {
+    const result = groundProposedFacts(
+      [p({ fact: "on_anticoagulant", value: "true", quote: "no anticoagulant use since the GI bleed" })],
+      OPTS,
+    );
+    expect(result.grounded).toEqual([]);
+    expect(result.rejected[0]!.reasons).toContain("contradictory-negation");
   });
 
   it("rejects a near-miss quote with one word changed", () => {
@@ -302,6 +335,23 @@ describe("verifyFactEntry — re-verification of a written facts.yaml", () => {
   it("catches a hand-edited value that broke the declared type", () => {
     const r = verifyFactEntry(entry({ fact: "lvef", value: "thirty two", unit: "%", source: { doc: "echo-x", quote: "LVEF 32%" } }), ctx);
     expect(r[0]!.reasons).toContain("type-mismatch");
+  });
+
+  it("rejects coercible scalar strings in persisted files so validation matches compilation", () => {
+    const numeric = verifyFactEntry(
+      entry({ fact: "lvef", value: "32", unit: "%", source: { doc: "echo-x", quote: "LVEF 32%" } }),
+      ctx,
+    );
+    const boolean = verifyFactEntry(
+      entry({
+        fact: "on_anticoagulant",
+        value: "false",
+        source: { doc: "echo-x", quote: "no anticoagulant use since the GI bleed" },
+      }),
+      ctx,
+    );
+    expect(numeric[0]!.reasons).toContain("type-mismatch");
+    expect(boolean[0]!.reasons).toContain("type-mismatch");
   });
 
   it("checks the type of a pipeline fact but demands no quote", () => {

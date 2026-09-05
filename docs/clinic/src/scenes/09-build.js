@@ -2,17 +2,17 @@
 // five screens floating in front of the test suite that was written before
 // them.
 //
-// THE WALL IS 470 SOLID MARKS, AND IT IS NOT GREEN.
+// THE WALL IS A REPRESENTATIVE FIELD OF SOLID MARKS, AND IT IS NOT GREEN.
 //
-// #build says "470 automated tests, written before the code they test", and
-// #exists calls them "green CI checks". They are not drawn green. In this
-// piece a verdict is a shape, never a hue:
+// #build says automated regression suites run in CI. The decorative field is
+// deliberately not presented as an exact count. It is not drawn green. In
+// this piece a verdict is a shape, never a hue:
 //
-//   pass    ■  solid    ×470   ← this room
+//   pass    ■  solid            ← this room
 //   fail    □  outline
 //   unknown ▨  hatched
 //
-// So the wall is 470 filled ink squares — the solid mark, in bulk, and the only
+// So the wall is filled ink squares — the solid mark, in bulk, and the only
 // place in the piece it appears in bulk. Chapter 08 is ten charts and not one
 // solid mark between them; this is the same mark language saying the opposite
 // thing about the only things in the project that do pass. Greyscale the frame
@@ -21,10 +21,10 @@
 //
 // THE COUNT IS TIER-SCALED AND THE FOOTPRINT IS NOT.
 //
-// `ctx.quality.count(470)` thins the wall on a phone, which is allowed here and
+// `ctx.quality.count(CHECK_MARKS)` thins the wall on a phone, which is allowed here and
 // was not allowed in chapter 08, for one reason: the panel beside this room
-// carries the exact number in text, so the wall is an impression of a suite
-// rather than a thing you are asked to count. What must NOT change with the
+// describes it as a suite, so the wall is an impression rather than a thing
+// you are asked to count. What must NOT change with the
 // tier is how much of the room the suite occupies — a suite that visibly shrank
 // on a slower machine would understate itself. So the column count is derived
 // from the instance count and the spacing from the column count: the wall keeps
@@ -48,7 +48,7 @@
 //
 // Contract notes (see ./_stub.js):
 //   • the only cloned shared material is one cloneOwned(materials.line);
-//   • the 470 checks are ONE InstancedMesh through createSwarm, sized by
+//   • the decorative checks are ONE InstancedMesh through createSwarm, sized by
 //     ctx.quality.count();
 //   • five fixed label strings, so the memoised text cache stays bounded;
 //   • ctx.portrait is read in update() only — it re-lays the room for a tall
@@ -63,7 +63,7 @@ import { cloneOwned } from '../lib/materials.js';
 import { sub, smoothstep, lerp } from '../lib/easing.js';
 
 const SCREENS = ['funnel', 'thresholds', 'amendment', 'checks', 'review'];
-const TESTS = 470;
+const CHECK_MARKS = 470;
 
 // The workbench stands off the flight path, on the side AWAY from station 10:
 // chapter 10's camera runs from here toward (+3.0, +1.6, -18) station-local, so
@@ -82,7 +82,7 @@ const WB_YAW = 0.42;
 // orientation to fill the frame it is read in rather than to letterbox inside
 // it: 1.7:1 against a 1.6:1 landscape frame, 0.78:1 against a tall one.
 const WALL_W = 7.0, WALL_AR = 1.7;        // landscape: 28 x 17 at the high tier
-const WALL_W_P = 3.9, WALL_AR_P = 0.78;   // portrait:  19 x 25, the same 470
+const WALL_W_P = 3.9, WALL_AR_P = 0.78;   // portrait: the same field, reflowed
 const MARK_FRAC = 0.48;                   // mark size as a fraction of the pitch
 const WALL_DEEP = 4.2;                    // how far back a mark starts, in fog
 
@@ -164,8 +164,8 @@ export default {
     // ── the test suite ────────────────────────────────────────────────────
     // A plane, not a box: `ink` is unlit MeshBasicMaterial, so every face of a
     // box renders the identical flat silhouette and five of the six are paid
-    // for and never seen. 470 planes is 940 triangles for the whole suite.
-    const n = ctx.quality.count(TESTS);
+    // for and never seen. One plane per representative mark keeps this cheap.
+    const n = ctx.quality.count(CHECK_MARKS);
     const checks = createSwarm({
       geometry: new THREE.PlaneGeometry(1, 1),
       material: M.ink,

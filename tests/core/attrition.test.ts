@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { computeAttrition, soleReasonCriterionId } from "../../src/core/attrition.js";
-import { evalPatient } from "../../src/core/evaluator.js";
+import {
+  computeAttrition,
+  soleModeledReasonCriterionId,
+  soleReasonCriterionId,
+} from "../../src/core/attrition.js";
+import { evalPatientUnsafe as evalPatient } from "../../src/core/evaluator.js";
 import { parsePatient, parseRuleSet, type PatientFacts, type RuleSet } from "../../src/core/schema.js";
 
 const rs = (...criteria: RuleSet["criteria"]): RuleSet => ({
@@ -86,11 +90,17 @@ describe("computeAttrition — per-criterion columns", () => {
     for (const r of a.rows) expect(r.failsAlone).toBeGreaterThanOrEqual(r.removedSequential);
   });
 
-  it("soleReason counts only patients every other MODELED criterion passes", () => {
-    expect(row("adult").soleReason).toBe(1); // P1
-    expect(row("renal").soleReason).toBe(1); // P3
-    // P2 fails both, so relaxing either one alone would not admit them.
-    expect(a.rows.reduce((n, r) => n + r.soleReason, 0)).toBe(2);
+  it("soleReason does not claim eligibility while another criterion is unknown", () => {
+    expect(row("adult").soleReason).toBe(0);
+    expect(row("renal").soleReason).toBe(0);
+    expect(a.rows.reduce((n, r) => n + r.soleReason, 0)).toBe(0);
+  });
+
+  it("reports the separately named modeled-only counterfactual pending chart review", () => {
+    expect(row("adult").soleModeledReason).toBe(1);
+    expect(row("renal").soleModeledReason).toBe(1);
+    expect(row("chart-review").soleModeledReason).toBe(0);
+    expect(a.bands["potentially-eligible"]).toBe(0);
   });
 
   it("an unmodeled criterion drains nobody — it is parked in chart review", () => {
@@ -106,7 +116,13 @@ describe("computeAttrition — per-criterion columns", () => {
     // eligible, so no criterion owns them.
     const missing = evalPatient(rs(adult, renal, { ...renal, id: "renal2", when: { fact: "lvef", op: "lte", value: 40, unit: "%" } }), { patient: "X", facts: { age: 70, egfr: 10 } });
     expect(soleReasonCriterionId(missing)).toBeUndefined();
+    expect(soleModeledReasonCriterionId(missing)).toBeUndefined();
     expect(soleReasonCriterionId(evalPatient(modeledOnly, { patient: "Y", facts: { age: 70, egfr: 10 } }))).toBe("renal");
+    expect(
+      soleModeledReasonCriterionId(
+        evalPatient(rs(adult, renal, chart), { patient: "Y", facts: { age: 70, egfr: 10 } }),
+      ),
+    ).toBe("renal");
   });
 });
 
@@ -123,5 +139,15 @@ describe("computeAttrition on the shipped commander-hf cohort", () => {
     // `rules screen` on this corpus: 0 eligible / 97 ineligible / 3 undetermined.
     expect(a.bands).toEqual({ "potentially-eligible": 0, "screen-fail": 97, "not-evaluable": 3 });
     expect(a.rows.reduce((n, r) => n + r.removedSequential, 0)).toBe(97);
+    expect(a.rows.reduce((n, r) => n + r.soleReason, 0)).toBe(0);
+    expect(
+      a.rows
+        .filter((r) => r.soleModeledReason > 0)
+        .map((r) => [r.id, r.soleModeledReason]),
+    ).toEqual([
+      ["lvef-40-or-below", 6],
+      ["significant-coronary-artery-disease", 1],
+      ["concomitant-disease", 2],
+    ]);
   });
 });

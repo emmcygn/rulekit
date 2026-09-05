@@ -8,7 +8,7 @@
  * result is not, and the difference is triage cluster B(c).
  */
 import { describe, expect, it } from "vitest";
-import { parseAllDocuments } from "yaml";
+import { parse } from "yaml";
 import { parseFactsFile } from "../../src/extract/schema.js";
 import { computeFunnel } from "../src/funnel/compute.js";
 import { displayBandOf } from "../src/funnel/bands.js";
@@ -27,9 +27,9 @@ import {
   factsRead,
   initialReviewState,
   loadReviewState,
+  LEGACY_STORAGE_KEY,
   parseEdit,
   pendingCount,
-  REVIEWER,
   reviewProgress,
   saveReviewState,
   STORAGE_KEY,
@@ -38,6 +38,7 @@ import {
 import { DEMO_FACT_MODEL } from "../src/data/index.js";
 
 const initial = initialReviewState(DEMO_FACTS);
+const CORRECTION = { reason: "Transcription corrected", source: "Source chart reviewed directly" };
 const engine = {
   ...realEngine,
   evalPatient: (yaml: string, p: (typeof DEMO_COHORT)[number]) =>
@@ -81,14 +82,11 @@ describe("applyReview — withhold the proposal, keep the record", () => {
     expect(syn007.facts["age"]).toBe(61);
   });
 
-  it("never manufactures a not-evaluable patient out of data it already had", () => {
-    // The three patients with facts files all have structured values, so none of
-    // them is un-evaluable at rest (uiux B6).
+  it("keeps missing modeled facts explicitly not evaluable", () => {
+    // NYHA is now modeled, but no proposed value enters evaluation before a
+    // reviewer confirms it.
     const bands = bandsFor(initial);
-    expect(bands["not-evaluable"]).toBe(0);
-    for (const id of ["SYN-007", "SYN-019", "SYN-042"]) {
-      expect(bandOfPatient(initial, id)).not.toBe("not-evaluable");
-    }
+    expect(bands["not-evaluable"]).toBe(3);
   });
 
   it("hands the engine the confirmed value, and only after a human confirms", () => {
@@ -108,7 +106,14 @@ describe("applyReview — withhold the proposal, keep the record", () => {
   });
 
   it("uses the human's corrected value when the card was edited", () => {
-    const edited = decide(initial, cardId("SYN-007", "egfr"), "confirmed", 47);
+    const edited = decide(
+      initial,
+      cardId("SYN-007", "egfr"),
+      "confirmed",
+      47,
+      "2026-08-21T10:00:00Z",
+      CORRECTION,
+    );
     const syn007 = applyReview(DEMO_COHORT, DEMO_FACTS, edited).find(
       (p) => p.patient === "SYN-007",
     )!;
@@ -150,6 +155,12 @@ describe("parseEdit — a correction is usable or it is refused", () => {
     expect(checkCardEdit({ value: "III" }, "IV")).toEqual({ ok: true, value: "IV" });
   });
 
+  it("will not create a correction without replacement provenance", () => {
+    expect(() => decide(initial, cardId("SYN-007", "egfr"), "confirmed", 47)).toThrow(
+      /reason and the source/,
+    );
+  });
+
   it("offers the fact model's closed value set for an enum fact", () => {
     expect(allowedValues("nyha_class", DEMO_FACT_MODEL)).toEqual(["I", "II", "III", "IV"]);
     expect(allowedValues("egfr", DEMO_FACT_MODEL)).toBeUndefined();
@@ -188,8 +199,8 @@ describe("G10 — deciding a fact moves the bands", () => {
   it("starts with everyone either failed or waiting on a chart review", () => {
     expect(bandsFor(initial)).toEqual({
       "screen-fail": 7,
-      "not-evaluable": 0,
-      "pending-chart-review": 3,
+      "not-evaluable": 3,
+      "pending-chart-review": 0,
       "potentially-eligible": 0,
     });
   });
@@ -199,7 +210,7 @@ describe("G10 — deciding a fact moves the bands", () => {
     // Confirming is an override, and the funnel reflects it immediately.
     expect(bandOfPatient(initial, "SYN-019")).toBe("screen-fail");
     const one = decide(initial, cardId("SYN-019", "egfr"), "confirmed");
-    expect(bandOfPatient(one, "SYN-019")).toBe("pending-chart-review");
+    expect(bandOfPatient(one, "SYN-019")).toBe("not-evaluable");
     expect(bandsFor(one)["screen-fail"]).toBe(6);
   });
 
@@ -217,35 +228,73 @@ describe("decisionsYaml — the audit trail leaves the browser", () => {
     "confirmed",
     "IV",
     "2026-08-21T10:05:00Z",
+    CORRECTION,
   );
-  const text = decisionsYaml(DEMO_FACTS, state, "2026-08-21T10:06:00Z");
+  const text = decisionsYaml(DEMO_FACTS, state, {
+    reviewer: "Ada Reviewer",
+    now: "2026-08-21T10:06:00Z",
+    cohort: DEMO_COHORT,
+  });
+  const manifest = parse(text) as {
+    kind: string;
+    authoritative: boolean;
+    reviewer: { identity: string };
+    patients: Array<{
+      patient: string;
+      sourceSnapshot: { facts: Array<{ fact: string; status: string }> };
+      decisions: Array<{
+        fact: string;
+        reviewedBy: string;
+        reviewedAt: string;
+        before: { proposal: { source?: { quote?: string } }; recordedValue?: unknown };
+        after: { value: unknown; extractedBy: string; source?: Record<string, unknown> };
+        correction?: { reason: string; source: string };
+      }>;
+    }>;
+  };
 
-  it("emits one parseable facts file per patient with a decision", () => {
-    const docs = parseAllDocuments(text).map((d) => d.toJS() as unknown);
-    expect(docs).toHaveLength(1);
-    const file = parseFactsFile(text);
-    expect(file.patient).toBe("SYN-019");
-    expect(file.facts.map((f) => f.fact).sort()).toEqual(["egfr", "nyha_class"]);
+  it("emits one valid manifest that cannot masquerade as a facts file", () => {
+    expect(manifest.kind).toBe("rulekit-review-manifest");
+    expect(manifest.authoritative).toBe(false);
+    expect(manifest.patients).toHaveLength(1);
+    expect(() => parseFactsFile(text)).toThrow(/invalid facts file/);
   });
 
-  it("stamps every entry with the reviewer and the time", () => {
-    const file = parseFactsFile(text);
-    for (const f of file.facts) {
-      expect(f.reviewedBy).toBe(REVIEWER);
-      expect(f.reviewedAt).toMatch(/^2026-08-21T10:0[05]:00Z$/);
-      expect(f.status).toBe("confirmed");
+  it("stamps every decision with the entered reviewer and time", () => {
+    expect(manifest.reviewer.identity).toBe("Ada Reviewer");
+    for (const decision of manifest.patients[0]!.decisions) {
+      expect(decision.reviewedBy).toBe("Ada Reviewer");
+      expect(decision.reviewedAt).toMatch(/^2026-08-21T10:0[05]:00Z$/);
     }
   });
 
-  it("records a human correction as human provenance, keeping the original quote", () => {
-    const nyha = parseFactsFile(text).facts.find((f) => f.fact === "nyha_class")!;
-    expect(nyha.value).toBe("IV");
-    expect(nyha.extractedBy).toBe("human");
-    expect(nyha.source?.doc).toBe("clinic-2026-04-02");
+  it("preserves pending history and records before/after correction provenance without a stale quote", () => {
+    const patient = manifest.patients[0]!;
+    expect(patient.sourceSnapshot.facts).toHaveLength(DEMO_FACTS.find((f) => f.patient === "SYN-019")!.facts.length);
+    expect(patient.sourceSnapshot.facts.some((f) => f.status === "proposed")).toBe(true);
+    const nyha = patient.decisions.find((decision) => decision.fact === "nyha_class")!;
+    expect(nyha.before.proposal.source?.quote).toContain("class III");
+    expect(nyha.after.value).toBe("IV");
+    expect(nyha.after.extractedBy).toBe("human");
+    expect(nyha.after.source).toEqual({ type: "reviewer-attestation", detail: CORRECTION.source });
+    expect(nyha.after.source).not.toHaveProperty("quote");
+    expect(nyha.correction).toEqual(CORRECTION);
   });
 
   it("says so rather than emitting an empty document when nothing was decided", () => {
-    expect(decisionsYaml(DEMO_FACTS, initial)).toContain("No decisions to export");
+    expect(decisionsYaml(DEMO_FACTS, initial, { reviewer: "" })).toContain("No decisions to export");
+  });
+
+  it("requires a self-entered reviewer identity", () => {
+    expect(() => decisionsYaml(DEMO_FACTS, state, { reviewer: " " })).toThrow(/reviewer identity/);
+  });
+
+  it("represents multiple patients in one valid manifest document", () => {
+    const twoPatients = decide(state, cardId("SYN-007", "egfr"), "rejected", undefined, "2026-08-21T10:07:00Z");
+    const multi = parse(decisionsYaml(DEMO_FACTS, twoPatients, { reviewer: "Ada Reviewer" })) as {
+      patients: Array<{ patient: string }>;
+    };
+    expect(multi.patients.map((patient) => patient.patient).sort()).toEqual(["SYN-007", "SYN-019"]);
   });
 });
 
@@ -256,15 +305,46 @@ describe("persistence", () => {
       getItem: (k: string) => store.get(k) ?? null,
       setItem: (k: string, v: string) => void store.set(k, v),
     };
-    const state = decide(initial, cardId("SYN-007", "egfr"), "confirmed", undefined, "T");
+    const state = decide(initial, cardId("SYN-007", "egfr"), "confirmed", undefined, "2026-08-21T10:00:00Z");
     saveReviewState(fake, state);
     expect(store.has(STORAGE_KEY)).toBe(true);
-    expect(loadReviewState(fake)).toEqual(state);
+    expect(loadReviewState(fake, DEMO_FACTS, DEMO_FACT_MODEL)).toEqual(state);
   });
 
   it("survives a missing or corrupt store rather than throwing", () => {
     expect(loadReviewState(undefined)).toEqual({});
     expect(loadReviewState({ getItem: () => "{{{" })).toEqual({});
+  });
+
+  it("ignores unknown and malformed entries instead of injecting them into evaluation", () => {
+    const known = cardId("SYN-007", "egfr");
+    const raw = JSON.stringify({
+      "OTHER:egfr": { decision: "confirmed", at: "2026-08-21T10:00:00Z" },
+      [known]: { decision: "confirmed", value: "banana", at: "2026-08-21T10:00:00Z" },
+    });
+    expect(loadReviewState({ getItem: () => raw }, DEMO_FACTS, DEMO_FACT_MODEL)).toEqual({});
+  });
+
+  it("ignores a persisted correction that has no replacement provenance", () => {
+    const id = cardId("SYN-007", "egfr");
+    const raw = JSON.stringify({
+      [id]: { decision: "confirmed", value: "47", at: "2026-08-21T10:00:00Z" },
+    });
+    expect(loadReviewState({ getItem: () => raw }, DEMO_FACTS, DEMO_FACT_MODEL)).toEqual({});
+  });
+
+  it("migrates a legacy numeric string only when correction provenance is complete", () => {
+    const id = cardId("SYN-007", "egfr");
+    const raw = JSON.stringify({
+      [id]: {
+        decision: "confirmed",
+        value: "47",
+        at: "2026-08-21T10:00:00Z",
+        correction: CORRECTION,
+      },
+    });
+    const fake = { getItem: (key: string) => (key === LEGACY_STORAGE_KEY ? raw : null) };
+    expect(loadReviewState(fake, DEMO_FACTS, DEMO_FACT_MODEL)[id]!.value).toBe(47);
   });
 });
 
@@ -285,14 +365,14 @@ describe("buildCards", () => {
 
   it("shows the value already on record beside the one being proposed", () => {
     const egfr019 = cards.find((c) => c.id === cardId("SYN-019", "egfr"))!;
-    expect(egfr019.structured).toBe("42");
-    expect(egfr019.value).toBe("62");
+    expect(egfr019.structured).toBe(42);
+    expect(egfr019.value).toBe(62);
   });
 
   it("flags the facts that would change a band, in the funnel's own words", () => {
     const egfr019 = cards.find((c) => c.id === cardId("SYN-019", "egfr"))!;
     expect(egfr019.flipsVerdict).toBe(true);
-    expect(egfr019.impact).toBe("screen fail → pending chart review");
+    expect(egfr019.impact).toBe("screen fail → not evaluable");
   });
 
   it("marks a fact no criterion reads, and leaves it without an impact claim", () => {

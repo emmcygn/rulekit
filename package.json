@@ -1,13 +1,13 @@
 {
   "name": "rulekit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Clinical-trial eligibility criteria as versioned, tested, conflict-checked YAML rules \u2014 deterministic engine, feasibility workbench, and an LLM facts compiler where humans confirm and only the engine decides",
   "scripts": {
     "test": "vitest run",
     "lint": "eslint .",
     "build": "tsc -p tsconfig.json",
     "rules": "tsx src/cli/index.ts",
-    "dogfood": "tsx src/cli/index.ts check rules/trials/demo-hf-001/ruleset@1.0.0.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/demo-hf-001 --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients && tsx src/cli/index.ts check rules/trials/commander-hf/ruleset.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/commander-hf --fact-model packs/trials/fact-model.yaml",
+    "dogfood": "tsx src/cli/index.ts check rules/trials/demo-hf-001/ruleset.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/demo-hf-001 --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients --coverage && tsx src/cli/index.ts check rules/trials/commander-hf/ruleset.yaml --fact-model packs/trials/fact-model.yaml && tsx src/cli/index.ts test rules/trials/commander-hf --fact-model packs/trials/fact-model.yaml --coverage",
     "corpus:fetch": "tsx scripts/fetch-synthea.ts",
     "corpus:flatten": "tsx scripts/flatten-synthea.ts",
     "corpus:mess": "tsx scripts/mess-injector.ts",
@@ -18,6 +18,8 @@
     "facts": "tsx src/cli-facts/index.ts",
     "facts:check": "tsx src/cli-facts/index.ts check corpus/facts",
     "facts:eval": "tsx src/cli-facts/index.ts eval --min-precision 0.95 --min-recall 0.95",
+    "recordings:migrate": "tsx scripts/record-responses.ts --migrate",
+    "recordings:record": "tsx scripts/record-responses.ts",
     "extract:corpus": "tsx scripts/extract-corpus.ts",
     "eval": "npm run build && promptfoo eval -c evals/promptfooconfig.yaml"
   },

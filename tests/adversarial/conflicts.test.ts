@@ -9,16 +9,16 @@
  */
 import { describe, it, expect } from "vitest";
 import { detectConflicts, checkRuleSet } from "../../src/core/conflicts.js";
-import { evalPatient } from "../../src/core/evaluator.js";
+import { evalPatientUnsafe as evalPatient } from "../../src/core/evaluator.js";
 import type { Criterion, FactModel, RuleSet } from "../../src/core/schema.js";
 
 const FM: FactModel = {
   name: "probe/v1",
   facts: {
-    age: { type: "number", unit: "years" },
-    egfr: { type: "number", unit: "mL/min/1.73m2" },
-    lvef: { type: "number", unit: "%" },
-    index_hospital_days: { type: "number", unit: "days" },
+    age: { type: "number" },
+    egfr: { type: "number" },
+    lvef: { type: "number" },
+    index_hospital_days: { type: "number" },
   },
 };
 
@@ -41,7 +41,7 @@ describe("B1 — a multi-fact exclusion is skipped from band analysis (REGRESSIO
   );
 
   it("makes no band claim: firing needs every conjunct, so 'for all inputs' cannot be shown", () => {
-    expect(detectConflicts(set)).toEqual([]);
+    expect(detectConflicts(set).filter((f) => f.level === "error")).toEqual([]);
   });
 
   it("the counterexample the old claim could not survive is now consistent with the analysis", () => {
@@ -112,17 +112,19 @@ describe("B2 — neq leaves close a degenerate interval (REGRESSION: were droppe
     }
   });
 
-  it("a neq that does not close the admitted interval stays quiet", () => {
+  it("a neq that does not close the admitted interval reports only analysis scope", () => {
     const set = rs(
       { id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18 } },
       { id: "not-fifty", kind: "inclusion", verbatim: "Age != 50", when: { fact: "age", op: "neq", value: 50 } },
     );
-    expect(detectConflicts(set)).toEqual([]);
+    const findings = detectConflicts(set);
+    expect(findings.filter((f) => f.level === "error")).toEqual([]);
+    expect(findings.find((f) => f.code === "analysis-incomplete")).toBeDefined();
   });
 });
 
-describe("B3 — any/not anywhere in a criterion disables ALL analysis of that criterion", () => {
-  it("an unsatisfiable all-chain goes unreported once an unrelated `any` is added", () => {
+describe("B3 — opaque branches do not hide necessary sibling contradictions", () => {
+  it("an unsatisfiable all-chain remains reported when an unrelated `any` is added", () => {
     const contradiction: Criterion = {
       id: "age-band",
       kind: "inclusion",
@@ -141,23 +143,19 @@ describe("B3 — any/not anywhere in a criterion disables ALL analysis of that c
         ],
       },
     };
-    // BUG: adding a clause that cannot possibly repair the contradiction
-    // silences the diagnostic. allChainLeaves() returns null for the whole tree.
-    expect(detectConflicts(rs(withAny))).toEqual([]);
+    expect(detectConflicts(rs(withAny)).some((f) => f.code === "unsatisfiable-criterion")).toBe(true);
   });
 
-  it("a rule set that admits nobody prints '0 conflict(s), 0 warning(s)'", () => {
+  it("unsupported disjunction is labeled as incomplete rather than silently certified", () => {
     const set = rs({
       id: "impossible-any",
       kind: "inclusion",
       verbatim: "Aged over 130 or under -5",
-      when: { any: [{ fact: "age", op: "gte", value: 130, unit: "years" }, { fact: "age", op: "lte", value: -5, unit: "years" }] },
+      when: { any: [{ fact: "age", op: "gte", value: 130 }, { fact: "age", op: "lte", value: -5 }] },
     });
     const findings = checkRuleSet(set, FM);
-    // MISLEADS: `rules check` prints exactly "0 conflict(s), 0 warning(s)" and
-    // exits 0. Nothing in the output says the analysis declined to look.
     expect(findings.filter((f) => f.level === "error")).toEqual([]);
-    expect(findings.filter((f) => f.level === "warning")).toEqual([]);
+    expect(findings.some((f) => f.code === "analysis-incomplete")).toBe(true);
   });
 });
 
@@ -171,8 +169,8 @@ describe("B4 — contradictory-inclusions attribution", () => {
     const f = detectConflicts(set).find((x) => x.code === "contradictory-inclusions")!;
     // The real contradiction is adult ∩ paediatric. `not-a-neonate` is
     // consistent with both and is blamed anyway.
-    expect(f.criteria).toEqual(["adult", "paediatric", "not-a-neonate"]);
-    expect(f.message).toContain('"not-a-neonate"');
+    expect(f.criteria).toEqual(["adult", "paediatric"]);
+    expect(f.message).not.toContain('"not-a-neonate"');
   });
 
   it("exactly two contributors reads correctly", () => {
@@ -189,7 +187,7 @@ describe("B5 — boundary arithmetic the engine gets right (attacks that failed)
     detectConflicts(rs(
       { id: "incl", kind: "inclusion", verbatim: "i", when: incl },
       { id: "excl", kind: "exclusion", verbatim: "e", when: excl },
-    )).filter((f) => f.code === "contradictory-band");
+    )).filter((f) => f.code === "unsatisfiable-ruleset");
 
   it("inclusion eq 45 vs exclusion lt 45 → no band (touching, half-open)", () => {
     expect(band({ fact: "egfr", op: "eq", value: 45 }, { fact: "egfr", op: "lt", value: 45 })).toEqual([]);
@@ -199,21 +197,22 @@ describe("B5 — boundary arithmetic the engine gets right (attacks that failed)
     expect(band({ fact: "egfr", op: "gte", value: 60 }, { fact: "egfr", op: "lt", value: 60 })).toEqual([]);
   });
 
-  it("inclusion lte 65 vs exclusion gte 65 → a real one-point band at 65", () => {
+  it("inclusion lte 65 vs exclusion gte 65 is only a partial overlap", () => {
     const f = band({ fact: "age", op: "lte", value: 65 }, { fact: "age", op: "gte", value: 65 });
-    expect(f).toHaveLength(1);
-    expect(f[0]!.evidence).toContain("[65, 65]");
+    expect(f).toHaveLength(0);
     expect(evalPatient(rs(
       { id: "incl", kind: "inclusion", verbatim: "i", when: { fact: "age", op: "lte", value: 65 } },
       { id: "excl", kind: "exclusion", verbatim: "e", when: { fact: "age", op: "gte", value: 65 } },
     ), { patient: "P65", facts: { age: 65 } }).overall).toBe("ineligible");
   });
 
-  it("an exclusion overlapping an inclusion on ONE fact is a real, reachable band", () => {
-    // Reported as an error even though 'adults, but not the very old' is a
-    // normal protocol shape. Noted as a design wart, not a wrong answer:
-    // every patient in the band really is admitted then excluded.
+  it("a normal upper-age exclusion is not a release-blocking contradiction", () => {
     const f = band({ fact: "age", op: "gte", value: 18 }, { fact: "age", op: "gt", value: 80 });
+    expect(f).toHaveLength(0);
+  });
+
+  it("an exclusion covering the whole admitted interval is a contradiction", () => {
+    const f = band({ fact: "age", op: "gte", value: 18 }, { fact: "age", op: "gte", value: 18 });
     expect(f).toHaveLength(1);
   });
 });

@@ -1,8 +1,12 @@
 # evals — the extraction eval harness
 
 Ground truth exists by construction: we authored every note in `corpus/notes/`,
-so every fact each one states is known exactly. That makes this a real eval
-rather than a vibe check.
+so every fact each one states is known exactly. This is a deterministic
+regression fixture, not clinical validation: it contains only **10 synthetic
+notes and 58 expected facts**, all author-created. Its point metrics do not
+support confidence intervals, statistical confidence, representativeness, or
+subgroup claims. This limitation is also machine-readable in
+`expected-facts.yaml` and printed by `facts eval`.
 
 Two harnesses, on purpose:
 
@@ -19,7 +23,11 @@ npm run eval          # == npm run build && promptfoo eval -c evals/promptfoocon
 
 **No API key. No network. No cost.** `evals/providers/recorded.js` serves the
 committed responses in `evals/recorded/` — one per note, produced by the pinned
-model against the pinned prompt. It is a fixture, not a cache: it never falls
+model against the pinned prompt. Before serving a response, the provider checks
+its model, prompt version and rendered hash, output-schema version and hash,
+inference settings, and full rendered-request hash. A changed note, fact model,
+prompt, schema, model, or setting therefore fails before scoring. It is a
+fixture, not a cache: it never falls
 back to a live call, and a note without a recording fails the run loudly rather
 than quietly reaching for the network.
 
@@ -54,15 +62,39 @@ assertions.
 
 ```bash
 export ANTHROPIC_API_KEY=...
-npx tsx scripts/record-responses.ts                  # every note
-npx tsx scripts/record-responses.ts echo-2026-03-12  # just one
+npm run recordings:record                            # every note in one provider batch
+npx tsx scripts/record-responses.ts echo-2026-03-12  # one selected note
+npx tsx scripts/record-responses.ts --resume msgbatch_x
 ```
 
 This is the only script in the repo that makes API calls, and nothing runs it
-automatically. Re-recording is deliberate: the recorded responses are a control
-point, and their diff is what a reviewer reads when the prompt or the model
-changes. Expect the `knownGap` entries in `expected-facts.yaml` to need
-revisiting afterwards — they describe specific mistakes in the *old* recording.
+automatically. It submits the selected notes through the Message Batches API,
+polls to completion, reconciles out-of-order results by document id, and refuses
+to write partial, duplicate, unknown, failed, or malformed results. `--resume`
+continues polling a known batch after an interrupted local process.
+
+Fresh recordings preserve batch wall latency and the provider's complete usage
+object, including input, output, cache-create, cache-read, and thinking-token
+counts. `facts eval` aggregates these values. It deliberately does not estimate
+dollar cost without a versioned provider price schedule.
+
+Re-recording is deliberate: the recorded responses are a control point, and
+their diff is what a reviewer reads when the prompt or the model changes. Expect
+the `knownGap` entries in `expected-facts.yaml` to need revisiting afterwards —
+they describe specific mistakes in the *old* recording.
+
+### Migrating the legacy recording envelope (offline)
+
+```bash
+npm run recordings:migrate
+```
+
+This makes no API call. It accepts only legacy files whose declared prompt and
+model already match the current ids, then binds their existing output to the
+current rendered request. That is an explicit maintainer attestation for known
+historical fixtures, not a substitute for re-recording after any control-point
+change. Migrated files say `capture.mode: legacy-migration` and keep metrics
+`null`; the eval reports them as unavailable rather than fabricating values.
 
 ## The four control points
 
@@ -75,7 +107,7 @@ credibility-assessment vocabulary implemented as a GitHub Action.
 | the prompt | `prompts/extract-facts.v1.md` — a file, never an inline string |
 | the schema | `ProposedFactsSchema` in `src/extract/pipeline.ts` |
 | the model id | `EXTRACTION_MODEL` in `src/extract/pipeline.ts` |
-| the recorded responses | `evals/recorded/*.json` |
+| the recorded responses | `evals/recorded/*.json` — versioned envelope with request/prompt/schema hashes, inference settings, and capture metrics |
 
 ## Files
 

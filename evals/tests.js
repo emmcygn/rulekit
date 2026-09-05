@@ -15,11 +15,11 @@ export default async function generateTests() {
     description: `${c.doc} (${c.patient}) — ${String(c.note ?? "").trim()}`,
     vars: {
       doc: c.doc,
-      patient: c.patient,
+      ...(c.patient === undefined ? {} : { patient: c.patient }),
       expected: c.expected,
       // Declared, reviewed shortfalls in the committed baseline. The assertion
       // allows exactly this many and no more.
-      knownGap: c.knownGap ?? null,
+      ...(c.knownGap === undefined ? {} : { knownGap: c.knownGap }),
     },
     assert: [
       // Structured outputs must actually hold.

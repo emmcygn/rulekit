@@ -106,6 +106,8 @@ describe('checkParity', () => {
       'synthetic-labelled-08',
       'synthetic-labelled-09',
       'chia-heuristic-labelled',
+      'overlap-not-a-contradiction',
+      'no-ehr-connector',
       'no-open-implementation',
       'not-medical-software',
       'tufts-sourced',

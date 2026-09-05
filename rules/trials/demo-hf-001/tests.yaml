@@ -2,7 +2,7 @@ cases:
   - name: healthy 40yo HFrEF patient is eligible pending chart review
     facts: { age: 40, lvef: 34, egfr: 60, medications: [] }
     expect: { age-min: pass, lvef-max: pass, egfr-min: pass, anticoag-washout: pass, renal-safety: pass, nyha-class-iv: unknown, overall: undetermined }
-  - name: 63yo in the contradictory band passes I3 then fails E3
+  - name: 63yo in the overlapping thresholds passes I3 then fails E3
     facts: { age: 63, lvef: 38, egfr: 41, medications: [] }
     expect: { egfr-min: pass, renal-safety: fail, overall: ineligible }
   - name: warfarin 21 days ago fires the widened washout
@@ -47,3 +47,12 @@ cases:
   - name: eGFR exactly 45 passes renal-safety (strict less-than)
     facts: { age: 40, lvef: 34, egfr: 45, medications: [] }
     expect: { renal-safety: pass, egfr-min: pass, overall: undetermined }
+  - name: eGFR below 30 fails the inclusion
+    facts: { age: 40, lvef: 34, egfr: 20, medications: [] }
+    expect: { egfr-min: fail, renal-safety: fail, overall: ineligible }
+  - name: NYHA class III does not fire the class IV exclusion
+    facts: { age: 40, lvef: 34, egfr: 60, medications: [], nyha_class: III }
+    expect: { nyha-class-iv: pass, overall: eligible }
+  - name: NYHA class IV fires the exclusion
+    facts: { age: 40, lvef: 34, egfr: 60, medications: [], nyha_class: IV }
+    expect: { nyha-class-iv: fail, overall: ineligible }

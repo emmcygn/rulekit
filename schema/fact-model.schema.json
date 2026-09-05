@@ -29,7 +29,7 @@
           "properties": {
             "type": { "const": "number" },
             "unit": {
-              "description": "UCUM-style unit the value is stated in. Optional, but a numeric fact without a declared unit cannot raise the `unit-mismatch` warning, so declare one.",
+              "description": "Canonical UCUM-style unit for patient values and rule literals. Optional only for genuinely unitless numbers; a declared unit is enforced as a blocking rule validation contract.",
               "type": "string",
               "minLength": 1
             }

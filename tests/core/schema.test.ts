@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRuleSet, parseFactModel, parsePatient, parseTestSuite } from "../../src/core/schema.js";
+import { PARSE_LIMITS, parseRuleSet, parseFactModel, parsePatient, parseTestSuite } from "../../src/core/schema.js";
 
 const VALID_RULESET = `
 ruleset: demo-hf-001-eligibility
@@ -46,6 +46,11 @@ describe("parseRuleSet", () => {
     expect(() => parseRuleSet(bad)).toThrow(/duplicate/i);
   });
 
+  it("reserves overall for the aggregate test outcome", () => {
+    const bad = VALID_RULESET.replace("age-min", "overall");
+    expect(() => parseRuleSet(bad)).toThrow(/overall.*reserved/);
+  });
+
   it("parses nested all/any/not conditions", () => {
     const rs = parseRuleSet(`
 ruleset: r
@@ -62,6 +67,20 @@ criteria:
 `);
     const when = rs.criteria[0]!.when as { all: unknown[] };
     expect(when.all).toHaveLength(2);
+  });
+
+  it("rejects pathological condition depth and rule/count breadth", () => {
+    let nested: unknown = { fact: "age", op: "gte", value: 18 };
+    for (let i = 0; i <= PARSE_LIMITS.nestingDepth; i += 1) nested = { not: nested };
+    const base = { ruleset: "r", rulesetVersion: "1.0.0", factModel: "patient-facts/v1" };
+    expect(() => parseRuleSet(JSON.stringify({ ...base, criteria: [{ id: "deep", kind: "inclusion", verbatim: "v", when: nested }] }))).toThrow(/nesting exceeds/);
+
+    const criteria = Array.from({ length: PARSE_LIMITS.criteria + 1 }, (_, i) => ({ id: `c${i}`, kind: "inclusion", verbatim: "v", when: { fact: "age", op: "gte", value: 18 } }));
+    expect(() => parseRuleSet(JSON.stringify({ ...base, criteria }))).toThrow(/Too big|too big|1000/);
+
+    const values = Array.from({ length: PARSE_LIMITS.codeValues + 1 }, (_, i) => `code-${i}`);
+    const codeCriterion = [{ id: "codes", kind: "inclusion", verbatim: "v", when: { fact: "conditions", op: "in", codes: { system: "snomed", values } } }];
+    expect(() => parseRuleSet(JSON.stringify({ ...base, criteria: codeCriterion }))).toThrow(/Too big|too big|1000/);
   });
 });
 
@@ -87,6 +106,17 @@ facts:
     - { code: warfarin, system: rxnorm, daysAgo: 5 }
 `);
     expect(p.facts["age"]).toBe(63);
+  });
+
+  it("rejects oversized patient fact bags and code lists", () => {
+    const facts = Object.fromEntries(Array.from({ length: PARSE_LIMITS.facts + 1 }, (_, i) => [`f${i}`, i]));
+    expect(() => parsePatient(JSON.stringify({ patient: "P", facts }))).toThrow(/more than 10000 facts/);
+    const codes = Array.from({ length: PARSE_LIMITS.codeEntries + 1 }, (_, i) => ({ code: String(i), system: "snomed" }));
+    expect(() => parsePatient(JSON.stringify({ patient: "P", facts: { conditions: codes } }))).toThrow(/Too big|too big|10000/);
+  });
+
+  it("rejects documents above the explicit input-size boundary before parsing", () => {
+    expect(() => parsePatient(" ".repeat(PARSE_LIMITS.documentChars + 1))).toThrow(/document exceeds/);
   });
 
   it("parses a test suite", () => {

@@ -36,8 +36,24 @@ export default class LiveExtractionProvider {
       const client = new Anthropic();
       const request = pipe.buildRequest(note, factModelYaml(), { model: this.config.model });
       const response = await pipe.liveCall(client)(request);
+      const usage = response?.metrics?.usage;
+      const promptTokens = usage
+        ? usage.input_tokens + (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0)
+        : undefined;
 
-      return { output: JSON.stringify(response?.parsed_output ?? null) };
+      return {
+        output: JSON.stringify(response?.parsed_output ?? null),
+        tokenUsage: usage
+          ? {
+              prompt: promptTokens,
+              completion: usage.output_tokens,
+              total: promptTokens + usage.output_tokens,
+              cached: usage.cache_read_input_tokens ?? 0,
+            }
+          : {},
+        latencyMs: response?.metrics?.latencyMs,
+        metadata: usage ? { usage } : {},
+      };
     } catch (err) {
       return { error: `${err.message}` };
     }

@@ -47,13 +47,22 @@ export type ProposedFactCard = {
   usedByRules?: boolean;
 };
 
-export type EditCheck = { ok: true } | { ok: false; message: string };
+export type ReviewValue = string | number | boolean;
+
+/** A correction carries the typed value and the reviewer's replacement provenance. */
+export type ReviewCorrection = {
+  value: ReviewValue;
+  reason: string;
+  source: string;
+};
+
+export type EditCheck = { ok: true; value: ReviewValue } | { ok: false; message: string };
 
 export type ReviewQueueProps = {
   items: ProposedFactCard[];
   onConfirm: (item: ProposedFactCard) => void;
-  /** The human supplies a value; provenance keeps the original quote. */
-  onEdit: (item: ProposedFactCard, value: string) => void;
+  /** The human supplies a typed value and provenance for the correction. */
+  onEdit: (item: ProposedFactCard, correction: ReviewCorrection) => void;
   onReject: (item: ProposedFactCard) => void;
   /**
    * Refuse a correction the engine could not use. Save stays blocked and the

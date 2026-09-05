@@ -45,41 +45,43 @@ export function computeFunnel(evaluations: readonly Evaluation[]): Funnel {
   if (attrition.n === 0) return { n: 0, rows: [], bands, attrition };
 
   const order = evaluations[0]!.results;
-  const resultOf = (e: Evaluation, id: string) => e.results.find((r) => r.id === id);
-
-  let pool: readonly Evaluation[] = evaluations;
+  const indexed = evaluations.map((evaluation) => ({
+    evaluation,
+    byId: new Map(evaluation.results.map((result) => [result.id, result])),
+    active: true,
+  }));
   const rows: FunnelRow[] = [];
 
   for (const [i, c] of order.entries()) {
-    const buckets = { pass: [] as Evaluation[], fail: [] as Evaluation[], unknown: [] as Evaluation[] };
+    const patients = { pass: [] as string[], fail: [] as string[], unknown: [] as string[] };
+    let entering = 0;
     let chartReview = 0;
     let chartReviewResolved = 0;
-    for (const e of pool) {
-      const r = resultOf(e, c.id);
+    for (const row of indexed) {
+      if (!row.active) continue;
+      entering += 1;
+      const r = row.byId.get(c.id);
       const v = r?.verdict ?? "unknown";
-      buckets[v === "pass" ? "pass" : v === "fail" ? "fail" : "unknown"].push(e);
+      patients[v === "pass" ? "pass" : v === "fail" ? "fail" : "unknown"].push(
+        row.evaluation.patient,
+      );
       if (r && isParked(r)) chartReview += 1;
       if (r?.chartReview !== undefined) chartReviewResolved += 1;
+      // Same drain rule as `attritionFrom`: only a fail removes anyone. An
+      // undecided criterion leaves the patient active for the next one.
+      if (v === "fail") row.active = false;
     }
 
     rows.push({
       ...attrition.rows[i]!,
-      entering: pool.length,
-      pass: buckets.pass.length,
-      fail: buckets.fail.length,
-      unknown: buckets.unknown.length,
+      entering,
+      pass: patients.pass.length,
+      fail: patients.fail.length,
+      unknown: patients.unknown.length,
       chartReview,
       chartReviewResolved,
-      patients: {
-        pass: buckets.pass.map((e) => e.patient),
-        fail: buckets.fail.map((e) => e.patient),
-        unknown: buckets.unknown.map((e) => e.patient),
-      },
+      patients,
     });
-
-    // Same drain rule as `attritionFrom`: only a fail removes anyone. An
-    // undecided criterion leaves the patient in the pool for the next one.
-    pool = pool.filter((e) => resultOf(e, c.id)?.verdict !== "fail");
   }
 
   return { n: attrition.n, rows, bands, attrition };

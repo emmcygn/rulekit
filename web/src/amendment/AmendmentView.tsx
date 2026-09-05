@@ -88,11 +88,11 @@ export function AmendmentView({
       ...changes.map(
         (c) =>
           `  ${c.kind === "added" ? "+" : c.kind === "removed" ? "-" : "~"} ${c.id} [${c.ref ?? "—"}] ${
-            c.kind === "changed" ? c.summary : `"${c.verbatim}"`
+            c.kind === "changed" || c.kind === "renamed" ? c.summary : `"${c.verbatim}"`
           }`,
       ),
       "",
-      `In the future screening pool, ${impact.flips.length} of ${cohort.length} change outcome (${deltaLine(impact)}).`,
+      `In the future screening pool, ${impact.flips.length} of ${cohort.length} change displayed screening band (${deltaLine(impact)}).`,
       "",
       ...groups.flatMap((g) => [
         `${refOf(g.criterionId)} ${g.criterionId} — ${g.flips.length} flip${g.flips.length === 1 ? "" : "s"}`,
@@ -165,13 +165,19 @@ export function AmendmentView({
         {changes.map((c) => (
           <div key={`${c.kind}-${c.id}`}>
             <b>
-              {c.kind === "added" ? "+ added" : c.kind === "removed" ? "− removed" : "~ changed"}
+              {c.kind === "added"
+                ? "+ added"
+                : c.kind === "removed"
+                  ? "− removed"
+                  : c.kind === "renamed"
+                    ? "~ renamed"
+                    : "~ changed"}
             </b>
             &nbsp;&nbsp;
-            {c.kind === "changed" ? null : `${c.criterionKind} `}
+            {c.kind === "changed" || c.kind === "renamed" ? null : `${c.criterionKind} `}
             <b>{c.id}</b> [{c.ref ?? "—"}]{" "}
             <span className="ink2">
-              {c.kind === "changed" ? c.summary : `— "${c.verbatim}"`}
+              {c.kind === "changed" || c.kind === "renamed" ? c.summary : `— "${c.verbatim}"`}
             </span>
           </div>
         ))}
@@ -182,7 +188,7 @@ export function AmendmentView({
         <b>
           {impact.flips.length} of {cohort.length}
         </b>{" "}
-        change outcome <span className="ink2">({deltaLine(impact)})</span>.
+        change displayed screening band <span className="ink2">({deltaLine(impact)})</span>.
         <div className="ink3" style={{ fontSize: 11.5, marginTop: 2 }}>
           every patient named below is one of those {impact.flips.length} · {asOf}
         </div>

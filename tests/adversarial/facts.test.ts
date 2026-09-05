@@ -16,7 +16,7 @@ import { confirmedFactsToPatient, isEvaluable } from "../../src/extract/confirme
 import { parseFactsFile } from "../../src/extract/schema.js";
 import { loadNotesDir, toDocuments } from "../../src/extract/notes.js";
 import { parseFactModel } from "../../src/core/schema.js";
-import { evalPatient } from "../../src/core/evaluator.js";
+import { evalPatientUnsafe as evalPatient } from "../../src/core/evaluator.js";
 import type { RuleSet } from "../../src/core/schema.js";
 
 const ROOT = join(import.meta.dirname, "..", "..");

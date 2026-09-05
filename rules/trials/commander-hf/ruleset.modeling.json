@@ -1,0 +1,14 @@
+{
+  "ruleset": "commander-hf-eligibility",
+  "rulesetVersion": "1.0.0",
+  "partialCriteria": [
+    {
+      "id": "significant-coronary-artery-disease",
+      "note": "The code set does not encode the protocol's investigator judgement of significance or every accepted evidence source."
+    },
+    {
+      "id": "concomitant-disease",
+      "note": "The executable proxy omits the transient-AFib discretion carve-out and acute MI scoped to the index event."
+    }
+  ]
+}

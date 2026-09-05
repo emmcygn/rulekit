@@ -1,8 +1,8 @@
 ruleset: demo-hf-001-eligibility
-protocol: "DEMO-HF-001 v3.0 (Amendment 2)"
+protocol: "DEMO-HF-001 v2.0"
 status: synthetic-demo
-effective: 2026-08-04
-rulesetVersion: 1.2.0
+effective: 2026-05-01
+rulesetVersion: 1.0.1
 factModel: patient-facts/v1
 criteria:
   - id: age-min
@@ -23,19 +23,14 @@ criteria:
   - id: anticoag-washout
     ref: E1
     kind: exclusion
-    verbatim: "Anticoagulant use within 30 days"
+    verbatim: "Anticoagulant use within 14 days"
     when:
       fact: medications
       op: anyWithin
       codes: { system: rxnorm-class, values: [anticoagulants] }
-      windowDays: 30
-  - id: renal-safety
-    ref: E3
-    kind: exclusion
-    verbatim: "eGFR below 45 at screening"
-    when: { fact: egfr, op: lt, value: 45, unit: mL/min/1.73m2 }
+      windowDays: 14
   - id: nyha-class-iv
     ref: E4
     kind: exclusion
     verbatim: "NYHA class IV heart failure"
-    when: { fact: nyha_class, op: eq, value: IV }
+    unmodeled: true

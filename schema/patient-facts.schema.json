@@ -9,8 +9,10 @@
   "properties": {
     "patient": { "type": "string", "minLength": 1 },
     "facts": {
-      "description": "Keyed by fact name. A name absent here is not false — it is `unknown`, and the evaluator says so.",
+      "description": "Keyed by fact name. Numeric values are already normalized to the canonical unit declared by the selected fact model. A name absent here is not false — it is `unknown`, and the evaluator says so.",
       "type": "object",
+      "maxProperties": 10000,
+      "propertyNames": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
       "additionalProperties": { "$ref": "#/$defs/factValue" }
     }
   },
@@ -20,7 +22,7 @@
         { "type": "number" },
         { "type": "boolean" },
         { "type": "string" },
-        { "type": "array", "items": { "$ref": "#/$defs/codeEntry" } }
+        { "type": "array", "maxItems": 10000, "items": { "$ref": "#/$defs/codeEntry" } }
       ]
     },
     "codeEntry": {

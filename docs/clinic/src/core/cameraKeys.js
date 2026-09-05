@@ -293,7 +293,7 @@ export const CAMERA_KEYS = {
                { p: 0.88, at: [-6.02, -2.80, -14.96], off: NP },
                { p: 1, at: [5.0, -0.5, -18.0], off: NP }],
   },
-  // The contradiction is one object — a slab of scores standing where two
+  // The exclusion boundary is one object — a slab of scores standing where two
   // clauses cross — and this chapter walks around it rather than at it. The
   // camera runs from 9u behind the station to 9u past it, and `off` swings
   // -1.35 → +1.35 on x between p = 0.44 and p = 0.70: 2.7u of lateral travel at

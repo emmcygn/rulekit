@@ -849,9 +849,9 @@
 <!-- verdict stamps: one mark pressed into the margin as each chapter closes -->
 <div class="stampcol" aria-hidden="true">
   <span class="vstamp" title="chapter 01: nobody can say which copy is current"><i class="mk mk-unknown"></i></span>
-  <span class="vstamp" title="chapter 02: the checker fails the build"><i class="mk mk-fail"></i></span>
+  <span class="vstamp" title="chapter 02: the evaluator exposes the exclusion boundary"><i class="mk mk-fail"></i></span>
   <span class="vstamp" title="chapter 03: only confirmed facts get through"><i class="mk mk-pass"></i></span>
-  <span class="vstamp" title="chapter 05: 470 tests, all passing"><i class="mk mk-pass"></i></span>
+  <span class="vstamp" title="chapter 05: automated regression suites passing"><i class="mk mk-pass"></i></span>
 </div>
 
 <!-- the rule document itself: a floating sheet with thickness. it idles
@@ -902,7 +902,7 @@
       </div>
       <div class="er-beat" data-step="2">
         <span class="nt">the page that decides</span>
-        <p>Buried in that stack are the <strong>entry rules</strong>. Get them wrong and the trial screens the wrong people, amendments follow at half a million dollars each, and the mistake surfaces only after the money is spent.</p>
+        <p>Buried in that stack are the <strong>entry rules</strong>. Copying them inconsistently can change who passes a local screen. Formal amendments can be expensive, but this project has not shown that its checker prevents them.</p>
         <span class="src">keep scrolling &mdash; this is where the story starts</span>
       </div>
     </div>
@@ -1028,7 +1028,7 @@
 
   <div class="wrap">
     <div class="prose" data-reveal>
-      <p>Sooner or later the drift, or a flaw in the rules themselves, forces an <span class="gloss">amendment<span class="gloss-note">a formal mid-trial rule change</span></span>. The word is borrowed from law for a reason: this is changing the statute mid-trial. It looks like a page turning. It is re-printing, re-training, regulator re-approval, and sometimes re-consenting every volunteer at every hospital in the trial.</p>
+      <p>A protocol change may require a formal <span class="gloss">amendment<span class="gloss-note">a formal mid-trial rule change</span></span>, with document, training, review and sometimes consent work. The demo below shows one version change; it does not claim that rulekit would have prevented the amendment.</p>
     </div>
     <figure class="fig flipfig" data-reveal="fade" role="group" aria-label="The protocol page turns from version 3.0 to version 3.1, which carries one new exclusion rule">
       <div class="flip3d">
@@ -1048,7 +1048,7 @@
           </div>
         </div>
       </div>
-      <figcaption class="fig-cap">The amendment, performed. Version 3.1 is the same page with one new exclusion row on it. Hold on to that row; it comes back in chapter 02. Researchers at Tufts University priced out what one page turn costs.</figcaption>
+      <figcaption class="fig-cap">The amendment, represented as data. Version 3.1 adds one exclusion row. Hold on to that row; chapter 02 shows exactly which values it excludes. The cited Tufts figures describe amendment costs generally, not savings demonstrated by this project.</figcaption>
     </figure>
     <div class="stat-row" data-zoomin data-reveal-children data-stagger="140">
       <div class="stat">
@@ -1069,7 +1069,7 @@
     </div>
     <p class="small" data-reveal>Source: Tufts Center for the Study of Drug Development, on the cost of protocol amendments.</p>
     <div class="prose" data-reveal style="margin-top:18px">
-      <p>Almost half a million pounds, spent on changing a paragraph. Nearly half of those changes were avoidable. If you can test the trial rules, you find rule flaws while it is still cheap to fix.</p>
+      <p>These are published aggregate amendment figures, not a rulekit outcome. The study does not establish that logic contradictions caused those amendments or that this checker would have avoided them.</p>
     </div>
   </div>
 </section>
@@ -1215,16 +1215,16 @@
   </div>
 </section>
 
-<!-- ---- 02b · contradiction intro + scrub ---- -->
+<!-- ---- 02b · exclusion-boundary intro + scrub ---- -->
 <section class="sec sec-band" id="clash-intro" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine &#183; idea two</p>
-    <h2 data-reveal>It finds contradictions before anyone enrolls</h2>
-    <p class="lede" data-reveal>Once the rules are logic, a checker can lay them out on a number line and prove when two of them collide. Here is the collision planted in the project's teaching example, drawn slowly.</p>
+    <h2 data-reveal>It shows exactly where an exclusion fires</h2>
+    <p class="lede" data-reveal>Once rules are logic, the evaluator can show which values pass an inclusion and then fire an exclusion. The [30,45) band in the teaching example is ordinary eligibility behavior, not a contradiction and not a failing check.</p>
   </div>
 </section>
 
-<section class="scrub" id="p-clash" data-scrub data-vars data-steps="4" style="height:500vh" data-section data-title="The contradiction" data-thread="code">
+<section class="scrub" id="p-clash" data-scrub data-vars data-steps="4" style="height:500vh" data-section data-title="The exclusion boundary" data-thread="code">
   <div class="scrub-stage">
     <div class="cf-col">
       <div class="cf-cards" data-step="0+">
@@ -1281,7 +1281,7 @@
           <div class="note"><span class="nt">rule 2, drawn</span>"Below 45" becomes a second bar: everything under 45 gets turned away. Now look at where the two bars sit on top of each other.</div>
         </div>
         <div data-step="3">
-          <div class="note"><span class="nt">the collision</span>One rule needs a kidney score of at least 30. The other rejects anything under 45. So everyone between 30 and 45 is admitted by one clause and barred by the other. The checker proves that for <em>every possible patient</em>, then fails the build the way a broken test fails software, before a single volunteer is screened. The honest limit: when the checker cannot prove a clash, it says nothing rather than guessing. Keep scrolling to walk the same ground.</div>
+          <div class="note"><span class="nt">the evaluated band</span>One rule needs a kidney score of at least 30. The other rejects anything under 45. Every value in [30,45) therefore passes the inclusion and fires the exclusion, producing an ineligible verdict. That is an exclusion doing its job; <span class="mono">rules check</span> does not report a contradiction or fail the build. Static checks block only contradictions they can prove within their documented scope. Keep scrolling to walk the same ground.</div>
         </div>
       </div>
     </div>
@@ -1289,13 +1289,13 @@
   </div>
 </section>
 
-<!-- ---- 02b2 · the chasm: the same collision, walked ---- -->
+<!-- ---- 02b2 · the chasm: the same excluded band, walked ---- -->
 <section class="bsec chasm" id="chasm" data-scrub data-vars data-steps="1"
          style="height:240vh" data-section data-title="The chasm" data-thread="code">
   <div class="bstage">
     <div class="bstage-inner">
-      <p class="kicker">the same collision, walked</p>
-      <p class="bcap">the floor is the statute. seven patients cross it. where the two clauses disagree there is no floor, and one patient, scoring exactly 30, is left hanging from the edge.</p>
+      <p class="kicker">the same excluded band, walked</p>
+      <p class="bcap">the floor is the evaluated rule set. seven patients cross it. where the exclusion fires, the floor drops into screen fail; a patient scoring exactly 30 passes the inclusion but is still ineligible.</p>
     </div>
     <div class="chasm-floor" aria-hidden="true">
       <span class="ch-seg ch-l"></span>
@@ -1324,7 +1324,7 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine &#183; idea three</p>
     <h2 data-reveal>Every number comes from one calculation</h2>
-    <p class="lede" data-reveal>A patient's verdict is computed exactly once. The printed report and the visual app both read that one result, so two screens can never show different counts.</p>
+    <p class="lede" data-reveal>A patient's verdict is computed exactly once for a pinned engine and input bundle. The printed report and the visual app both read that result, so two screens can share the same counts.</p>
   </div>
   <div class="wrap-wide">
     <div data-zoomin>
@@ -1346,8 +1346,8 @@
           <line x1="230" y1="150" x2="292" y2="150" stroke="#17150F" stroke-width="1.5" marker-end="url(#p-arr)"/>
           <rect x="296" y="104" width="220" height="92" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
           <text x="406" y="136" text-anchor="middle" font-family="Martian Mono, monospace" font-size="12.5" font-weight="600" fill="#17150F">one calculation</text>
-          <text x="406" y="158" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">the engine &#183; same input,</text>
-          <text x="406" y="174" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">same answer, always</text>
+          <text x="406" y="158" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">same pinned engine + input,</text>
+          <text x="406" y="174" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">same answer</text>
         </g>
         <g class="pn q3">
           <rect x="546" y="129" width="118" height="42" rx="2" fill="#F3EFE7" stroke="#C9C2B4"/>
@@ -1459,10 +1459,10 @@
           <div class="note"><span class="nt">a suggestion, with its receipt</span>The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can check the suggestion against the note in a few seconds, without having to trust the LLM at all.</div>
         </div>
         <div data-step="3">
-          <div class="note"><span class="nt">approved, and only now visible</span>The click writes the reviewer's name and a timestamp next to the fact. Until that click, the engine cannot see the suggestion at all. The AI has no wire to the decision.</div>
+          <div class="note"><span class="nt">approved, and only now visible</span>The click stores a generic demo reviewer label and timestamp in this browser. Until that click, the engine cannot see the suggestion. This local state is not authenticated or a durable audit trail.</div>
         </div>
         <div data-step="4">
-          <div class="note"><span class="nt">and when the AI makes something up</span>If the quote is not in the source document word for word, the software throws the suggestion out before any person lays eyes on it. A fact that cannot show its receipt does not exist here. That setup, where the clinician can see the evidence and check it themselves, is what the FDA looks for in a tool that assists rather than decides.</div>
+          <div class="note"><span class="nt">and when the AI makes something up</span>If the quote is not in the source document word for word, the software throws the suggestion out before any person lays eyes on it. A fact that cannot show its receipt does not exist here. This makes the demo inspectable; it does not establish an FDA classification, regulatory compliance or clinical validity.</div>
         </div>
       </div>
     </div>
@@ -1501,16 +1501,16 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">04</span>what exists</p>
     <h2 data-reveal>What runs today</h2>
-    <p class="lede" data-reveal>A public code repository that runs on any computer without an account, cloud dependency, and no patient data leaves if paired with a local/sandboxed LLM.</p>
+    <p class="lede" data-reveal>A public code repository that runs locally without an account or required cloud service. Automated regression suites run on every change. The repository has no EHR connector, and every person in this project is synthetic.</p>
 
     <div class="coda-grid" data-zoomin data-reveal-children data-stagger="110">
       <div class="coda-cell">
-        <span class="cv"><span data-count-to="470">0</span></span>
-        <p class="cl2">automated tests, all passing, re-run on every change (green <span class="gloss">CI<span class="gloss-note">checks that run on every change</span></span>)</p>
+        <span class="cv">CI</span>
+        <p class="cl2">automated regression suites, re-run on every change (green <span class="gloss">CI<span class="gloss-note">checks that run on every change</span></span> at publication time)</p>
       </div>
       <div class="coda-cell">
         <span class="cv">2</span>
-        <p class="cl2">trial rule packs. One was built from the published entry criteria of COMMANDER HF, a real heart-failure trial (registry id NCT01877915): 12 criteria, 8 of them turned into runnable rules, the other 4 left as plain text because the language cannot say what they mean.</p>
+        <p class="cl2">trial rule packs. COMMANDER HF uses public registry text: 12 criteria, 8 executable (2 explicitly partial), and 4 left unmodeled because the language cannot say what they mean.</p>
       </div>
       <div class="coda-cell">
         <span class="cv"><span data-count-to="110">0</span></span>
@@ -1518,7 +1518,7 @@
       </div>
       <div class="coda-cell">
         <span class="cv">1 + 1</span>
-        <p class="cl2">a working screening report (who fails, on which rule, and which single rule change would admit the most people) and an interactive <span class="gloss">workbench<span class="gloss-note">the visual app</span></span> with five screens, including the live funnel below</p>
+        <p class="cl2">a demonstration report over invented patients (including strict sole-reason counts that stay empty when another criterion is unknown) and an interactive <span class="gloss">workbench<span class="gloss-note">the visual app</span></span> with five screens</p>
       </div>
     </div>
   </div>
@@ -1600,13 +1600,13 @@
   <div class="wrap-wide">
     <figure class="fig" data-reveal="fade" role="group" aria-label="A layered map of what rulekit is made of: YAML rule files pass through zod checking into a TypeScript engine, which feeds a React workbench and a command line report, with the note-reading step below a human gate, and the whole thing wrapped in vitest tests.">
       <div class="fig-scroll">
-      <svg viewBox="0 0 900 470" style="min-width:700px" data-drawin role="img" aria-label="Rule files written in YAML are checked by zod at the door, then read by a TypeScript engine, which feeds a React workbench and a command line report. Below a human gate sits the Anthropic SDK note-reading step, scored offline by promptfoo. A box labelled vitest, 470 tests written before the code, encloses everything.">
+      <svg viewBox="0 0 900 470" style="min-width:700px" data-drawin role="img" aria-label="Rule files written in YAML are checked by zod at the door, then read by a TypeScript engine, which feeds a React workbench and a command line report. Below a human gate sits the Anthropic SDK note-reading step, scored offline by promptfoo. A box labelled automated regression suites encloses everything.">
 
         <!-- the tests, wrapped around the whole of it -->
         <g class="dw" style="--dd:.25s">
           <rect x="16" y="16" width="868" height="438" rx="3" fill="none" stroke="#C9C2B4" stroke-width="1.5"/>
           <text x="40" y="49" font-family="Martian Mono, monospace" font-weight="600" font-size="12" fill="#17150F">vitest</text>
-          <text x="112" y="49" font-family="Spline Sans Mono, monospace" font-size="11" fill="#6B655C">470 automated tests, written before the code they test</text>
+          <text x="112" y="49" font-family="Spline Sans Mono, monospace" font-size="11" fill="#6B655C">automated regression suites, re-run in CI</text>
         </g>
 
         <!-- the rules themselves -->
@@ -1783,7 +1783,7 @@
         <g data-step="0+">
           <rect x="505" y="100" width="190" height="120" rx="2" fill="#FAF8F4" stroke="#17150F" stroke-width="1.5"/>
           <text x="600" y="150" text-anchor="middle" font-family="Martian Mono, monospace" font-weight="600" font-size="13" fill="#17150F">one engine</text>
-          <text x="600" y="172" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">same input, same answer</text>
+          <text x="600" y="172" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="10.5" fill="#6B655C">same pinned input + engine, same answer</text>
         </g>
 
         <!-- one step back: the rule file in, the three answers out -->
@@ -1841,7 +1841,7 @@
         <span class="fly fly-stamp" style="--t0:.68;--fx:320px;--fy:150px;--fr:16deg">refused</span>
       </div>
       <p class="kicker">chapter 06 &#183; close</p>
-      <p class="bcap">pull back and the parts are small, and you have met every one of them: a compiled chip, a patient, the collision band, a stamp. a page, a file, one check, one answer, printed twice.</p>
+      <p class="bcap">pull back and the parts are small, and you have met every one of them: a compiled chip, a patient, the excluded band, a stamp. a page, a file, one check, one answer, printed twice.</p>
     </div>
   </div>
 </section>
@@ -1861,7 +1861,7 @@
 
     <div data-zoomin>
     <blockquote class="claim" data-reveal>
-      The narrow claim: there is <strong>no open implementation</strong> of this whole shape in one place. AI suggestions that carry their quotes. Human approval as the only way in. A <span class="gloss">deterministic<span class="gloss-note">same input, same answer, always</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.
+      The narrow claim: there is <strong>no open implementation</strong> of this whole shape in one place. AI suggestions that carry their quotes. Human approval as the only way in. A <span class="gloss">deterministic<span class="gloss-note">same pinned engine and input, same answer</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.
       <span class="who">from the project README, stated with its own caveats attached</span>
     </blockquote>
     </div>

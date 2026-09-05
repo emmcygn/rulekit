@@ -8,7 +8,9 @@ import {
   factValues,
   histogram,
   numericTargets,
+  prepareSensitivity,
   relaxedValue,
+  sensitivityCounts,
   setKnob,
   topYield,
   yieldsAreRanked,
@@ -37,7 +39,7 @@ describe("numericTargets", () => {
     expect(renal.label).toBe("eGFR < 45");
     expect(renal.fact).toBe("egfr");
     const egfrMin = targets.find((t) => t.criterionId === "egfr-min")!;
-    expect(egfrMin.unit).toBe("mL/min");
+    expect(egfrMin.unit).toBe("mL/min/1.73m2");
   });
 });
 
@@ -86,8 +88,8 @@ describe("live re-count", () => {
     const after = displayBandCounts(evalResolved(setKnob(DEMO_RULESET_CURRENT, renal.path, 40)));
     expect(before["screen-fail"]).toBe(7);
     expect(after["screen-fail"]).toBe(5);
-    expect(after["pending-chart-review"]).toBe(before["pending-chart-review"] + 1);
-    expect(after["not-evaluable"]).toBe(before["not-evaluable"] + 1);
+    expect(after["pending-chart-review"]).toBe(before["pending-chart-review"]);
+    expect(after["not-evaluable"]).toBe(before["not-evaluable"] + 2);
   });
 
   it("tightening a threshold moves patients the other way", () => {
@@ -111,6 +113,20 @@ describe("topYield", () => {
     expect(ranked[0]!.criterionId).toBe("renal-safety");
     expect(ranked[0]!.delta).toBe(2);
     expect(ranked.map((r) => r.delta)).toEqual([...ranked.map((r) => r.delta)].sort((a, b) => b - a));
+  });
+
+  it("matches full cohort evaluation while recomputing only the changed criterion", () => {
+    const prepared = prepareSensitivity(
+      parseRuleSet(DEMO_RULESET_CURRENT),
+      DEMO_COHORT,
+      evalResolved(DEMO_RULESET_CURRENT),
+    );
+    for (const target of prepared.targets) {
+      const value = relaxedValue(target.criterionKind, target.op, target.value);
+      expect(sensitivityCounts(prepared, target, value)).toEqual(
+        displayBandCounts(evalResolved(setKnob(DEMO_RULESET_CURRENT, target.path, value))),
+      );
+    }
   });
 
   it("lists every numeric knob, including the ones that buy nothing", () => {

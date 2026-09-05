@@ -1,11 +1,11 @@
 import type { Condition, FactModel, Leaf, NumericLeaf, RuleSet } from "./schema.js";
-import { FULL, fromLeaf, intersect, isEmpty, fmtInterval, type Interval } from "./interval.js";
+import { FULL, contains, fromLeaf, intersect, isEmpty, fmtInterval, type Interval } from "./interval.js";
 import { lintRuleSet, type Finding } from "./lint.js";
 
 const INTERVAL_OPS = new Set(["eq", "gt", "gte", "lt", "lte"]);
 
 function isNumericIntervalLeaf(l: Leaf): l is NumericLeaf {
-  return INTERVAL_OPS.has(l.op);
+  return INTERVAL_OPS.has(l.op) && "value" in l && typeof l.value === "number";
 }
 
 /** An interval that admits exactly one value, e.g. `[40, 40]` from `eq 40`. */
@@ -13,56 +13,67 @@ function pointOf(i: Interval): number | undefined {
   return i.lo === i.hi && !i.loOpen && !i.hiOpen && Number.isFinite(i.lo) ? i.lo : undefined;
 }
 
-/** Leaves reachable through `all` chains only; null if condition contains any/not. */
-function allChainLeaves(cond: Condition): Leaf[] | null {
-  if ("any" in cond || "not" in cond) return null;
+/** Necessary leaves reachable through `all`; opaque any/not branches are skipped. */
+function allChainLeaves(cond: Condition): { leaves: Leaf[]; complete: boolean } {
+  if ("any" in cond || "not" in cond) return { leaves: [], complete: false };
   if ("all" in cond) {
     const parts = cond.all.map(allChainLeaves);
-    if (parts.some((p) => p === null)) return null;
-    return parts.flatMap((p) => p as Leaf[]);
+    return { leaves: parts.flatMap((p) => p.leaves), complete: parts.every((p) => p.complete) };
   }
-  return [cond];
+  return { leaves: [cond], complete: true };
 }
+
+type CodeConstraint = { fact: string; op: "in" | "notIn"; system: string; values: string[] };
 
 type Analysis = {
   /** Per-fact interval from the criterion's `eq/gt/gte/lt/lte` leaves. */
   intervals: Map<string, Interval>;
   /** Per-fact values the criterion's `neq` leaves rule out. */
   neqs: Map<string, number[]>;
-  /**
-   * True when *every* leaf in the all-chain is an interval leaf on one single
-   * fact. Only then does "this fact is in this interval" imply the criterion
-   * fires; a second fact or a code/exists/anyWithin leaf is another conjunct
-   * that has to hold too, and interval arithmetic says nothing about it.
-   */
-  singleFactComplete: boolean;
+  codes: CodeConstraint[];
+  /** Exactly one `in` leaf and no surrounding or additional logic. */
+  simpleCodeIn?: CodeConstraint;
+  fullyAnalyzed: boolean;
 };
 
 /** Per-fact intervals for one criterion, or null when not analyzable. */
-function criterionIntervals(cond: Condition): Analysis | null {
-  const leaves = allChainLeaves(cond);
-  if (leaves === null) return null;
+function criterionIntervals(cond: Condition): Analysis {
+  const chain = allChainLeaves(cond);
+  const leaves = chain.leaves;
   const intervals = new Map<string, Interval>();
   const neqs = new Map<string, number[]>();
+  const codes: CodeConstraint[] = [];
   let nonInterval = 0;
   for (const leaf of leaves) {
     // `neq v` carries no interval of its own (it punches a hole, which is not an
     // interval), but it does decide the one case interval arithmetic can see: an
     // interval already narrowed to the single point `v`.
-    if (leaf.op === "neq") {
+    if (leaf.op === "neq" && "value" in leaf && typeof leaf.value === "number") {
       nonInterval += 1;
       neqs.set(leaf.fact, [...(neqs.get(leaf.fact) ?? []), leaf.value]);
       continue;
     }
     if (!isNumericIntervalLeaf(leaf)) {
+      if ((leaf.op === "in" || leaf.op === "notIn") && "codes" in leaf) {
+        codes.push({ fact: leaf.fact, op: leaf.op, system: leaf.codes.system, values: leaf.codes.values });
+      }
       nonInterval += 1;
       continue;
     }
     const prev = intervals.get(leaf.fact) ?? FULL;
     intervals.set(leaf.fact, intersect(prev, fromLeaf(leaf.op as "eq" | "gt" | "gte" | "lt" | "lte", leaf.value)));
   }
-  return { intervals, neqs, singleFactComplete: intervals.size === 1 && nonInterval === 0 };
+  return {
+    intervals,
+    neqs,
+    codes,
+    simpleCodeIn: chain.complete && leaves.length === 1 && codes.length === 1 && codes[0]!.op === "in" ? codes[0] : undefined,
+    fullyAnalyzed: chain.complete && nonInterval === 0,
+  };
 }
+
+const sameCodeDomain = (a: CodeConstraint, b: CodeConstraint): boolean => a.fact === b.fact && a.system === b.system;
+const subset = (a: readonly string[], b: readonly string[]): boolean => a.every((v) => b.includes(v));
 
 export function detectConflicts(rs: RuleSet): Finding[] {
   const out: Finding[] = [];
@@ -71,7 +82,9 @@ export function detectConflicts(rs: RuleSet): Finding[] {
   for (const c of rs.criteria) {
     if (c.when === undefined) continue;
     const a = criterionIntervals(c.when);
-    if (a === null) continue;
+    if (!a.fullyAnalyzed) {
+      out.push({ level: "info", code: "analysis-incomplete", criteria: [c.id], message: `"${c.id}" contains logic outside complete interval analysis; lint and supported local proofs still run, but this criterion is not proven conflict-free` });
+    }
     for (const [fact, iv] of a.intervals) {
       if (isEmpty(iv)) {
         out.push({ level: "error", code: "unsatisfiable-criterion", criteria: [c.id], message: `"${c.id}" can never fire: its own constraints on ${fact} intersect to the empty set`, evidence: `${fact}: ${fmtInterval(iv)}` });
@@ -82,7 +95,39 @@ export function detectConflicts(rs: RuleSet): Finding[] {
         out.push({ level: "error", code: "unsatisfiable-criterion", criteria: [c.id], message: `"${c.id}" can never fire: its own constraints on ${fact} admit only ${point}, which its "neq ${point}" leaf rules out`, evidence: `${fact}: ${fmtInterval(iv)} minus {${point}} is the empty set` });
       }
     }
-    if (a.intervals.size > 0 || a.neqs.size > 0) analyzed.push({ id: c.id, kind: c.kind, ...a });
+    for (const positive of a.codes.filter((x) => x.op === "in")) {
+      for (const negative of a.codes.filter((x) => x.op === "notIn" && sameCodeDomain(x, positive))) {
+        if (!subset(positive.values, negative.values)) continue;
+        out.push({ level: "error", code: "unsatisfiable-criterion", criteria: [c.id], message: `"${c.id}" can never fire: it requires a ${positive.system} code from {${positive.values.join(",")}} while forbidding that entire set`, evidence: `${positive.fact}: in {${positive.values.join(",")}} ∩ notIn {${negative.values.join(",")}} → empty` });
+      }
+    }
+    if (a.intervals.size > 0 || a.neqs.size > 0 || a.codes.length > 0) analyzed.push({ id: c.id, kind: c.kind, ...a });
+  }
+
+  // Necessary code constraints across inclusion criteria can also prove that
+  // nobody is eligible: requiring a value from S while forbidding all of S.
+  const inclusionCodes = analyzed.filter((x) => x.kind === "inclusion").flatMap((a) => a.codes.map((code) => ({ id: a.id, code })));
+  for (const positive of inclusionCodes.filter((x) => x.code.op === "in")) {
+    for (const negative of inclusionCodes.filter((x) => x.code.op === "notIn" && x.id !== positive.id && sameCodeDomain(x.code, positive.code))) {
+      if (!subset(positive.code.values, negative.code.values)) continue;
+      out.push({ level: "error", code: "contradictory-inclusions", criteria: [positive.id, negative.id], message: `no patient can pass: "${positive.id}" requires a ${positive.code.system} code from {${positive.code.values.join(",")}} while "${negative.id}" forbids that entire set — for all inputs, not just a test corpus` });
+    }
+  }
+
+  // The simple cross-kind code-set proof: every code that can satisfy the
+  // inclusion also fires the exclusion. Restrict this to a single `in` leaf
+  // on each side so `all`/`any`/`not` cannot make the implication unsound.
+  for (const inclusion of analyzed.filter((x) => x.kind === "inclusion" && x.simpleCodeIn !== undefined)) {
+    for (const exclusion of analyzed.filter((x) => x.kind === "exclusion" && x.simpleCodeIn !== undefined)) {
+      if (!sameCodeDomain(inclusion.simpleCodeIn!, exclusion.simpleCodeIn!) || !subset(inclusion.simpleCodeIn!.values, exclusion.simpleCodeIn!.values)) continue;
+      out.push({
+        level: "error",
+        code: "unsatisfiable-ruleset",
+        criteria: [inclusion.id, exclusion.id],
+        message: `no patient can pass: inclusion "${inclusion.id}" requires a ${inclusion.simpleCodeIn!.system} code from {${inclusion.simpleCodeIn!.values.join(",")}}, all of which fire exclusion "${exclusion.id}" — for all inputs, not just a test corpus`,
+        evidence: `${inclusion.simpleCodeIn!.fact}: inclusion set {${inclusion.simpleCodeIn!.values.join(",")}} is contained by exclusion set {${exclusion.simpleCodeIn!.values.join(",")}}`,
+      });
+    }
   }
 
   // inclusion-admitted interval per fact
@@ -98,12 +143,18 @@ export function detectConflicts(rs: RuleSet): Finding[] {
   // A lone inclusion with an empty interval is already reported as unsatisfiable-criterion.
   for (const [fact, adm] of admitted) {
     if (!isEmpty(adm.interval) || adm.sources.length < 2) continue;
+    let pair: { id: string; interval: Interval }[] = adm.sources;
+    for (let i = 0; i < adm.sources.length; i += 1) {
+      for (let j = i + 1; j < adm.sources.length; j += 1) {
+        if (isEmpty(intersect(adm.sources[i]!.interval, adm.sources[j]!.interval))) pair = [adm.sources[i]!, adm.sources[j]!];
+      }
+    }
     out.push({
       level: "error",
       code: "contradictory-inclusions",
-      criteria: adm.sources.map((s) => s.id),
-      message: `no patient can pass: the inclusion constraints on ${fact} from ${adm.sources.map((s) => `"${s.id}"`).join(" and ")} intersect to the empty set — for all inputs, not just a test corpus`,
-      evidence: `${fact}: inclusion constraints intersect to the empty set — ${adm.sources.map((s) => `"${s.id}" admits ${fmtInterval(s.interval)}`).join(" ∩ ")}`,
+      criteria: pair.map((s) => s.id),
+      message: `no patient can pass: the inclusion constraints on ${fact} from ${pair.map((s) => `"${s.id}"`).join(" and ")} intersect to the empty set — for all inputs, not just a test corpus`,
+      evidence: `${fact}: inclusion constraints intersect to the empty set — ${pair.map((s) => `"${s.id}" admits ${fmtInterval(s.interval)}`).join(" ∩ ")}`,
     });
   }
 
@@ -127,26 +178,20 @@ export function detectConflicts(rs: RuleSet): Finding[] {
     }
   }
 
-  // A band claim says "every patient in this interval passes inclusion and is
-  // then excluded". That is only true when the exclusion fires on this fact
-  // alone: a multi-fact `all` needs its other conjuncts to hold as well, and
-  // interval arithmetic cannot show they ever do. Those exclusions are skipped
-  // rather than downgraded — see docs for the "may exclude" follow-up.
-  for (const e of analyzed.filter((x) => x.kind === "exclusion" && x.singleFactComplete)) {
-    for (const [fact, exclIv] of e.intervals) {
-      const adm = admitted.get(fact);
-      if (adm === undefined) continue;
-      const band = intersect(adm.interval, exclIv);
-      if (!isEmpty(band)) {
-        out.push({
-          level: "error",
-          code: "contradictory-band",
-          criteria: [...adm.sources.map((s) => s.id), e.id],
-          message: `every patient with ${fact} in ${fmtInterval(band)} passes inclusion and is then excluded by "${e.id}" — for all inputs, not just a test corpus`,
-          evidence: `${fact}: inclusion admits ${fmtInterval(adm.interval)} ∩ exclusion fires ${fmtInterval(exclIv)} → contradictory band ${fmtInterval(band)}`,
-        });
-      }
-    }
+  // An exclusion is contradictory only when it eliminates the entire domain
+  // admitted by all inclusions. Partial overlap is ordinary exclusion logic.
+  const inclusionsAlreadyContradict = [...admitted.values()].some((value) => isEmpty(value.interval));
+  for (const e of analyzed.filter((x) => !inclusionsAlreadyContradict && x.kind === "exclusion" && x.fullyAnalyzed && x.intervals.size > 0)) {
+    const eliminatesAll = [...e.intervals].every(([fact, exclIv]) => contains(exclIv, admitted.get(fact)?.interval ?? FULL));
+    if (!eliminatesAll) continue;
+    const sources = [...new Set([...e.intervals.keys()].flatMap((fact) => admitted.get(fact)?.sources.map((s) => s.id) ?? []))];
+    out.push({
+      level: "error",
+      code: "unsatisfiable-ruleset",
+      criteria: [...sources, e.id],
+      message: `no patient can pass: exclusion "${e.id}" covers the entire numeric domain admitted by the inclusion criteria — for all inputs, not just a test corpus`,
+      evidence: [...e.intervals].map(([fact, iv]) => `${fact}: admitted ${fmtInterval(admitted.get(fact)?.interval ?? FULL)} is contained by exclusion ${fmtInterval(iv)}`).join("; "),
+    });
   }
   return out;
 }

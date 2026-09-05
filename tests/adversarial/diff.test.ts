@@ -60,34 +60,64 @@ describe("F1 — undetermined ↔ eligible flips are attributed (REGRESSION: use
   });
 });
 
-describe("F2 — a renamed criterion looks like an unrelated add + remove", () => {
-  const v1 = rs("1.0.0", adult, { id: "renal-safety", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 30 } });
+describe("F2 — exact criterion renames are explicit", () => {
+  const v1 = rs("1.0.0", adult, { id: "renal-safety", ref: "E3", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 30 } });
   // Same condition, new id (a re-lettering during an amendment).
-  const v2 = rs("2.0.0", adult, { id: "e3-renal-safety", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 30 } });
+  const v2 = rs("2.0.0", adult, { id: "e3-renal-safety", ref: "E3", kind: "exclusion", verbatim: "eGFR < 30", when: { fact: "egfr", op: "lt", value: 30 } });
 
-  it("structural diff shows add + remove, never 'renamed'", () => {
-    expect(structuralDiff(v1, v2)).toEqual({ added: ["e3-renal-safety"], removed: ["renal-safety"], changed: [] });
+  it("structural diff reports the rename", () => {
+    expect(structuralDiff(v1, v2)).toEqual({ added: [], removed: [], changed: [], renamed: [{ from: "renal-safety", to: "e3-renal-safety" }], reordered: [], metadataChanged: [] });
   });
 
-  it("behavioral attribution blames the new id for patients whose outcome never moved", () => {
+  it("behavioral attribution aligns a renamed criterion by stable protocol ref", () => {
     // Nobody flips (the rule is identical), so the diff is silent...
     const corpus: PatientFacts[] = [{ patient: "LOW-EGFR", facts: { age: 70, egfr: 20 } }];
     expect(behavioralDiff(v1, v2, corpus)).toEqual([]);
 
-    // ...but pair the rename with any real change and the attribution is wrong:
-    // the added id is "responsible" purely because the old id is not in v2.
-    const v3 = rs("2.0.0", adult, { id: "e3-renal-safety", kind: "exclusion", verbatim: "eGFR < 45", when: { fact: "egfr", op: "lt", value: 45 } });
+    // Pair the rename with a real threshold change. The stable ref identifies
+    // one logical criterion across both versions.
+    const v3 = rs("2.0.0", adult, { id: "e3-renal-safety", ref: "E3", kind: "exclusion", verbatim: "eGFR < 45", when: { fact: "egfr", op: "lt", value: 45 } });
     const p: PatientFacts[] = [{ patient: "EGFR-40", facts: { age: 70, egfr: 40 } }];
     const flips = behavioralDiff(v1, v3, p);
     expect(flips[0]!.responsible).toEqual(["e3-renal-safety"]);
-    // Reversing the direction used to produce an empty attribution, because
-    // `responsible` was built only from the NEW version's results. A criterion
-    // dropped between versions is now named too (REGRESSION for that half).
+    expect(structuralDiff(v1, v3)).toMatchObject({
+      added: [], removed: [], changed: ["e3-renal-safety"],
+      renamed: [{ from: "renal-safety", to: "e3-renal-safety" }],
+    });
     const back = behavioralDiff(v3, v1, p);
     expect(back[0]).toMatchObject({ from: "ineligible", to: "eligible" });
-    expect(back[0]!.responsible).toEqual(["e3-renal-safety"]);
-    // Still open (see triage: rename detection is deferred): the rename means
-    // the id named here is the one that vanished, not the one that replaced it.
+    expect(back[0]!.responsible).toEqual(["renal-safety"]);
+  });
+
+  it("does not call a wholesale replacement a rename just because its ref was reused", () => {
+    const replacement = rs("2.0.0", adult, {
+      id: "e3-comorbidity",
+      ref: "E3",
+      kind: "exclusion",
+      verbatim: "Age below 50",
+      when: { fact: "age", op: "lt", value: 50, unit: "years" },
+    });
+    expect(structuralDiff(v1, replacement)).toMatchObject({
+      added: ["e3-comorbidity"],
+      removed: ["renal-safety"],
+      renamed: [],
+    });
+  });
+
+  it("tracks an exact rename even when its protocol ref also changes", () => {
+    const movedRef = rs("2.0.0", adult, {
+      id: "e4-renal-safety",
+      ref: "E4",
+      kind: "exclusion",
+      verbatim: "eGFR < 30",
+      when: { fact: "egfr", op: "lt", value: 30 },
+    });
+    expect(structuralDiff(v1, movedRef)).toMatchObject({
+      added: [],
+      removed: [],
+      changed: ["e4-renal-safety"],
+      renamed: [{ from: "renal-safety", to: "e4-renal-safety" }],
+    });
   });
 });
 
@@ -115,7 +145,7 @@ describe("F3 — rule content can change with the version string standing still"
     expect(versionWarning(v1, v1, structuralDiff(v1, v1))).toBeUndefined();
   });
 
-  it("`verbatim` drift is invisible to the diff — the audit trail can lie", () => {
+  it("`verbatim` drift is a structural change", () => {
     const relabelled: RuleSet = rs("1.0.0", adult, {
       id: "renal",
       kind: "exclusion",
@@ -123,8 +153,6 @@ describe("F3 — rule content can change with the version string standing still"
       when: { fact: "egfr", op: "lt", value: 30, unit: "mL/min/1.73m2" },
     });
     // normalize() in src/core/diff.ts hashes kind/when/unmodeled only.
-    expect(structuralDiff(v1, relabelled)).toEqual({ added: [], removed: [], changed: [] });
-    // MISLEADS: the source-of-truth protocol text changed under a criterion and
-    // `rules diff` reports "no change".
+    expect(structuralDiff(v1, relabelled).changed).toEqual(["renal"]);
   });
 });

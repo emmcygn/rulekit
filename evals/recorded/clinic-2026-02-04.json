@@ -1,8 +1,25 @@
 {
+  "recordingVersion": 2,
   "doc": "clinic-2026-02-04",
   "model": "claude-opus-5",
   "prompt": "extract-facts.v1",
+  "promptSha256": "017c165fdc57b35b2c066a07e9e3c2d38af0361dc5341df272b2b7f8eb8e1ebc",
+  "schema": {
+    "id": "proposed-facts.v1",
+    "sha256": "c344f0320f0729c86ebbc4a0258f59cfe8e3c5575da311572e2b17b9949e784e"
+  },
+  "requestSha256": "a472e244dd5a4b48d314767e8c3f01b1a083d88dbe29470aab72c85e62e498ef",
+  "inference": {
+    "max_tokens": 16000,
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
   "recordedAt": "2026-08-20T09:14:19Z",
+  "capture": {
+    "mode": "legacy-migration",
+    "metrics": null
+  },
   "parsed_output": {
     "facts": [
       {

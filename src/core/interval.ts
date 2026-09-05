@@ -30,6 +30,14 @@ export function isFull(i: Interval): boolean {
   return i.lo === -Infinity && i.hi === Infinity;
 }
 
+/** Whether every value admitted by `inner` is also admitted by `outer`. */
+export function contains(outer: Interval, inner: Interval): boolean {
+  if (isEmpty(inner)) return true;
+  const lowerCovered = outer.lo < inner.lo || (outer.lo === inner.lo && (!outer.loOpen || inner.loOpen));
+  const upperCovered = outer.hi > inner.hi || (outer.hi === inner.hi && (!outer.hiOpen || inner.hiOpen));
+  return lowerCovered && upperCovered;
+}
+
 export function fmtInterval(i: Interval): string {
   const lo = i.lo === -Infinity ? "−∞" : String(i.lo);
   const hi = i.hi === Infinity ? "∞" : String(i.hi);

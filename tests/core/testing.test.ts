@@ -25,6 +25,16 @@ cases:
     expect(r.ok).toBe(false);
   });
 
+  it("cannot pass vacuously when a programmatic suite omits overall", () => {
+    const r = runSuite(RS, { cases: [{ name: "empty expectation", facts: { age: 40, egfr: 60 }, expect: {} }] });
+    expect(r.ok).toBe(false);
+    expect(r.cases[0]!.mismatches[0]).toMatchObject({ key: "overall", expected: "(required)" });
+  });
+
+  it("the parser rejects a suite without an overall assertion", () => {
+    expect(() => parseTestSuite(`cases:\n  - { name: empty, facts: { age: 40 }, expect: {} }`)).toThrow(/must assert `overall`/);
+  });
+
   it("coverage counts verdict directions and flags one-sided criteria", () => {
     const suite = parseTestSuite(`
 cases:
@@ -41,6 +51,26 @@ cases:
     expect(renal.fail).toBe(0);
     expect(renal.gaps).toEqual(["never fails"]);
   });
+
+  it("does not demand impossible coverage directions from exists", () => {
+    const exists = parseRuleSet(`
+ruleset: exists
+rulesetVersion: 1.0.0
+factModel: patient-facts/v1
+criteria:
+  - { id: present, kind: inclusion, verbatim: v, when: { fact: age, op: exists } }
+  - { id: excluded-when-present, kind: exclusion, verbatim: v, when: { fact: egfr, op: exists } }
+`);
+    const suite = parseTestSuite(`
+cases:
+  - { name: present, facts: { age: 40, egfr: 60 }, expect: { overall: ineligible } }
+  - { name: absent, facts: {}, expect: { overall: undetermined } }
+`);
+    expect(runSuite(exists, suite).coverage.map((c) => [c.criterion, c.gaps])).toEqual([
+      ["present", []],
+      ["excluded-when-present", []],
+    ]);
+  });
 });
 
 describe("deadRules", () => {
@@ -49,7 +79,7 @@ describe("deadRules", () => {
       { patient: "P1", facts: { age: 40, egfr: 60 } },
       { patient: "P2", facts: { age: 12, egfr: 80 } },
     ];
-    expect(deadRules(RS, corpus)).toEqual([{ criterion: "renal-safety", reason: "never fires on the corpus (0 of 2 patients)" }]);
+    expect(deadRules(RS, corpus)).toEqual([{ criterion: "renal-safety", reason: "never fires on the corpus (0 of 2 patients; 0 unknown)" }]);
   });
 
   it("an inclusion that never fails on the corpus is dead", () => {
@@ -57,7 +87,7 @@ describe("deadRules", () => {
       { patient: "P1", facts: { age: 40, egfr: 30 } },
       { patient: "P2", facts: { age: 70, egfr: 80 } },
     ];
-    expect(deadRules(RS, corpus)).toEqual([{ criterion: "age-min", reason: "never fails on the corpus (0 of 2 patients)" }]);
+    expect(deadRules(RS, corpus)).toEqual([{ criterion: "age-min", reason: "never fails on the corpus (0 of 2 patients; 0 unknown)" }]);
   });
 
   it("nothing dead when both directions occur", () => {
@@ -66,5 +96,11 @@ describe("deadRules", () => {
       { patient: "P2", facts: { age: 40, egfr: 60 } },
     ];
     expect(deadRules(RS, corpus)).toEqual([]);
+  });
+
+  it("does not call an inclusion exists leaf dead and emits no empty-corpus noise", () => {
+    const exists = parseRuleSet(`ruleset: e\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{ id: present, kind: inclusion, verbatim: v, when: { fact: age, op: exists } }]`);
+    expect(deadRules(exists, [{ patient: "P1", facts: { age: 40 } }, { patient: "P2", facts: {} }])).toEqual([]);
+    expect(deadRules(RS, [])).toEqual([]);
   });
 });

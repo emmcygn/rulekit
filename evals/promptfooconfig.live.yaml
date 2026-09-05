@@ -11,7 +11,7 @@
 # uses the same pinned model, the same prompts/extract-facts.v1.md, and the
 # same structured-output schema as production — the only difference from the
 # offline run is where the response comes from.
-description: rulekit facts compiler — extraction eval (LIVE)
+description: rulekit facts compiler — 10-note synthetic regression fixture (LIVE; not statistical confidence)
 
 prompts:
   - id: file://prompt.js

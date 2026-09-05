@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { evalCondition } from "../../src/core/evaluator.js";
-import type { Condition, PatientFacts } from "../../src/core/schema.js";
+import { evalCondition, evalPatient, evalPatientChecked, evalPatientUnsafe } from "../../src/core/evaluator.js";
+import type { Condition, FactModel, PatientFacts, RuleSet } from "../../src/core/schema.js";
 
 const patient = (facts: PatientFacts["facts"]): PatientFacts => ({ patient: "P1", facts });
 
@@ -15,6 +15,12 @@ describe("numeric leaves", () => {
   });
   it("non-numeric value (string lab like \">60\") → unknown", () => {
     expect(evalCondition({ fact: "egfr", op: "gte", value: 30 }, patient({ egfr: ">60" })).result).toBe("unknown");
+  });
+  it("non-finite numeric values never produce a definite comparison", () => {
+    for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      expect(evalCondition(geAdult, patient({ age: value })).result).toBe("unknown");
+      expect(evalCondition({ fact: "age", op: "neq", value: 18 }, patient({ age: value })).result).toBe("unknown");
+    }
   });
   it("trace detail names the observed value and the requirement", () => {
     const t = evalCondition(geAdult, patient({ age: 12 }));
@@ -31,8 +37,40 @@ describe("set and exists leaves", () => {
   });
   it("in on missing fact → unknown; exists is presence-only", () => {
     expect(evalCondition(onAnticoag, patient({})).result).toBe("unknown");
-    expect(evalCondition({ fact: "egfr", op: "exists" }, patient({})).result).toBe("false");
+    expect(evalCondition({ fact: "egfr", op: "exists" }, patient({})).result).toBe("unknown");
     expect(evalCondition({ fact: "egfr", op: "exists" }, patient({ egfr: 50 })).result).toBe("true");
+  });
+});
+
+describe("scalar leaves", () => {
+  it("compares enum strings and booleans", () => {
+    expect(evalCondition({ fact: "sex", op: "eq", value: "female" }, patient({ sex: "female" })).result).toBe("true");
+    expect(evalCondition({ fact: "consented", op: "neq", value: false }, patient({ consented: true })).result).toBe("true");
+  });
+
+  it("a runtime scalar type mismatch is unknown", () => {
+    expect(evalCondition({ fact: "consented", op: "eq", value: true }, patient({ consented: "yes" })).result).toBe("unknown");
+  });
+});
+
+describe("checked evaluation", () => {
+  const fm: FactModel = { name: "patient/v1", facts: { age: { type: "number", unit: "years" } } };
+  const rs: RuleSet = {
+    ruleset: "r", rulesetVersion: "1.0.0", factModel: "patient/v1",
+    criteria: [{ id: "adult", kind: "inclusion", verbatim: "Age >= 18", when: { fact: "age", op: "gte", value: 18, unit: "years" } }],
+  };
+
+  it("runs only after both sides of the fact-model contract validate", () => {
+    expect(evalPatient(rs, fm, patient({ age: 21 })).overall).toBe("eligible");
+    expect(evalPatientChecked(rs, fm, patient({ age: 21 })).overall).toBe("eligible");
+    expect(() => evalPatientChecked(rs, fm, patient({ age: "21" }))).toThrow(/invalid-patient-fact/);
+    expect(() => evalPatientChecked({ ...rs, factModel: "other/v1" }, fm, patient({ age: 21 }))).toThrow(/fact-model-mismatch/);
+  });
+
+  it("exposes unchecked execution only under an explicit unsafe name", () => {
+    const invalid = patient({ age: "21" });
+    expect(() => evalPatient(rs, fm, invalid)).toThrow(/evaluation blocked/);
+    expect(evalPatientUnsafe(rs, invalid).overall).toBe("undetermined");
   });
 });
 
