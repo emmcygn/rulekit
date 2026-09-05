@@ -98,6 +98,16 @@ describe("computeFunnel — sequential attrition", () => {
     expect(f.n).toBe(0);
     expect(f.rows).toEqual([]);
   });
+
+  it("indexes result rows instead of rescanning each array with find", () => {
+    const evaluations = [evaluation("A", "pfp"), evaluation("B", "upp")];
+    for (const item of evaluations) {
+      item.results.find = () => {
+        throw new Error("linear result scan");
+      };
+    }
+    expect(() => computeFunnel(evaluations)).not.toThrow();
+  });
 });
 
 describe("display bands reconcile with the shared bands", () => {

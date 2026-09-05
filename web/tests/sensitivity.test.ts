@@ -8,7 +8,9 @@ import {
   factValues,
   histogram,
   numericTargets,
+  prepareSensitivity,
   relaxedValue,
+  sensitivityCounts,
   setKnob,
   topYield,
   yieldsAreRanked,
@@ -111,6 +113,20 @@ describe("topYield", () => {
     expect(ranked[0]!.criterionId).toBe("renal-safety");
     expect(ranked[0]!.delta).toBe(2);
     expect(ranked.map((r) => r.delta)).toEqual([...ranked.map((r) => r.delta)].sort((a, b) => b - a));
+  });
+
+  it("matches full cohort evaluation while recomputing only the changed criterion", () => {
+    const prepared = prepareSensitivity(
+      parseRuleSet(DEMO_RULESET_CURRENT),
+      DEMO_COHORT,
+      evalResolved(DEMO_RULESET_CURRENT),
+    );
+    for (const target of prepared.targets) {
+      const value = relaxedValue(target.criterionKind, target.op, target.value);
+      expect(sensitivityCounts(prepared, target, value)).toEqual(
+        displayBandCounts(evalResolved(setKnob(DEMO_RULESET_CURRENT, target.path, value))),
+      );
+    }
   });
 
   it("lists every numeric knob, including the ones that buy nothing", () => {

@@ -5,7 +5,7 @@
  * closed-world-list limitation so its clinical interpretation stays visible.
  */
 import { describe, it, expect } from "vitest";
-import { evalCondition, evalPatient } from "../../src/core/evaluator.js";
+import { evalCondition, evalPatientUnsafe as evalPatient } from "../../src/core/evaluator.js";
 import { lintRuleSet } from "../../src/core/lint.js";
 import { parseRuleSet, type Condition, type PatientFacts, type RuleSet, type FactModel } from "../../src/core/schema.js";
 

@@ -40,6 +40,12 @@ describe("lintRuleSet", () => {
     expect(f?.message).toContain("mL/min/1.73m2");
   });
 
+  it("rejects a unit literal on a fact declared unitless", () => {
+    const model = parseFactModel(`name: patient-facts/v1\nfacts: { score: { type: number } }`);
+    const r = rs(`  - { id: a, kind: inclusion, verbatim: v, when: { fact: score, op: gte, value: 1, unit: points } }`);
+    expect(lintRuleSet(r, model).find((x) => x.code === "unit-unexpected")?.level).toBe("error");
+  });
+
   it("code system not declared for fact → error", () => {
     const r = rs(`  - { id: a, kind: exclusion, verbatim: v, when: { fact: medications, op: in, codes: { system: atc, values: [B01] } } }`);
     expect(lintRuleSet(r, FM).find((x) => x.code === "unknown-code-system")?.level).toBe("error");
@@ -84,5 +90,19 @@ describe("lintPatient", () => {
     } }, FM);
     expect(out).toHaveLength(4);
     expect(out.every((f) => f.code === "invalid-patient-fact" && f.level === "error")).toBe(true);
+  });
+
+  it("validates numeric companion units, including spelling-only aliases", () => {
+    const valid = lintPatient({ patient: "P", facts: { egfr: 52, egfr_unit: "mL/min/{1.73_m2}" } }, FM);
+    expect(valid.filter((f) => f.level === "error")).toEqual([]);
+
+    const invalid = lintPatient({ patient: "P", facts: { egfr: 52, egfr_unit: "mL/min" } }, FM);
+    expect(invalid.find((f) => f.code === "invalid-patient-unit")?.message).toContain("conversion is required");
+  });
+
+  it("rejects a companion unit for a unitless numeric fact", () => {
+    const model = parseFactModel(`name: m\nfacts: { score: { type: number } }`);
+    const out = lintPatient({ patient: "P", facts: { score: 2, score_unit: "points" } }, model);
+    expect(out.find((f) => f.code === "invalid-patient-unit")?.message).toContain("declared unitless");
   });
 });

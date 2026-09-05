@@ -37,9 +37,12 @@ sample bundles (Apache-2.0, ~85 MB zipped, 1,180 patients) and unzips them into
 a git-ignored `data/synthea/`. No Java, no Synthea run. Idempotent — re-running
 it does nothing unless you pass `--force`.
 
-Synthea is *format*-accurate: FHIR R4 / US Core, the shape an EHR API extract
-arrives in under the ONC Cures Act rule. It is not *content*-realistic, which
-is what stage 2 is for.
+These Synthea bundles use FHIR R4 / US Core-shaped resources, which is useful
+for a synthetic parser fixture. That does not make this pipeline representative
+of an EHR export: it implements no authorization, pagination, subscriptions,
+site profile, terminology service, completeness contract or production Epic /
+Cerner integration. The records are not clinically realistic either; stage 2
+only injects deterministic mess for testing and does not validate realism.
 
 ## Stage 1 — flatten
 

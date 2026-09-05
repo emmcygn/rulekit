@@ -22,7 +22,7 @@
  * Pure: rule set and facts in, counts out. No filesystem, no clock.
  */
 import type { PatientFacts, RuleSet } from "./schema.js";
-import { evalPatient, type Evaluation } from "./evaluator.js";
+import { evalPatientUnsafe, type Evaluation } from "./evaluator.js";
 
 /**
  * Derived ONLY from `evalPatient().overall`:
@@ -56,6 +56,12 @@ export type CriterionAttrition = {
    * counterfactual from being overstated.
    */
   soleReason: number;
+  /**
+   * Patients for whom this is the only modeled failure and every other modeled
+   * criterion passes. Unknown unmodeled criteria are ignored only for this
+   * counterfactual and still require chart review; this is never eligibility.
+   */
+  soleModeledReason: number;
 };
 
 export type Attrition = {
@@ -76,10 +82,25 @@ export function bandOf<E extends { overall: Evaluation["overall"] }>(e: E): Pati
  * because the "sole-disqualifier argument" — the list of patients a site would
  * gain by relaxing one criterion — is the reason to compute attrition at all.
  */
-export function soleReasonCriterionId(e: Evaluation): string | undefined {
+export function soleReasonCriterionId(e: AttritionInput): string | undefined {
   const fails = e.results.filter((r) => r.verdict === "fail");
   if (fails.length !== 1) return undefined;
   return e.results.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
+}
+
+/**
+ * The sole modeled disqualifier, provided every other modeled criterion passes.
+ * Only unresolved unmodeled criteria may remain unknown. The caller must label
+ * this as pending chart review and must not present it as eligibility.
+ */
+export function soleModeledReasonCriterionId(e: AttritionInput): string | undefined {
+  const fails = e.results.filter((r) => r.verdict === "fail");
+  if (fails.length !== 1 || fails[0]!.unmodeled) return undefined;
+  return e.results.every((r) =>
+    r.verdict === "fail" || r.verdict === "pass" || isParked(r),
+  )
+    ? fails[0]!.id
+    : undefined;
 }
 
 /**
@@ -146,74 +167,61 @@ export function attritionFrom<E extends AttritionInput>(evaluations: readonly E[
   });
   if (n === 0) return { n: 0, bands, rows: [], patients };
 
-  const verdictOf = (e: AttritionInput, id: string) => e.results.find((r) => r.id === id)?.verdict;
+  const removedSequential = new Map<string, number>();
+  const failsAlone = new Map<string, number>();
+  const soleReasons = new Map<string, number>();
+  const soleModeledReasons = new Map<string, number>();
+  for (const evaluation of evaluations) {
+    let firstFailure: string | undefined;
+    for (const result of evaluation.results) {
+      if (result.verdict !== "fail") continue;
+      firstFailure ??= result.id;
+      failsAlone.set(result.id, (failsAlone.get(result.id) ?? 0) + 1);
+    }
+    if (firstFailure !== undefined) {
+      removedSequential.set(firstFailure, (removedSequential.get(firstFailure) ?? 0) + 1);
+    }
+    const strict = soleReasonCriterionId(evaluation);
+    if (strict !== undefined) soleReasons.set(strict, (soleReasons.get(strict) ?? 0) + 1);
+    const modeled = soleModeledReasonCriterionId(evaluation);
+    if (modeled !== undefined) {
+      soleModeledReasons.set(modeled, (soleModeledReasons.get(modeled) ?? 0) + 1);
+    }
+  }
 
-  const soleReasonIds = evaluations.map((e) => {
-    const fails = e.results.filter((r) => r.verdict === "fail");
-    if (fails.length !== 1) return undefined;
-    return e.results.every((r) => r.verdict === "fail" || r.verdict === "pass") ? fails[0]!.id : undefined;
-  });
-
-  let pool: readonly E[] = evaluations;
-  const rows: CriterionAttrition[] = evaluations[0]!.results.map((c) => {
-    const removedSequential = pool.filter((e) => verdictOf(e, c.id) === "fail").length;
-    pool = pool.filter((e) => verdictOf(e, c.id) !== "fail");
-    return {
-      id: c.id,
-      ...(c.ref !== undefined ? { ref: c.ref } : {}),
-      kind: c.kind,
-      unmodeled: c.unmodeled,
-      removedSequential,
-      failsAlone: evaluations.filter((e) => verdictOf(e, c.id) === "fail").length,
-      soleReason: soleReasonIds.filter((id) => id === c.id).length,
-    };
-  });
+  const rows: CriterionAttrition[] = evaluations[0]!.results.map((c) => ({
+    id: c.id,
+    ...(c.ref !== undefined ? { ref: c.ref } : {}),
+    kind: c.kind,
+    unmodeled: c.unmodeled,
+    removedSequential: removedSequential.get(c.id) ?? 0,
+    failsAlone: failsAlone.get(c.id) ?? 0,
+    soleReason: soleReasons.get(c.id) ?? 0,
+    soleModeledReason: soleModeledReasons.get(c.id) ?? 0,
+  }));
 
   return { n, bands, rows, patients };
 }
 
 export function computeAttrition(rs: RuleSet, corpus: PatientFacts[]): Attrition {
-  const patients = corpus.map((p) => {
-    const evaluation = evalPatient(rs, p);
-    return { patient: p.patient, band: bandOf(evaluation), evaluation };
-  });
-
-  const bands: Record<PatientBand, number> = { "potentially-eligible": 0, "screen-fail": 0, "not-evaluable": 0 };
-  for (const p of patients) bands[p.band] += 1;
-
-  // A screen failure belongs to the first criterion, in rule-set order, that
-  // fails them. `unknown` never removes anyone here — an undetermined patient is
-  // already banded not-evaluable and is not in this distribution at all.
-  const firstFailure = new Map<string, number>();
-  for (const p of patients) {
-    if (p.band !== "screen-fail") continue;
-    const first = p.evaluation.results.find((r) => r.verdict === "fail");
-    if (first === undefined) continue; // unreachable: screen-fail means some verdict is fail
-    firstFailure.set(first.id, (firstFailure.get(first.id) ?? 0) + 1);
-  }
-
-  const soleCounts = new Map<string, number>();
-  for (const p of patients) {
-    const id = soleReasonCriterionId(p.evaluation);
-    if (id !== undefined) soleCounts.set(id, (soleCounts.get(id) ?? 0) + 1);
-  }
-
-  const failsAlone = new Map<string, number>();
-  for (const p of patients) {
-    for (const r of p.evaluation.results) {
-      if (r.verdict === "fail") failsAlone.set(r.id, (failsAlone.get(r.id) ?? 0) + 1);
-    }
-  }
-
-  const rows: CriterionAttrition[] = rs.criteria.map((c) => ({
-    id: c.id,
-    ...(c.ref !== undefined ? { ref: c.ref } : {}),
-    kind: c.kind,
-    unmodeled: c.unmodeled === true || c.when === undefined,
-    removedSequential: firstFailure.get(c.id) ?? 0,
-    failsAlone: failsAlone.get(c.id) ?? 0,
-    soleReason: soleCounts.get(c.id) ?? 0,
-  }));
-
-  return { n: corpus.length, bands, rows, patients };
+  // This helper receives already-parsed domain objects. Public boundaries use
+  // the checked evaluator; keeping the primitive explicit prevents accidental
+  // bypasses while avoiding a redundant schema pass per patient here.
+  const evaluations = corpus.map((p) => evalPatientUnsafe(rs, p));
+  if (evaluations.length > 0) return attritionFrom(evaluations);
+  return {
+    n: 0,
+    bands: { "potentially-eligible": 0, "screen-fail": 0, "not-evaluable": 0 },
+    rows: rs.criteria.map((c) => ({
+      id: c.id,
+      ...(c.ref !== undefined ? { ref: c.ref } : {}),
+      kind: c.kind,
+      unmodeled: c.unmodeled === true || c.when === undefined,
+      removedSequential: 0,
+      failsAlone: 0,
+      soleReason: 0,
+      soleModeledReason: 0,
+    })),
+    patients: [],
+  };
 }

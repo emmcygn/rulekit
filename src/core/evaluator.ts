@@ -62,7 +62,7 @@ function evalLeaf(leaf: Leaf, facts: PatientFacts): TraceNode {
     const ok = leaf.op === "eq" ? v === leaf.value : v !== leaf.value;
     return { kind: "leaf", result: ok ? "true" : "false", observed, detail: `${leaf.fact} = ${JSON.stringify(v)}, required ${OP_TEXT[leaf.op]} ${JSON.stringify(leaf.value)}` };
   }
-  if (typeof v !== "number" || typeof leaf.value !== "number")
+  if (typeof v !== "number" || !Number.isFinite(v) || typeof leaf.value !== "number" || !Number.isFinite(leaf.value))
     return { kind: "leaf", result: "unknown", observed, detail: `${leaf.fact} = ${JSON.stringify(v)} (non-numeric) → unknown` };
   const cmp: Record<string, boolean> = {
     eq: v === leaf.value, neq: v !== leaf.value, gt: v > leaf.value, gte: v >= leaf.value, lt: v < leaf.value, lte: v <= leaf.value,
@@ -108,7 +108,12 @@ export function evalCriterion(c: Criterion, facts: PatientFacts): CriterionResul
   return { id: c.id, ref: c.ref, kind: c.kind, verdict: toVerdict(c.kind, trace.result), unmodeled: false, trace };
 }
 
-export function evalPatient(rs: RuleSet, facts: PatientFacts): Evaluation {
+/**
+ * Raw deterministic evaluator for inputs that have already passed rule-set and
+ * patient validation. Application and library boundaries must use
+ * `evalPatient` instead.
+ */
+export function evalPatientUnsafe(rs: RuleSet, facts: PatientFacts): Evaluation {
   const results = rs.criteria.map((c) => evalCriterion(c, facts));
   const overall: Overall = results.some((r) => r.verdict === "fail")
     ? "ineligible"
@@ -119,15 +124,17 @@ export function evalPatient(rs: RuleSet, facts: PatientFacts): Evaluation {
 }
 
 /**
- * Safe application boundary for callers that have not already validated their
- * inputs. `evalPatient` stays a small, deterministic primitive; production
- * entry points should use this function or perform the same checks once before
- * evaluating a corpus.
+ * Safe default application/library boundary. The fact model is deliberately a
+ * required argument: omitting it must not silently turn an invalid contract
+ * into an eligibility result.
  */
-export function evalPatientChecked(rs: RuleSet, fm: FactModel, facts: PatientFacts): Evaluation {
+export function evalPatient(rs: RuleSet, fm: FactModel, facts: PatientFacts): Evaluation {
   const errors = [...checkRuleSet(rs, fm), ...lintPatient(facts, fm)].filter((f) => f.level === "error");
   if (errors.length > 0) {
     throw new Error(`evaluation blocked: ${errors.map((f) => `${f.code}: ${f.message}`).join("; ")}`);
   }
-  return evalPatient(rs, facts);
+  return evalPatientUnsafe(rs, facts);
 }
+
+/** @deprecated `evalPatient` is checked by default; retained for source compatibility. */
+export const evalPatientChecked = evalPatient;

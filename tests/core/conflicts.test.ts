@@ -38,6 +38,36 @@ describe("inclusion/exclusion overlap", () => {
   - { id: nobody, kind: exclusion, verbatim: v, when: { fact: age, op: gte, value: 18 } }`));
     expect(out.find((x) => x.code === "unsatisfiable-ruleset")?.level).toBe("error");
   });
+
+  it("does not blame an exclusion when inclusions already admit an empty interval", () => {
+    const out = detectConflicts(rs(`
+  - { id: older, kind: inclusion, verbatim: v, when: { fact: age, op: gte, value: 60 } }
+  - { id: younger, kind: inclusion, verbatim: v, when: { fact: age, op: lt, value: 50 } }
+  - { id: very-old, kind: exclusion, verbatim: v, when: { fact: age, op: gt, value: 100 } }`));
+    expect(out.find((x) => x.code === "contradictory-inclusions")).toBeDefined();
+    expect(out.find((x) => x.code === "unsatisfiable-ruleset")).toBeUndefined();
+  });
+
+  it("detects a simple inclusion code set fully covered by an exclusion set", () => {
+    const out = detectConflicts(rs(`
+  - { id: requires-af, kind: inclusion, verbatim: v, when: { fact: conditions, op: in, codes: { system: snomed, values: [af] } } }
+  - { id: excludes-arrhythmia, kind: exclusion, verbatim: v, when: { fact: conditions, op: in, codes: { system: snomed, values: [af, flutter] } } }`));
+    const finding = out.find((x) => x.code === "unsatisfiable-ruleset");
+    expect(finding?.criteria).toEqual(["requires-af", "excludes-arrhythmia"]);
+  });
+
+  it("does not extend the code-set proof through additional exclusion logic", () => {
+    const out = detectConflicts(rs(`
+  - { id: requires-af, kind: inclusion, verbatim: v, when: { fact: conditions, op: in, codes: { system: snomed, values: [af] } } }
+  - id: conditional-exclusion
+    kind: exclusion
+    verbatim: v
+    when:
+      all:
+        - { fact: conditions, op: in, codes: { system: snomed, values: [af] } }
+        - { fact: age, op: gt, value: 100 }`));
+    expect(out.find((x) => x.code === "unsatisfiable-ruleset")).toBeUndefined();
+  });
 });
 
 describe("contradictory inclusions (no patient can pass the set)", () => {

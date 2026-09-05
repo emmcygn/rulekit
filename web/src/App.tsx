@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { parseRuleSet, type PatientFacts, type RuleSet } from "../../src/core/schema.js";
+import { parseRuleSet, type FactValue, type PatientFacts, type RuleSet } from "../../src/core/schema.js";
 import { RuleEditor, type RevealRequest } from "./editor/RuleEditor.js";
 import { realEngine } from "./engine/real.js";
 import { resolveChartReview } from "./engine/chart-review.js";
@@ -87,19 +87,21 @@ export function App() {
   const [reveal, setReveal] = useState<RevealRequest | null>(null);
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
-  const findings = useCheck(rulesetYaml, factModelYaml);
+  const checked = useCheck(rulesetYaml, factModelYaml);
+  const findings = checked.findings;
 
   // While the author is editing, the document may be malformed or fail a hard
   // engine check. Views keep showing the last rule set safe to evaluate.
   const parsed = useMemo(() => {
+    if (checked.rulesetYaml !== rulesetYaml || checked.factModelYaml !== factModelYaml) return null;
+    if (findings.some((finding) => finding.level === "error")) return null;
     try {
       const rs = parseRuleSet(rulesetYaml);
-      if (realEngine.check(rulesetYaml, factModelYaml).some((f) => f.level === "error")) return null;
       return { rs, yaml: rulesetYaml };
     } catch {
       return null;
     }
-  }, [rulesetYaml, factModelYaml]);
+  }, [checked.rulesetYaml, checked.factModelYaml, findings, rulesetYaml, factModelYaml]);
   const [good, setGood] = useState<{ rs: RuleSet; yaml: string }>(() => ({
     rs: parseRuleSet(DEMO_RULESET_CURRENT),
     yaml: DEMO_RULESET_CURRENT,
@@ -112,7 +114,8 @@ export function App() {
   // Review decisions are session state that survives a reload, and the cohort
   // the engine sees is a function of them: a proposed fact is withheld until a
   // human confirms it, so every view downstream re-evaluates when a card moves.
-  const [review, setReview] = useState(() => loadReviewState(storage()));
+  const [review, setReview] = useState(() => loadReviewState(storage(), DEMO_FACTS, DEMO_FACT_MODEL));
+  const [reviewer, setReviewer] = useState("");
   // Phone layout only: the editor collapses behind a toggle bar (the button is
   // display:none on desktop, where both panes are always visible).
   const [editorOpen, setEditorOpen] = useState(false);
@@ -165,8 +168,12 @@ export function App() {
       }),
     [good.yaml, review],
   );
-  const onDecide = (id: string, decision: Decision, editedValue?: string) =>
-    setReview((s) => decide(s, id, decision, editedValue));
+  const onDecide = (
+    id: string,
+    decision: Decision,
+    editedValue?: FactValue,
+    correction?: { reason: string; source: string },
+  ) => setReview((s) => decide(s, id, decision, editedValue, undefined, correction));
 
   const jumpToLine = (line: number) => {
     setDoc("ruleset");
@@ -319,6 +326,7 @@ export function App() {
             {tab === "thresholds" && (
               <ThresholdsView
                 rulesetYaml={good.yaml}
+                ruleSet={good.rs}
                 cohort={cohort}
                 engine={workbenchEngine}
                 onCopyBack={setRulesetYaml}
@@ -354,11 +362,13 @@ export function App() {
                 bands={funnel.bands}
                 progress={progress}
                 factModelYaml={factModelYaml}
+                reviewer={reviewer}
+                onReviewerChange={setReviewer}
                 onDecide={onDecide}
                 onDownload={() =>
                   downloadText(
-                    `rulekit-decisions-${new Date().toISOString().slice(0, 10)}.yaml`,
-                    decisionsYaml(DEMO_FACTS, review),
+                    `rulekit-review-manifest-${new Date().toISOString().slice(0, 10)}.yaml`,
+                    decisionsYaml(DEMO_FACTS, review, { reviewer, cohort: DEMO_COHORT }),
                   )
                 }
                 onReset={() => setReview({})}

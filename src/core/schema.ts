@@ -22,6 +22,18 @@ export type Overall = "eligible" | "ineligible" | "undetermined";
 export type TestCase = { name: string; facts: Record<string, FactValue>; expect: Record<string, string> };
 export type TestSuite = { cases: TestCase[] };
 
+export const PARSE_LIMITS = {
+  documentChars: 1_000_000,
+  nestingDepth: 64,
+  structuralNodes: 50_000,
+  criteria: 1_000,
+  conditionChildren: 1_000,
+  codeValues: 1_000,
+  facts: 10_000,
+  codeEntries: 10_000,
+  testCases: 10_000,
+} as const;
+
 const nonEmpty = z.string().min(1);
 const semver = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
@@ -30,7 +42,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month! - 1 && date.getUTCDate() === day;
 }, { message: "must be a real ISO-8601 calendar date" });
 const factName = z.string().regex(/^[a-z][a-z0-9_]*$/);
-const codeRef = z.strictObject({ system: nonEmpty, values: z.array(nonEmpty).min(1) });
+const codeRef = z.strictObject({ system: nonEmpty, values: z.array(nonEmpty).min(1).max(PARSE_LIMITS.codeValues) });
 
 const leaf = z.union([
   z.strictObject({ fact: factName, op: z.enum(["eq", "neq", "gt", "gte", "lt", "lte"]), value: z.number(), unit: nonEmpty.optional() }),
@@ -42,8 +54,8 @@ const leaf = z.union([
 
 const condition: z.ZodType<Condition> = z.lazy(() =>
   z.union([
-    z.strictObject({ all: z.array(condition).min(1) }),
-    z.strictObject({ any: z.array(condition).min(1) }),
+    z.strictObject({ all: z.array(condition).min(1).max(PARSE_LIMITS.conditionChildren) }),
+    z.strictObject({ any: z.array(condition).min(1).max(PARSE_LIMITS.conditionChildren) }),
     z.strictObject({ not: condition }),
     leaf,
   ]),
@@ -51,7 +63,7 @@ const condition: z.ZodType<Condition> = z.lazy(() =>
 
 const criterion = z
   .strictObject({
-    id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
+    id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/).refine((id) => id !== "overall", { message: 'criterion id "overall" is reserved for the aggregate test outcome' }),
     ref: nonEmpty.optional(),
     kind: z.enum(["inclusion", "exclusion"]),
     verbatim: nonEmpty,
@@ -76,7 +88,7 @@ const ruleSet = z
     status: nonEmpty.optional(),
     effective: isoDate.optional(),
     source: source.optional(),
-    criteria: z.array(criterion).min(1),
+    criteria: z.array(criterion).min(1).max(PARSE_LIMITS.criteria),
   })
   .refine((r) => new Set(r.criteria.map((c) => c.id)).size === r.criteria.length, {
     message: "duplicate criterion ids",
@@ -88,11 +100,15 @@ const factDecl = z.union([
   z.strictObject({ type: z.literal("enum"), values: z.array(nonEmpty).min(1) }),
   z.strictObject({ type: z.literal("boolean") }),
 ]);
+const limitedFacts = <T extends z.ZodType>(value: T) => z.record(factName, value).refine(
+  (facts) => Object.keys(facts).length <= PARSE_LIMITS.facts,
+  { message: `cannot contain more than ${PARSE_LIMITS.facts} facts` },
+);
 const factModel = z.strictObject({ name: nonEmpty, facts: z.record(factName, factDecl) });
 
 const codeEntry = z.strictObject({ code: nonEmpty, system: nonEmpty, daysAgo: z.number().int().nonnegative().optional() });
-const factValue = z.union([z.number(), z.boolean(), z.array(codeEntry), z.string()]);
-const patientFacts = z.strictObject({ patient: nonEmpty, facts: z.record(factName, factValue) });
+const factValue = z.union([z.number(), z.boolean(), z.array(codeEntry).max(PARSE_LIMITS.codeEntries), z.string()]);
+const patientFacts = z.strictObject({ patient: nonEmpty, facts: limitedFacts(factValue) });
 
 const expectations = z.record(z.string().min(1), z.enum(["pass", "fail", "unknown", "eligible", "ineligible", "undetermined"]))
   .superRefine((value, ctx) => {
@@ -109,9 +125,9 @@ const expectations = z.record(z.string().min(1), z.enum(["pass", "fail", "unknow
 const testSuite = z.strictObject({
   cases: z.array(z.strictObject({
     name: nonEmpty,
-    facts: z.record(factName, factValue),
+    facts: limitedFacts(factValue),
     expect: expectations,
-  })).min(1),
+  })).min(1).max(PARSE_LIMITS.testCases),
 }).refine((suite) => new Set(suite.cases.map((c) => c.name)).size === suite.cases.length, {
   message: "duplicate test case names",
 });
@@ -131,7 +147,32 @@ function describeIssues(issues: readonly z.core.$ZodIssue[], prefix: PropertyKey
 }
 
 function parseWith<T>(schema: z.ZodType<T>, yamlText: string, what: string): T {
-  const raw: unknown = parseYaml(yamlText);
+  if (yamlText.length > PARSE_LIMITS.documentChars) {
+    throw new Error(`invalid ${what}: document exceeds ${PARSE_LIMITS.documentChars} characters`);
+  }
+  let raw: unknown;
+  try {
+    raw = parseYaml(yamlText);
+  } catch (error) {
+    throw new Error(`invalid ${what}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+  }
+  const seen = new WeakSet<object>();
+  const stack: { value: unknown; depth: number }[] = [{ value: raw, depth: 0 }];
+  let nodes = 0;
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    if (current.depth > PARSE_LIMITS.nestingDepth) {
+      throw new Error(`invalid ${what}: nesting exceeds ${PARSE_LIMITS.nestingDepth} levels`);
+    }
+    if (typeof current.value !== "object" || current.value === null || seen.has(current.value)) continue;
+    seen.add(current.value);
+    nodes += 1;
+    if (nodes > PARSE_LIMITS.structuralNodes) {
+      throw new Error(`invalid ${what}: structure exceeds ${PARSE_LIMITS.structuralNodes} container nodes`);
+    }
+    const children = Array.isArray(current.value) ? current.value : Object.values(current.value as Record<string, unknown>);
+    for (const value of children) stack.push({ value, depth: current.depth + 1 });
+  }
   const result = schema.safeParse(raw);
   if (!result.success) {
     const issues = [...new Set(describeIssues(result.error.issues))].join("; ");

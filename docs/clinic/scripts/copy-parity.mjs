@@ -213,6 +213,12 @@ const CLAIM_RULES = [
   { rule: 'synthetic-labelled-09', panel: '09-build', must: ['synthetic'] },
   { rule: 'chia-heuristic-labelled', panel: '09-build', must: ['56.7%', 'heuristic estimate'] },
   {
+    rule: 'overlap-not-a-contradiction',
+    panel: '05-clash',
+    must: ['does not report a contradiction or fail the build'],
+  },
+  { rule: 'no-ehr-connector', panel: '09-build', must: ['no ehr connector'] },
+  {
     rule: 'no-open-implementation',
     panel: '10-close',
     must: ['there is no open implementation of this whole shape in one place'],

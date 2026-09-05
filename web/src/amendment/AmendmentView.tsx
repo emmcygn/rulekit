@@ -88,7 +88,7 @@ export function AmendmentView({
       ...changes.map(
         (c) =>
           `  ${c.kind === "added" ? "+" : c.kind === "removed" ? "-" : "~"} ${c.id} [${c.ref ?? "—"}] ${
-            c.kind === "changed" ? c.summary : `"${c.verbatim}"`
+            c.kind === "changed" || c.kind === "renamed" ? c.summary : `"${c.verbatim}"`
           }`,
       ),
       "",
@@ -165,13 +165,19 @@ export function AmendmentView({
         {changes.map((c) => (
           <div key={`${c.kind}-${c.id}`}>
             <b>
-              {c.kind === "added" ? "+ added" : c.kind === "removed" ? "− removed" : "~ changed"}
+              {c.kind === "added"
+                ? "+ added"
+                : c.kind === "removed"
+                  ? "− removed"
+                  : c.kind === "renamed"
+                    ? "~ renamed"
+                    : "~ changed"}
             </b>
             &nbsp;&nbsp;
-            {c.kind === "changed" ? null : `${c.criterionKind} `}
+            {c.kind === "changed" || c.kind === "renamed" ? null : `${c.criterionKind} `}
             <b>{c.id}</b> [{c.ref ?? "—"}]{" "}
             <span className="ink2">
-              {c.kind === "changed" ? c.summary : `— "${c.verbatim}"`}
+              {c.kind === "changed" || c.kind === "renamed" ? c.summary : `— "${c.verbatim}"`}
             </span>
           </div>
         ))}

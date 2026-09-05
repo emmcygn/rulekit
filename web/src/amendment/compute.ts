@@ -5,6 +5,7 @@
  * Pure: rule sets in, evaluations in, rows out.
  */
 import type { Condition, Criterion, RuleSet } from "../../../src/core/schema.js";
+import { structuralDiff as coreStructuralDiff } from "../../../src/core/diff.js";
 import type { Evaluation, Flip } from "../engine/api.js";
 import {
   BAND_LABEL,
@@ -16,8 +17,9 @@ import {
 } from "../funnel/bands.js";
 
 export type StructuralChange = {
-  kind: "added" | "removed" | "changed";
+  kind: "added" | "removed" | "changed" | "renamed";
   id: string;
+  fromId?: string;
   ref?: string;
   verbatim: string;
   criterionKind: Criterion["kind"];
@@ -53,28 +55,46 @@ function changeSummary(before: Criterion, after: Criterion): string {
   const a = scalars(before.when);
   const b = scalars(after.when);
   const sameShape = a.size === b.size && [...a.keys()].every((k) => b.has(k));
-  if (!sameShape) return "condition rewritten";
-  const moved = [...a.entries()]
-    .filter(([k, v]) => b.get(k) !== v)
-    .map(([k, v]) => `${k.split(".").pop()} ${v} → ${b.get(k)}`);
-  if (moved.length === 0) {
-    return before.kind !== after.kind ? `${before.kind} → ${after.kind}` : "metadata changed";
+  const changes = sameShape
+    ? [...a.entries()]
+        .filter(([k, v]) => b.get(k) !== v)
+        .map(([k, v]) => `${k.split(".").pop()} ${v} → ${b.get(k)}`)
+    : ["condition rewritten"];
+  if (before.kind !== after.kind) changes.push(`${before.kind} → ${after.kind}`);
+  if ((before.ref ?? "—") !== (after.ref ?? "—")) {
+    changes.push(`ref ${before.ref ?? "—"} → ${after.ref ?? "—"}`);
   }
-  return moved.join(", ");
-}
-
-function sameCondition(a: Criterion, b: Criterion): boolean {
-  return JSON.stringify(a.when ?? null) === JSON.stringify(b.when ?? null) && a.kind === b.kind;
+  if (before.verbatim !== after.verbatim) changes.push("verbatim changed");
+  if ((before.unmodeled ?? false) !== (after.unmodeled ?? false)) {
+    changes.push(after.unmodeled ? "now unmodeled" : "now modeled");
+  }
+  return changes.length === 0 ? "metadata changed" : changes.join(", ");
 }
 
 export function structuralDiff(from: RuleSet, to: RuleSet): StructuralChange[] {
   const before = new Map(from.criteria.map((c) => [c.id, c]));
-  const after = new Map(to.criteria.map((c) => [c.id, c]));
+  const diff = coreStructuralDiff(from, to);
+  const added = new Set(diff.added);
+  const removed = new Set(diff.removed);
+  const changed = new Set(diff.changed);
+  const renameByTo = new Map(diff.renamed.map((rename) => [rename.to, rename.from]));
   const out: StructuralChange[] = [];
 
   for (const c of to.criteria) {
-    const prev = before.get(c.id);
-    if (!prev) {
+    const fromId = renameByTo.get(c.id);
+    const prev = before.get(fromId ?? c.id);
+    if (fromId !== undefined) {
+      out.push({
+        kind: "renamed",
+        id: c.id,
+        fromId,
+        ref: c.ref,
+        verbatim: c.verbatim,
+        criterionKind: c.kind,
+        summary: `${fromId} → ${c.id}`,
+      });
+    }
+    if (added.has(c.id)) {
       out.push({
         kind: "added",
         id: c.id,
@@ -83,7 +103,7 @@ export function structuralDiff(from: RuleSet, to: RuleSet): StructuralChange[] {
         criterionKind: c.kind,
         summary: "",
       });
-    } else if (!sameCondition(prev, c)) {
+    } else if (changed.has(c.id) && prev !== undefined) {
       out.push({
         kind: "changed",
         id: c.id,
@@ -95,7 +115,7 @@ export function structuralDiff(from: RuleSet, to: RuleSet): StructuralChange[] {
     }
   }
   for (const c of from.criteria) {
-    if (after.has(c.id)) continue;
+    if (!removed.has(c.id)) continue;
     out.push({
       kind: "removed",
       id: c.id,

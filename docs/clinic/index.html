@@ -70,7 +70,7 @@
       <p class="small"><span class="big-num">$535K</span><br>median direct cost in <span class="gloss">Phase III<span class="gloss-note">the large late-stage test</span></span></p>
       <p class="small"><span class="big-num">~45%</span><br>of substantial amendments judged avoidable</p>
       <p class="src">Source: Tufts Center for the Study of Drug Development, on the cost of protocol amendments.</p>
-      <p class="small ext-tall">Almost half a million pounds, spent on changing a paragraph. Nearly half of those changes were avoidable. If you can test the trial rules, you find rule flaws while it is still cheap to fix.</p>
+      <p class="small ext-tall">These are published aggregate amendment figures, not a rulekit outcome. The study does not establish that logic contradictions caused those amendments or that this checker would have avoided them.</p>
     </section>
     <section class="panel" id="panel-02-engine" data-panel="02-engine" data-plain="engine engine-notes" data-side="left" aria-labelledby="h-02-engine">
       <p class="eyebrow"><span class="ch">02</span>the engine</p>
@@ -107,19 +107,19 @@
     </section>
     <section class="panel" id="panel-05-clash" data-panel="05-clash" data-plain="clash-intro p-clash" data-side="right" aria-labelledby="h-05-clash">
       <p class="eyebrow"><span class="ch">02</span>idea two</p>
-      <h2 id="h-05-clash">It finds contradictions before anyone enrolls</h2>
+      <h2 id="h-05-clash">It shows exactly where an exclusion fires</h2>
       <div class="ext">
-        <p class="small">Once the rules are logic, a checker can lay them out on a number line and prove when two of them collide.</p>
+        <p class="small">Once rules are logic, the evaluator can show which values pass an inclusion and then fire an exclusion.</p>
         <p class="small"><strong>two clauses, pages apart.</strong> Each rule makes sense on its own. One admits decent kidney function, the other protects people with fragile kidneys. Different authors, different sections of the same statute, and no court ever read the two side by side.</p>
       </div>
-      <p class="small"><strong>the collision.</strong> One rule needs a kidney score of at least 30. The other rejects anything under 45. So everyone between 30 and 45 is admitted by one clause and barred by the other. The checker proves that for every possible patient, then fails the build the way a broken test fails software, before a single volunteer is screened.</p>
-      <p class="small">The honest limit: when the checker cannot prove a clash, it says nothing rather than guessing.</p>
+      <p class="small"><strong>the evaluated band.</strong> One rule needs a kidney score of at least 30. The other rejects anything under 45. Every value in [30,45) therefore passes the inclusion and fires the exclusion, producing an ineligible verdict.</p>
+      <p class="small">That is an exclusion doing its job; <span class="mono">rules check</span> does not report a contradiction or fail the build.</p>
     </section>
     <section class="panel" id="panel-06-chasm" data-panel="06-chasm" data-plain="chasm onecalc" data-side="left" aria-labelledby="h-06-chasm">
       <p class="eyebrow"><span class="ch">02</span>idea three</p>
       <h2 id="h-06-chasm">Every number comes from one calculation</h2>
       <p class="small mono ext">exactly 30: admitted by rule 1, barred by rule 2</p>
-      <p class="lede">A patient's verdict is computed exactly once. The printed report and the visual app both read that one result, so two screens can never show different counts.</p>
+      <p class="lede">A patient's verdict is computed exactly once for a pinned engine and input bundle. The printed report and the visual app both read that result, so two screens can share the same counts.</p>
       <p class="small">The dot next to a patient's name and the totals on every screen come from that one verdict. There is no second copy of the math to drift.</p>
     </section>
     <section class="panel" id="panel-07-ai" data-panel="07-ai" data-plain="sw-ai ai-intro p-ai" data-side="right" aria-labelledby="h-07-ai">
@@ -140,7 +140,7 @@
     <section class="panel" id="panel-09-build" data-panel="09-build" data-plain="exists build" data-side="right" aria-labelledby="h-09-build">
       <p class="eyebrow"><span class="ch">04</span>what exists</p>
       <h2 id="h-09-build">What runs today</h2>
-      <p class="small">A public code repository that runs on any computer without an account, cloud dependency, and no patient data leaves if paired with a local/sandboxed LLM. <span class="mono">470</span> automated tests, all passing, re-run on every change. Every person in this project is synthetic.</p>
+      <p class="small">A public code repository that runs locally without an account or required cloud service. Automated regression suites run on every change. The repository has no EHR connector, and every person in this project is synthetic.</p>
       <p class="small"><strong>The honest coverage number.</strong> Of 12,060 entry criteria pulled from 996 real trials, 56.7% look like the rule language could express them as written, 12.2% partially, and 31.1% not at all. That is a <strong>heuristic estimate</strong>: pattern matching over the text, never checked against human judges.</p>
       <div class="ext">
         <p class="eyebrow"><span class="ch">05</span>the build</p>
@@ -153,7 +153,7 @@
       <p class="eyebrow"><span class="ch">06</span>close</p>
       <h2 id="h-10-close">The limits, up front</h2>
       <p class="small"><strong>&#9888; not medical software</strong> <span class="ext-tall">This is a demonstration of rule-governance tooling. </span>It is not validated, not cleared by any regulator, and not for clinical, feasibility, or research screening use. Every patient, note, clinician and institution here is invented.</p>
-      <p class="small">The narrow claim: there is <strong>no open implementation</strong> of this whole shape in one place.<span class="ext-tall"> AI suggestions that carry their quotes. Human approval as the only way in. A <span class="gloss">deterministic<span class="gloss-note">same input, same answer, always</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.</span></p>
+      <p class="small">The narrow claim: there is <strong>no open implementation</strong> of this whole shape in one place.<span class="ext-tall"> AI suggestions that carry their quotes. Human approval as the only way in. A <span class="gloss">deterministic<span class="gloss-note">same pinned engine and input, same answer</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.</span></p>
       <p class="small ext-tall">from the project README, stated with its own caveats attached</p>
       <p class="small ext">Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://claude.ai/code/artifact/f6f26ee6-5f16-457a-b01d-0aa4b1443ff3">technical thesis</a> (also <span class="mono">docs/thesis.html</span> in the repository), which is this same story told longer, for engineers, with the engine's real output in it.</p>
       <p class="small">The repository itself is at <a href="https://github.com/mannycygn/rulekit">github.com/mannycygn/rulekit</a>.</p>

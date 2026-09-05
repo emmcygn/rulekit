@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { parseRuleSet, parseFactModel, parsePatient, parseTestSuite } from "../../src/core/schema.js";
@@ -8,7 +9,7 @@ import { behavioralDiff } from "../../src/core/diff.js";
 
 const read = (p: string) => readFileSync(p, "utf8");
 const RS = parseRuleSet(read("rules/trials/demo-hf-001/ruleset.yaml"));
-const RS_OLD = parseRuleSet(read("rules/trials/demo-hf-001/ruleset@1.0.0.yaml"));
+const RS_OLD = parseRuleSet(read("rules/trials/demo-hf-001/ruleset@1.0.1.yaml"));
 const FM = parseFactModel(read("packs/trials/fact-model.yaml"));
 const SUITE = parseTestSuite(read("rules/trials/demo-hf-001/tests.yaml"));
 const CORPUS = readdirSync("fixtures/patients").map((f) => parsePatient(read(join("fixtures/patients", f))));
@@ -19,8 +20,26 @@ describe("DEMO-HF-001 content (spec weeks 1-2 milestone)", () => {
     expect(findings.filter((f) => f.level === "error")).toEqual([]);
   });
 
-  it("the pre-amendment rule set has no conflict", () => {
+  it("the corrected pre-amendment rule set has no conflict", () => {
     expect(checkRuleSet(RS_OLD, FM).filter((f) => f.level === "error")).toHaveLength(0);
+  });
+
+  it("keeps the originally published 1.0.0 artifact byte-for-byte", () => {
+    const historical = read("rules/trials/demo-hf-001/ruleset@1.0.0.yaml");
+    expect(createHash("sha256").update(historical).digest("hex")).toBe("e17aaa9e1220094e5df6a546afda1812f1f51a2e13e6986a93c977881b61d7e9");
+  });
+
+  it("keeps the landing, plain, 3D and thesis surfaces honest about the demo band", () => {
+    const surfaces = ["README.md", "deploy/landing.html", "docs/plain.html", "docs/clinic/index.html", "docs/thesis.html"];
+    for (const surface of surfaces) {
+      const text = read(surface);
+      expect(text, surface).not.toContain("It finds contradictions before anyone enrolls");
+      expect(text, surface).not.toContain("the teaching pack with its contradiction seeded on purpose");
+      expect(text, surface).not.toContain("The checker proves that for every possible patient, then fails the build");
+    }
+    expect(read("README.md")).toContain("deliberately **not** called a contradiction");
+    expect(read("docs/plain.html")).toContain("ordinary eligibility behavior, not a contradiction and not a failing check");
+    expect(read("docs/clinic/index.html")).toContain("does not report a contradiction or fail the build");
   });
 
   it("all 13 rule-set test cases pass", () => {

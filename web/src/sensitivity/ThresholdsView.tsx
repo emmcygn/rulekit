@@ -1,22 +1,21 @@
 import { useMemo, useRef, useState } from "react";
-import type { PatientFacts } from "../../../src/core/schema.js";
+import type { PatientFacts, RuleSet } from "../../../src/core/schema.js";
 import type { Engine } from "../engine/api.js";
-import { BAND_LABEL, DISPLAY_BANDS, displayBandCounts, summaryLine } from "../funnel/bands.js";
+import { BAND_LABEL, DISPLAY_BANDS, summaryLine } from "../funnel/bands.js";
 import { copyText } from "../util/io.js";
 import {
   excludes,
   histogram,
   knobValues,
   niceWidth,
-  numericTargets,
   setKnob,
-  topYield,
   yieldsAreRanked,
-  type Target,
 } from "./compute.js";
+import { useSensitivity } from "./useSensitivity.js";
 
 type Props = {
   rulesetYaml: string;
+  ruleSet: RuleSet;
   cohort: PatientFacts[];
   engine: Engine;
   onCopyBack: (nextYaml: string) => void;
@@ -24,22 +23,22 @@ type Props = {
   asOf: string;
 };
 
-export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }: Props) {
-  const targets = useMemo(() => numericTargets(rulesetYaml), [rulesetYaml]);
+export function ThresholdsView({ rulesetYaml, ruleSet, cohort, engine, onCopyBack, asOf }: Props) {
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const histRef = useRef<HTMLDivElement | null>(null);
 
-  const ranked = useMemo(() => topYield(rulesetYaml, cohort, engine), [rulesetYaml, cohort, engine]);
+  const sensitivity = useSensitivity(
+    rulesetYaml,
+    ruleSet,
+    cohort,
+    engine,
+    pickedId,
+    preview,
+  );
+  const { targets, target, ranked } = sensitivity;
   const ordered = yieldsAreRanked(ranked);
-  // Open on the knob worth the most patients — but only when one knob actually
-  // is worth more than the next. On a tie, document order is the honest default.
-  const best = ordered ? ranked[0]?.target : undefined;
-  const target: Target | undefined =
-    targets.find((t) => `${t.criterionId}.${t.knob}` === pickedId) ??
-    targets.find((t) => best && t.criterionId === best.criterionId && t.knob === best.knob) ??
-    targets[0];
   const saved = target?.value ?? 0;
   const current = preview ?? saved;
 
@@ -57,18 +56,8 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }
   const hi = bins.at(-1)?.hi ?? 1;
   const maxCount = Math.max(1, ...bins.map((b) => b.count));
 
-  const before = useMemo(
-    () => displayBandCounts(cohort.map((p) => engine.evalPatient(rulesetYaml, p))),
-    [cohort, engine, rulesetYaml],
-  );
-  const previewYaml = useMemo(
-    () => (target && preview !== null ? setKnob(rulesetYaml, target.path, preview) : rulesetYaml),
-    [rulesetYaml, target, preview],
-  );
-  const after = useMemo(
-    () => displayBandCounts(cohort.map((p) => engine.evalPatient(previewYaml, p))),
-    [cohort, engine, previewYaml],
-  );
+  const before = sensitivity.before;
+  const after = sensitivity.after;
 
   if (!target) {
     return (
@@ -110,8 +99,8 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }
       `${countedIn} of ${values.numeric.length} recorded values stay in the pool` +
         (withoutValue > 0 ? ` · ${withoutValue} of ${cohort.length} have no ${target.fact} value` : ""),
       "",
-      `before: ${summaryLine(before)}`,
-      `after:  ${summaryLine(after)}`,
+      `before: ${before ? summaryLine(before) : "calculating"}`,
+      `after:  ${after ? summaryLine(after) : "calculating"}`,
       "",
       "Yield if relaxed by one step (patients returned from screen fail):",
       ...ranked.map(
@@ -130,6 +119,7 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }
         <button
           className="tbtn"
           style={{ marginLeft: "auto" }}
+          disabled={sensitivity.pending}
           onClick={() => {
             void copyText(summary()).then((ok) => {
               setCopied(ok);
@@ -140,6 +130,12 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }
           {copied ? "Copied" : "Copy summary"}
         </button>
       </div>
+
+      {sensitivity.error && (
+        <div className="f-error" role="alert">
+          Sensitivity analysis stopped: {sensitivity.error}
+        </div>
+      )}
 
       <div className="knobbar">
         <span className="refbadge" style={{ fontSize: 13 }}>
@@ -262,27 +258,33 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }
         </div>
       </div>
 
-      <div className="recount" data-testid="recount">
-        {DISPLAY_BANDS.map((band, i) => (
-          <span key={band}>
-            {i > 0 && <>&nbsp;&nbsp;·&nbsp;&nbsp;</>}
-            {BAND_LABEL[band]} {before[band]} <span className="ink3">→</span>{" "}
-            <b
-              className={
-                (band === "potentially-eligible" || band === "pending-chart-review") &&
-                after[band] > before[band]
-                  ? "up"
-                  : ""
-              }
-            >
-              {after[band]}
-            </b>
-          </span>
-        ))}
+      <div className="recount" data-testid="recount" aria-live="polite">
+        {before && after ? (
+          DISPLAY_BANDS.map((band, i) => (
+            <span key={band}>
+              {i > 0 && <>&nbsp;&nbsp;·&nbsp;&nbsp;</>}
+              {BAND_LABEL[band]} {before[band]} <span className="ink3">→</span>{" "}
+              <b
+                className={
+                  (band === "potentially-eligible" || band === "pending-chart-review") &&
+                  after[band] > before[band]
+                    ? "up"
+                    : ""
+                }
+              >
+                {after[band]}
+              </b>
+            </span>
+          ))
+        ) : (
+          <span className="ink2">calculating cohort impact…</span>
+        )}
       </div>
       <div className="ink3" style={{ fontSize: 11.5, marginTop: -8 }}>
         band counts are the engine's verdict per patient · {asOf}
         {countedIn !== values.numeric.length &&
+          after !== undefined &&
+          before !== undefined &&
           after["potentially-eligible"] === before["potentially-eligible"] &&
           " · a value re-entering the pool does not move a band when another criterion still blocks that patient"}
       </div>
@@ -293,7 +295,10 @@ export function ThresholdsView({ rulesetYaml, cohort, engine, onCopyBack, asOf }
           {ordered ? "ranked" : "unranked (the top yields tie)"}
         </div>
         <div className="yield-list" data-testid="yield-list">
-          {ranked.length === 0 && <span className="ink2">this rule set has no numeric knob</span>}
+          {sensitivity.pending && <span className="ink2">calculating yields…</span>}
+          {!sensitivity.pending && ranked.length === 0 && (
+            <span className="ink2">this rule set has no numeric knob</span>
+          )}
           {ranked.map((y, i) => (
             <div key={`${y.criterionId}-${y.from}`}>
               <button

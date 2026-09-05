@@ -4,18 +4,16 @@
 //
 // BEAT ONE — the floor is the statute, and it has a hole in it.
 //
-// The same collision as chapter 05, walked instead of drawn. The floor is one
+// The same excluded band as chapter 05, walked instead of drawn. The floor is one
 // slab of law with a rectangular hole cut out of it between 30 and 45, and the
 // camera flies down the middle of the hole for the first two thirds of the
 // chapter: for that whole stretch there is no floor under you. Seven people
 // cross. Three are on lanes past the far lip and walk straight over. Three are
 // on lanes that run through the hole and drop out of the world. One reaches the
-// lip at exactly 30 and stops there, admitted by one clause and barred by the
-// other, with nowhere to put its foot down.
+// lip at exactly 30 and stops there, admitted by one clause but assigned the
+// overall screen-fail result because the exclusion fires.
 //
-// The void is hatched, not empty. ▨ is this piece's mark for "don't know", and
-// that is precisely what the statute says about the interval: nothing. Empty
-// white would have read as "fine".
+// The void is inked as the screen-fail band, not hatched as "don't know".
 //
 // BEAT TWO — every number comes from one calculation.
 //
@@ -102,11 +100,11 @@ const SCREENS = 12;
 const CORE_R = 0.62;
 
 const L_ONE = 'one calculation';
-const L_ALWAYS = 'same input, same answer, always';
+const L_ALWAYS = 'same pinned engine + input, same answer';
 const L_REPORT = 'printed report';
 const L_APP = 'visual app';
 const L_COUNT = '7 screen fail of 10';
-const L_STATUTE = 'the floor is the statute';
+const L_STATUTE = 'the floor is the evaluated rule set';
 const L_BAND = '[30, 45)';
 
 // Both orientations, built up front, chosen in update(). Portrait is ~31° wide
@@ -195,11 +193,13 @@ export default {
     const lipMat = cloneOwned(M.line);
     lipMat.color.setHex(0x1A1D21);
     lipMat.transparent = true;
-    // The slab and the hatch are owned clones so the whole chasm can fade. A
+    // The slab and the fail band are owned clones so the whole chasm can fade. A
     // shared material could not: it is the same object in every other room.
     const slabMat = cloneOwned(M.bone);
     slabMat.transparent = true;
-    const voidMat = cloneOwned(M.hatch);
+    const voidMat = cloneOwned(M.line);
+    voidMat.transparent = true;
+    voidMat.color.setHex(0x3A4148);
     voidMat.opacity = 0;
 
     // ── the floor, in four strips around the hole ─────────────────────────
@@ -219,8 +219,7 @@ export default {
       g.add(m);
     }
 
-    // The void reads ▨, not empty: the statute does not say "allowed" about
-    // [30, 45), it says nothing at all.
+    // The dark band reads as a screen fail: [30, 45) fires the exclusion.
     const voidGeo = new THREE.PlaneGeometry(1, 1);
     const uv = voidGeo.attributes.uv;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 4, uv.getY(i) * 9);

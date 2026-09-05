@@ -1,8 +1,25 @@
 {
+  "recordingVersion": 2,
   "doc": "echo-2026-01-22",
   "model": "claude-opus-5",
   "prompt": "extract-facts.v1",
+  "promptSha256": "017c165fdc57b35b2c066a07e9e3c2d38af0361dc5341df272b2b7f8eb8e1ebc",
+  "schema": {
+    "id": "proposed-facts.v1",
+    "sha256": "c344f0320f0729c86ebbc4a0258f59cfe8e3c5575da311572e2b17b9949e784e"
+  },
+  "requestSha256": "ccae36083edec1259fdd4adf64494e2ec19ca50bc2bbf0d120d5eecc0bfea51b",
+  "inference": {
+    "max_tokens": 16000,
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
   "recordedAt": "2026-08-20T09:14:31Z",
+  "capture": {
+    "mode": "legacy-migration",
+    "metrics": null
+  },
   "parsed_output": {
     "facts": [
       {

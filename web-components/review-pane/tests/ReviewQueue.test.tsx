@@ -149,9 +149,15 @@ describe("ReviewQueue — the three actions", () => {
 
     await userEvent.clear(input);
     await userEvent.type(input, "II");
+    await userEvent.type(screen.getByLabelText("correction reason for nyha_class"), "Class corrected");
+    await userEvent.type(screen.getByLabelText("correction source for nyha_class"), "Cardiology note");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(h.onEdit).toHaveBeenCalledExactlyOnceWith(a, "II");
+    expect(h.onEdit).toHaveBeenCalledExactlyOnceWith(a, {
+      value: "II",
+      reason: "Class corrected",
+      source: "Cardiology note",
+    });
   });
 
   it("cancelling an edit reports nothing", async () => {
@@ -218,7 +224,7 @@ describe("ReviewQueue — the host's refusals are honoured", () => {
         items={[card({ id: "1", fact: "egfr", value: "62", unit: "mL/min/1.73m2" })]}
         validate={(_item, draft) =>
           /^-?\d+(\.\d+)?$/.test(draft.trim())
-            ? { ok: true }
+            ? { ok: true, value: Number(draft) }
             : { ok: false, message: `"${draft}" is not a number.` }
         }
       />,
@@ -236,9 +242,15 @@ describe("ReviewQueue — the host's refusals are honoured", () => {
     // …and the same box accepts a usable correction.
     await user.clear(input);
     await user.type(input, "47");
+    await user.type(screen.getByLabelText("correction reason for egfr"), "Lab corrected");
+    await user.type(screen.getByLabelText("correction source for egfr"), "Lab report");
     await user.click(screen.getByRole("button", { name: "Save" }));
     expect(h.onEdit).toHaveBeenCalledTimes(1);
-    expect(h.onEdit.mock.calls[0]![1]).toBe("47");
+    expect(h.onEdit.mock.calls[0]![1]).toEqual({
+      value: 47,
+      reason: "Lab corrected",
+      source: "Lab report",
+    });
   });
 
   it("shows the value on record beside the proposal and calls confirming it an override", () => {
@@ -273,8 +285,14 @@ describe("ReviewQueue — the host's refusals are honoured", () => {
     await user.click(screen.getByRole("button", { name: /edit nyha_class/ }));
     const select = screen.getByLabelText("corrected value for nyha_class");
     await user.selectOptions(select, "IV");
+    await user.type(screen.getByLabelText("correction reason for nyha_class"), "Class corrected");
+    await user.type(screen.getByLabelText("correction source for nyha_class"), "Cardiology note");
     await user.click(screen.getByRole("button", { name: "Save" }));
-    expect(h.onEdit.mock.calls[0]![1]).toBe("IV");
+    expect(h.onEdit.mock.calls[0]![1]).toEqual({
+      value: "IV",
+      reason: "Class corrected",
+      source: "Cardiology note",
+    });
   });
 
   it("renders an excerpt with an expand control rather than the whole note", async () => {

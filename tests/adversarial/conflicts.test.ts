@@ -9,7 +9,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { detectConflicts, checkRuleSet } from "../../src/core/conflicts.js";
-import { evalPatient } from "../../src/core/evaluator.js";
+import { evalPatientUnsafe as evalPatient } from "../../src/core/evaluator.js";
 import type { Criterion, FactModel, RuleSet } from "../../src/core/schema.js";
 
 const FM: FactModel = {
@@ -151,7 +151,7 @@ describe("B3 — opaque branches do not hide necessary sibling contradictions", 
       id: "impossible-any",
       kind: "inclusion",
       verbatim: "Aged over 130 or under -5",
-      when: { any: [{ fact: "age", op: "gte", value: 130, unit: "years" }, { fact: "age", op: "lte", value: -5, unit: "years" }] },
+      when: { any: [{ fact: "age", op: "gte", value: 130 }, { fact: "age", op: "lte", value: -5 }] },
     });
     const findings = checkRuleSet(set, FM);
     expect(findings.filter((f) => f.level === "error")).toEqual([]);

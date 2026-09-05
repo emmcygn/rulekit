@@ -260,7 +260,7 @@
     <h1>Eligibility criteria are the most consequential logic in a clinical trial. Almost everywhere, they are prose in a Word document.</h1>
     <p class="hero-kicker">This is a thesis about treating them as code instead — versioned, tested, conflict-checked — told in one scroll. Agents propose evidence. Humans confirm it. A deterministic engine is the only thing that ever decides.</p>
 
-    <figure class="fig hero-fig" role="group" aria-label="Two eligibility intervals on a number line: an inclusion admitting 30 and above, an exclusion firing below 45, and their overlap from 30 to 45 highlighted as a contradiction">
+    <figure class="fig hero-fig" role="group" aria-label="Two eligibility intervals on a number line: an inclusion admitting 30 and above, an exclusion firing below 45, and their ordinary overlap from 30 to 45 highlighted as an exclusion boundary">
       <div class="fig-scroll">
       <svg viewBox="0 0 960 260" style="min-width:620px" role="img" aria-label="Number line for the lab value eGFR. An inclusion bar covers 30 to infinity, an exclusion bar covers everything below 45. The band from 30 to 45 where both apply is marked in accent.">
         <!-- band: [30, 45) -->
@@ -294,7 +294,7 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">Two reasonable-looking criteria. Every patient in the ignited band passes one and is thrown out by the other — for all inputs. By the end of this page you will know exactly how a machine proves that sentence, and when it refuses to.</figcaption>
+      <figcaption class="fig-cap">Two reasonable-looking criteria. Every patient in the highlighted band passes the inclusion and fires the exclusion. That produces an ineligible trace, not a contradiction; this page explains both evaluation and the narrower conflicts static analysis can actually prove.</figcaption>
     </figure>
 
     <div class="hero-cue"><span class="bar"></span><span>scroll — about ten minutes, best read in order</span></div>
@@ -348,7 +348,7 @@
 
   <div class="wrap">
     <div class="prose" data-reveal>
-      <p>Drift like this surfaces as a protocol <span class="gloss">amendment<span class="gloss-note">a formal protocol change</span></span> — re-consenting, re-training, re-printing, IRB re-review. The Tufts Center for the Study of Drug Development put numbers on it:</p>
+      <p>A formal protocol <span class="gloss">amendment<span class="gloss-note">a formal protocol change</span></span> can involve consent, training, document and review work. The Tufts Center for the Study of Drug Development reported aggregate costs:</p>
     </div>
     <div class="stat-row" data-reveal-children data-stagger="140">
       <div class="stat">
@@ -368,7 +368,7 @@
       </div>
     </div>
     <div class="prose" data-reveal>
-      <p>A recurring cause is eligibility logic: a threshold that contradicts another threshold, a criterion nobody realised excluded a third of the screening pool, a change whose effect on already-enrolled participants surfaces only after it ships. Two of those three are catchable <em>before the protocol leaves the building</em> — by a tool that can read the criteria as logic. So the first move is to make them logic.</p>
+      <p>Those figures do not establish that contradictions caused the amendments or that this project would have avoided them. The demonstrated claims are narrower: static analysis can prove specific unsatisfiable constraints, attrition can describe the supplied synthetic corpus, and a behavioural diff can show which synthetic verdicts changed.</p>
     </div>
   </div>
 </section>
@@ -475,7 +475,7 @@
   </div>
   <div class="wrap">
     <div class="prose" data-reveal>
-      <p>The evaluator is a pure function of (rule set, one patient's facts): same inputs, same verdict, forever. Nothing calls a clock, nothing calls a random number, nothing calls a model. Now the interesting part — what happens when a fact is <em>missing</em>. Which, for real patients, is constantly.</p>
+      <p>The evaluator is deterministic for a pinned engine version and exact rule-set, fact-model, patient-input and as-of bundle. A future engine may correct semantics, so reports record versions and hashes rather than promising the same verdict forever. Now the interesting part — what happens when a fact is <em>missing</em>.</p>
     </div>
   </div>
 </section>
@@ -1327,7 +1327,7 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">07</span>the amendment</p>
     <h2 data-reveal>The day the protocol changes</h2>
-    <p class="lede" data-reveal>A protocol <span class="gloss">amendment<span class="gloss-note">formal change to trial rules</span></span> is where prose criteria hurt most. A substantial one carries a median direct cost of <b>$<span data-count-to="141" data-count-dur="1100">0</span>K</b> in Phase II and <b>$<span data-count-to="535" data-count-dur="1100">0</span>K</b> in Phase III, and roughly <b><span data-count-to="45" data-count-dur="900">0</span>%</b> are judged avoidable (Tufts CSDD).</p>
+    <p class="lede" data-reveal>A protocol <span class="gloss">amendment<span class="gloss-note">formal change to trial rules</span></span> can be expensive. Tufts CSDD reported median direct costs of <b>$<span data-count-to="141" data-count-dur="1100">0</span>K</b> in Phase II and <b>$<span data-count-to="535" data-count-dur="1100">0</span>K</b> in Phase III, with roughly <b><span data-count-to="45" data-count-dur="900">0</span>%</b> judged avoidable. Those aggregate figures do not measure rulekit or attribute avoidance to logic checks.</p>
     <div class="prose" data-reveal>
       <p>DEMO-HF-001 moves from v2.0 to v3.0 (Amendment 2): one new exclusion drops in, one washout window widens. In a Word document, the impact question &#8212; <em>who changes answer?</em> &#8212; takes a manual chart review. In a rule file, it is a diff. Not a diff of the text: a <span class="gloss">behavioural diff<span class="gloss-note">which patients change answer</span></span>.</p>
     </div>
@@ -1341,10 +1341,10 @@
       <p class="b-stage-sub">as surfaced in the workbench's Amendment view</p>
 
       <div class="b-vpills" data-step="0+">
-        <span class="b-vpill">Protocol v2.0 &#183; ruleset v1.0.0</span>
+        <span class="b-vpill">Protocol v2.0 &#183; ruleset v1.0.1 corrigendum</span>
         <span style="color: var(--ink2);">&#8594;</span>
         <span class="b-vpill b-vpill-on">Protocol v3.0 (Amendment 2) &#183; ruleset v1.2.0</span>
-        <span style="font-size: 11.5px; color: var(--ink2);">site-effective 04-Aug-2026</span>
+        <span style="font-size: 11.5px; color: var(--ink2);">illustrative effective date &#183; not verified approval</span>
       </div>
 
       <div class="b-diffblock" data-step="1+">
@@ -1379,14 +1379,14 @@
       </div>
 
       <div class="b-enrolled" data-step="8+">
-        <div class="b-enrolled-title">Already enrolled &#8212; requires PI / IRB review</div>
+        <div class="b-enrolled-title">Synthetic already-enrolled examples &#8212; no clinical decision</div>
         <div class="b-erow">002-0041 <span>randomized 02-Jun-2026 &#183; eGFR = 39 &#8212; now meets E3</span></div>
         <div class="b-erow">003-0017 <span>randomized 21-May-2026 &#183; eGFR = 44 &#8212; now meets E3</span></div>
-        <div class="b-enrolled-note">continuation / re-consent decision per protocol &#167;5.4 &#183; 2 participants</div>
+        <div class="b-enrolled-note">illustrates an escalation queue only &#183; qualified review remains external</div>
       </div>
 
       <div data-step="9+" style="margin-top: 14px; font-size: 14px; line-height: 1.6; color: var(--ink);">
-        Five of ten fixtures flip, each carrying the criterion that did it &#8212; and the two participants who are <em>already inside the trial</em> light up before the amendment ships, not months after. That last list is the one a clinical reader feels in their stomach.
+        Five of ten synthetic fixtures flip, each carrying the criterion that did it. Two fabricated already-enrolled examples illustrate a review queue; rulekit does not determine continuation or consent.
       </div>
     </div>
     <div class="scrub-dots" aria-hidden="true"></div>
@@ -1397,9 +1397,9 @@
   <div class="wrap-wide">
     <h3 data-reveal>The diff is a command, and a view</h3>
     <div class="prose" data-reveal><p>From the CLI, over the fixtures, verbatim:</p></div>
-    <div class="evidence" data-reveal>$ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.0.yaml \
+    <div class="evidence" data-reveal>$ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.1.yaml \
     rules/trials/demo-hf-001/ruleset.yaml --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients
-rulesetVersion 1.0.0 &#8594; 1.2.0
+rulesetVersion 1.0.1 &#8594; 1.2.0
 + added renal-safety
 ~ changed anticoag-washout
 ~ changed nyha-class-iv
@@ -1431,8 +1431,8 @@ rulesetVersion 1.0.0 &#8594; 1.2.0
               <span class="b-ui-pill" style="font-size: 12px; height: 24px;">Protocol v2.0</span>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9.5 4.5L13 8l-3.5 3.5" stroke="#6B655C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <span class="b-ui-pill" style="font-size: 12px; height: 24px; color: var(--ink); border-color: var(--rule);">Protocol v3.0 (Amendment 2)</span>
-              <span style="font-size: 11.5px; color: var(--ink2);">sponsor-issued 14-Jul-2026 &#183; IRB-approved 28-Jul-2026 &#183; site-effective 04-Aug-2026</span>
-              <span class="mono" style="margin-left: auto; font-size: 11px; color: var(--ink3);">ruleset v1.0.0 &#8594; v1.2.0</span>
+              <span style="font-size: 11.5px; color: var(--ink2);">illustrative lifecycle metadata &#183; not verified approval</span>
+              <span class="mono" style="margin-left: auto; font-size: 11px; color: var(--ink3);">ruleset v1.0.1 &#8594; v1.2.0</span>
             </div>
             <div class="mono" style="font-size: 12px; line-height: 22px; padding: 10px 12px; background: var(--paper-alt); border-radius: 2px;">
               <div><b>+ added</b>&#160;&#160;exclusion <b>renal-safety</b> [E3] <span style="color: var(--ink2);">&#8212; &#8220;eGFR below 45 at screening&#8221;</span></div>
@@ -1450,17 +1450,17 @@ rulesetVersion 1.0.0 &#8594; 1.2.0
               <div class="b-arow"><span class="b-aid">SYN-088</span><span class="b-ameta">M &#183; 47y</span><span class="b-awhy">warfarin 21d ago &#8212; inside widened 30d window</span></div>
             </div>
             <div style="border-left: 2px solid var(--ink); padding-left: 14px;">
-              <div style="font-size: 12.5px; font-weight: 600;">Already enrolled &#8212; requires PI / IRB review</div>
+              <div style="font-size: 12.5px; font-weight: 600;">Synthetic already-enrolled examples &#8212; no clinical decision</div>
               <div class="mono" style="font-size: 12px; line-height: 21px; margin-top: 4px;">
                 <div>002-0041 <span style="color: var(--ink2);">randomized 02-Jun-2026 &#183; eGFR = 39 &#8212; now meets E3</span></div>
                 <div>003-0017 <span style="color: var(--ink2);">randomized 21-May-2026 &#183; eGFR = 44 &#8212; now meets E3</span></div>
               </div>
-              <div style="font-size: 11.5px; color: var(--ink2); margin-top: 4px;">continuation / re-consent decision per protocol &#167;5.4 &#183; 2 participants</div>
+              <div style="font-size: 11.5px; color: var(--ink2); margin-top: 4px;">illustrates an escalation queue only &#183; qualified review remains external</div>
             </div>
           </div>
         </div>
       </div>
-      <figcaption class="fig-cap">The Amendment view: structural diff on top, behavioural diff underneath, and &#8212; the part nobody ships &#8212; amendment impact on already-randomized participants, surfaced for PI/IRB review rather than discovered later.</figcaption>
+      <figcaption class="fig-cap">The Amendment view: structural diff on top, behavioural diff underneath, plus two fabricated already-randomized examples illustrating an external review queue. This is a demo interaction, not evidence about competitor features or a clinical workflow.</figcaption>
     </figure>
   </div>
 </section>
@@ -1556,7 +1556,7 @@ rulesetVersion 1.0.0 &#8594; 1.2.0
           <span class="b-btn b-btn-act">Confirm</span>
           <span class="b-btn">Edit value</span>
           <span class="b-btn">Reject</span>
-          <span style="margin-left: auto; font-size: 11.5px; color: var(--ink2);">confirm writes reviewedBy + timestamp to facts/SYN-042.yaml and re-evaluates live</span>
+          <span style="margin-left: auto; font-size: 11.5px; color: var(--ink2);">confirm stores a generic reviewer label + timestamp in local browser state and re-evaluates live</span>
         </div>
       </div>
 
@@ -1568,7 +1568,7 @@ rulesetVersion 1.0.0 &#8594; 1.2.0
       <div class="b-caption-slot">
         <div data-step="3+" style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--hairline); font-size: 12.5px; color: var(--ink2);">
           <span><b style="color: var(--ink);">Proposed facts never reach the engine.</b> Verdicts use confirmed and pipeline facts only.</span>
-          <span class="mono" style="margin-left: auto;">audit trail = git history of corpus/facts/</span>
+          <span class="mono" style="margin-left: auto;">demo browser state is not an authenticated, durable audit trail</span>
         </div>
       </div>
     </div>
@@ -1616,7 +1616,7 @@ rulesetVersion 1.0.0 &#8594; 1.2.0
       <figcaption class="fig-cap">G11: the model never sorts patients and never emits a verdict. A <span class="mono">proposed</span> fact is invisible to the engine until a person confirms it.</figcaption>
     </figure>
     <div class="prose" data-reveal>
-      <p>That is not just an engineering preference: it is close to a checklist implementation of the FDA's Non-Device CDS Criterion 4 &#8212; the clinician can independently review the basis for the recommendation &#8212; and of the assistive-not-autonomous posture in the FDA's January 2025 draft guidance on AI in regulatory decision-making.</p>
+      <p>That separation makes the demonstration inspectable. It does not establish an FDA device classification, satisfy FDA guidance, demonstrate regulatory compliance, or replace clinical validation and an authenticated audit trail.</p>
     </div>
   </div>
 </section>
@@ -1747,12 +1747,12 @@ rulesetVersion 1.0.0 &#8594; 1.2.0
 
     <div class="coda-grid" data-reveal-children data-stagger="110">
       <div class="coda-cell">
-        <span class="cv"><span data-count-to="470">0</span></span>
-        <p class="cl2">passing tests across engine, CLI, schema, extraction and adversarial suites</p>
+        <span class="cv">CI</span>
+        <p class="cl2">automated regression suites across engine, CLI, schema, extraction and adversarial behavior</p>
       </div>
       <div class="coda-cell">
         <span class="cv">2</span>
-        <p class="cl2">trial packs: <span class="mono">commander-hf</span> — COMMANDER HF (NCT01877915), 12 criteria transcribed verbatim from the registry, 8 modelled, 4 honestly <span class="mono">unmodeled: true</span> — and <span class="mono">demo-hf-001</span>, the teaching pack with its contradiction seeded on purpose</p>
+        <p class="cl2">trial packs: <span class="mono">commander-hf</span> — COMMANDER HF (NCT01877915), 12 criteria transcribed verbatim from the registry, 8 modelled (2 only partially), 4 <span class="mono">unmodeled: true</span> — and <span class="mono">demo-hf-001</span>, whose [30,45) band is an ordinary exclusion boundary, not a contradiction</p>
       </div>
       <div class="coda-cell">
         <span class="cv"><span data-count-to="100">0</span></span>

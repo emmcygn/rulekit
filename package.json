@@ -1,6 +1,6 @@
 {
   "name": "rulekit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Clinical-trial eligibility criteria as versioned, tested, conflict-checked YAML rules \u2014 deterministic engine, feasibility workbench, and an LLM facts compiler where humans confirm and only the engine decides",
   "scripts": {
     "test": "vitest run",
@@ -18,6 +18,8 @@
     "facts": "tsx src/cli-facts/index.ts",
     "facts:check": "tsx src/cli-facts/index.ts check corpus/facts",
     "facts:eval": "tsx src/cli-facts/index.ts eval --min-precision 0.95 --min-recall 0.95",
+    "recordings:migrate": "tsx scripts/record-responses.ts --migrate",
+    "recordings:record": "tsx scripts/record-responses.ts",
     "extract:corpus": "tsx scripts/extract-corpus.ts",
     "eval": "npm run build && promptfoo eval -c evals/promptfooconfig.yaml"
   },

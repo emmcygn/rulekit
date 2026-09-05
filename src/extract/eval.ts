@@ -20,6 +20,7 @@ import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 import type { FactEntry, FactFileValue } from "./schema.js";
 import type { GroundingResult, Rejection, RejectionReason } from "./ground.js";
+import type { RecordedResponse } from "./recorded.js";
 
 export type ExpectedFact = { fact: string; value: FactFileValue; unit?: string };
 
@@ -41,10 +42,21 @@ export type ExpectedCase = {
   knownGap?: KnownGap;
   expected: ExpectedFact[];
 };
-export type ExpectedFile = { cases: ExpectedCase[] };
+export type DatasetMetadata = {
+  id: string;
+  synthetic: boolean;
+  caseCount: number;
+  limitations: string;
+};
+export type ExpectedFile = { metadata: DatasetMetadata; cases: ExpectedCase[] };
 
 /** One case's extraction output, as produced by extractFacts(). */
-export type ScoredCase = { doc: string; expected: ExpectedFact[]; result: GroundingResult };
+export type ScoredCase = {
+  doc: string;
+  expected: ExpectedFact[];
+  result: GroundingResult;
+  recording?: Pick<RecordedResponse, "capture">;
+};
 
 export type Judgement = {
   doc: string;
@@ -70,6 +82,7 @@ export type CalibrationBucket = {
 
 export type EvalReport = {
   cases: number;
+  dataset?: DatasetMetadata;
   counts: { tp: number; fp: number; fn: number; expected: number };
   precision: number;
   recall: number;
@@ -87,6 +100,20 @@ export type EvalReport = {
   };
   perFact: Record<string, { tp: number; fp: number; fn: number; precision: number; recall: number }>;
   calibration: { buckets: CalibrationBucket[]; ece: number };
+  operational: {
+    capturesWithMetrics: number;
+    latency: { samples: number; meanMs: number; p50Ms: number; p95Ms: number } | null;
+    usage: {
+      samples: number;
+      inputTokens: number;
+      outputTokens: number;
+      cacheCreationInputTokens: number;
+      cacheReadInputTokens: number;
+      thinkingTokens: number;
+    } | null;
+    /** Null unless a provider-supplied or versioned pricing calculation is recorded. */
+    estimatedCostUsd: number | null;
+  };
   judgements: Judgement[];
 };
 
@@ -96,6 +123,12 @@ const expectedFactSchema = z.strictObject({
   unit: z.string().optional(),
 });
 const expectedFileSchema = z.strictObject({
+  metadata: z.strictObject({
+    id: z.string().min(1),
+    synthetic: z.boolean(),
+    caseCount: z.number().int().positive(),
+    limitations: z.string().min(1),
+  }),
   cases: z.array(
     z.strictObject({
       doc: z.string(),
@@ -118,6 +151,11 @@ export function parseExpectedFacts(yamlText: string): ExpectedFile {
   if (!result.success) {
     const issues = result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`invalid expected-facts file: ${issues}`);
+  }
+  if (result.data.metadata.caseCount !== result.data.cases.length) {
+    throw new Error(
+      `invalid expected-facts file: metadata.caseCount is ${result.data.metadata.caseCount}, but ${result.data.cases.length} cases are present`,
+    );
   }
   return result.data as ExpectedFile;
 }
@@ -176,7 +214,15 @@ const ratio = (num: number, den: number): number => (den === 0 ? 0 : num / den);
  * model said: a fact the model got right and the gate blocked is still a miss
  * from the reviewer's seat. `fnCause` keeps the two apart.
  */
-export function scoreExtraction(cases: readonly ScoredCase[], opts: { buckets?: number } = {}): EvalReport {
+const percentile = (values: readonly number[], quantile: number): number => {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.max(0, Math.ceil(sorted.length * quantile) - 1)] ?? 0;
+};
+
+export function scoreExtraction(
+  cases: readonly ScoredCase[],
+  opts: { buckets?: number; dataset?: DatasetMetadata } = {},
+): EvalReport {
   const judgements: Judgement[] = [];
   const calibrationInput: { confidence: number; correct: boolean }[] = [];
   const byReason: Partial<Record<RejectionReason, number>> = {};
@@ -231,6 +277,32 @@ export function scoreExtraction(cases: readonly ScoredCase[], opts: { buckets?: 
   const fn = judgements.filter((j) => j.kind === "fn").length;
   const precision = ratio(tp, tp + fp);
   const recall = ratio(tp, tp + fn);
+  const metrics = cases.flatMap((c) => (c.recording?.capture.metrics ? [c.recording.capture.metrics] : []));
+  const latencies = metrics.map((m) => m.latencyMs);
+  const operational: EvalReport["operational"] = {
+    capturesWithMetrics: metrics.length,
+    latency:
+      latencies.length === 0
+        ? null
+        : {
+            samples: latencies.length,
+            meanMs: latencies.reduce((sum, n) => sum + n, 0) / latencies.length,
+            p50Ms: percentile(latencies, 0.5),
+            p95Ms: percentile(latencies, 0.95),
+          },
+    usage:
+      metrics.length === 0
+        ? null
+        : {
+            samples: metrics.length,
+            inputTokens: metrics.reduce((sum, m) => sum + m.usage.input_tokens, 0),
+            outputTokens: metrics.reduce((sum, m) => sum + m.usage.output_tokens, 0),
+            cacheCreationInputTokens: metrics.reduce((sum, m) => sum + (m.usage.cache_creation_input_tokens ?? 0), 0),
+            cacheReadInputTokens: metrics.reduce((sum, m) => sum + (m.usage.cache_read_input_tokens ?? 0), 0),
+            thinkingTokens: metrics.reduce((sum, m) => sum + (m.usage.output_tokens_details?.thinking_tokens ?? 0), 0),
+          },
+    estimatedCostUsd: null,
+  };
 
   const perFact: EvalReport["perFact"] = {};
   for (const j of judgements) {
@@ -244,6 +316,7 @@ export function scoreExtraction(cases: readonly ScoredCase[], opts: { buckets?: 
 
   return {
     cases: cases.length,
+    ...(opts.dataset === undefined ? {} : { dataset: opts.dataset }),
     counts: { tp, fp, fn, expected: cases.reduce((a, c) => a + c.expected.length, 0) },
     precision,
     recall,
@@ -251,6 +324,7 @@ export function scoreExtraction(cases: readonly ScoredCase[], opts: { buckets?: 
     grounding: { proposed, grounded, rejected, passRate: ratio(grounded, proposed), caught, overBlocked, byReason },
     perFact,
     calibration: bucketize(calibrationInput, opts.buckets ?? 5),
+    operational,
     judgements,
   };
 }
@@ -261,6 +335,11 @@ const pct = (n: number): string => `${(n * 100).toFixed(1)}%`;
 export function formatEvalReport(r: EvalReport): string {
   const lines: string[] = [];
   lines.push(`extraction eval — ${r.cases} notes, ${r.counts.expected} expected facts`);
+  if (r.dataset) {
+    lines.push(`dataset ${r.dataset.id} — ${r.dataset.caseCount} ${r.dataset.synthetic ? "synthetic" : "non-synthetic"} notes`);
+    lines.push(`  limitation: ${r.dataset.limitations}`);
+    lines.push("  these point metrics are regression-fixture results, not statistical confidence estimates");
+  }
   lines.push("");
   lines.push(`  precision ${pct(r.precision)}   recall ${pct(r.recall)}   f1 ${pct(r.f1)}`);
   lines.push(`  tp ${r.counts.tp}   fp ${r.counts.fp}   fn ${r.counts.fn}`);
@@ -285,6 +364,21 @@ export function formatEvalReport(r: EvalReport): string {
   }
   lines.push(`  expected calibration error: ${r.calibration.ece.toFixed(3)}`);
   lines.push("  (self-estimates are not calibrated probabilities — this table orders the review queue, nothing else)");
+  lines.push("");
+  lines.push("capture resources");
+  if (!r.operational.latency || !r.operational.usage) {
+    lines.push("  unavailable — recordings were migrated from the legacy envelope without fabricating capture metrics");
+  } else {
+    const latency = r.operational.latency;
+    const usage = r.operational.usage;
+    lines.push(
+      `  latency ${latency.samples} capture(s): mean ${latency.meanMs.toFixed(0)}ms, p50 ${latency.p50Ms.toFixed(0)}ms, p95 ${latency.p95Ms.toFixed(0)}ms`,
+    );
+    lines.push(
+      `  tokens: input ${usage.inputTokens}, output ${usage.outputTokens}, cache-create ${usage.cacheCreationInputTokens}, cache-read ${usage.cacheReadInputTokens}, thinking ${usage.thinkingTokens}`,
+    );
+    lines.push("  estimated cost unavailable — recordings contain usage, but no versioned provider price schedule");
+  }
 
   const misses = r.judgements.filter((j) => j.kind !== "tp");
   if (misses.length > 0) {

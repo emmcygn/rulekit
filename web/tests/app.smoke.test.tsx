@@ -9,6 +9,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { parse } from "yaml";
 
 afterEach(cleanup);
 
@@ -37,13 +38,24 @@ vi.mock("../src/editor/RuleEditor.js", () => ({
   ),
 }));
 
+vi.mock("../src/util/io.js", () => ({ downloadText: vi.fn() }));
+
 import { App } from "../src/App.js";
 import { DEMO_RULESET_CURRENT } from "../src/data/index.js";
+import { downloadText } from "../src/util/io.js";
+import { realEngine } from "../src/engine/real.js";
 
 const tab = (name: string) => screen.getByRole("tab", { name: new RegExp(`^${name}`) });
 const editor = () => screen.getByRole("textbox") as HTMLTextAreaElement;
 
 describe("workbench shell", () => {
+  it("does not duplicate the synchronous check that seeds useCheck", () => {
+    const check = vi.spyOn(realEngine, "check");
+    render(<App />);
+    expect(check).toHaveBeenCalledTimes(1);
+    check.mockRestore();
+  });
+
   it("opens on the funnel with the demo cohort counted", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "Screening funnel" })).toBeDefined();
@@ -52,6 +64,7 @@ describe("workbench shell", () => {
     expect(within(totals).getByText(/^7 screen fail$/)).toBeDefined();
     expect(within(totals).getByText(/^3 not evaluable$/)).toBeDefined();
     expect(within(totals).getByText(/^0 potentially eligible$/)).toBeDefined();
+    expect(screen.getByText(/sole modeled reason pending chart review/)).toBeDefined();
   });
 
   it("has one h1 and a main landmark", () => {
@@ -71,7 +84,7 @@ describe("workbench shell", () => {
     expect(screen.getByText(/egfr = 41, required < 45, exclusion fired/)).toBeDefined();
   });
 
-  it("renders the thresholds tab with a live re-count and a number input", () => {
+  it("renders the thresholds tab while cohort work completes off render", async () => {
     render(<App />);
     fireEvent.click(tab("Thresholds"));
     expect(screen.getByRole("heading", { name: "Threshold impact" })).toBeDefined();
@@ -79,7 +92,8 @@ describe("workbench shell", () => {
     expect(screen.getByLabelText(/threshold value/)).toBeDefined();
     // Every knob is listed, +0 included, so the criterion you came for is there.
     const list = screen.getByTestId("yield-list");
-    expect(within(list).getByText(/egfr-min/)).toBeDefined();
+    expect(within(list).getByText(/calculating yields/)).toBeDefined();
+    expect(await within(list).findByText(/egfr-min/)).toBeDefined();
     expect(screen.getByRole("button", { name: "Copy summary" })).toBeDefined();
   });
 
@@ -206,9 +220,28 @@ describe("workbench shell", () => {
     fireEvent.click(tab("Review"));
     fireEvent.click(screen.getByRole("button", { name: "edit egfr for SYN-019" }));
     fireEvent.change(screen.getByLabelText("corrected value for egfr"), { target: { value: "70" } });
+    fireEvent.change(screen.getByLabelText("correction reason for egfr"), {
+      target: { value: "Transcription corrected" },
+    });
+    fireEvent.change(screen.getByLabelText("correction source for egfr"), {
+      target: { value: "Lab report checked" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(screen.queryByTestId("edit-error")).toBeNull();
     expect(screen.getByTestId("as-of").textContent).toContain("as of 1 of 5 facts reviewed");
+
+    fireEvent.change(screen.getByLabelText("Reviewer identity"), { target: { value: "Ada Reviewer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Download review manifest (YAML)" }));
+    const [, yaml] = vi.mocked(downloadText).mock.calls.at(-1)!;
+    const manifest = parse(yaml) as {
+      authoritative: boolean;
+      patients: Array<{ decisions: Array<{ fact: string; after: { value: unknown; source: unknown } }> }>;
+    };
+    const egfr = manifest.patients[0]!.decisions.find((decision) => decision.fact === "egfr")!;
+    expect(egfr.after.value).toBe(70);
+    expect(typeof egfr.after.value).toBe("number");
+    expect(egfr.after.source).toEqual({ type: "reviewer-attestation", detail: "Lab report checked" });
+    expect(manifest.authoritative).toBe(false);
   });
 
   it("moves the bands when a fact is confirmed (G10), same numbers on every tab", () => {
@@ -246,6 +279,12 @@ describe("workbench shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "edit nyha_class for SYN-019" }));
     fireEvent.change(screen.getByLabelText("corrected value for nyha_class"), {
       target: { value: "IV" },
+    });
+    fireEvent.change(screen.getByLabelText("correction reason for nyha_class"), {
+      target: { value: "Functional class corrected" },
+    });
+    fireEvent.change(screen.getByLabelText("correction source for nyha_class"), {
+      target: { value: "Cardiology note checked" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -295,11 +334,11 @@ describe("workbench shell", () => {
     expect(screen.getByTestId("queue-count").textContent).toBe("0 pending");
   });
 
-  it("copies a previewed threshold back into the editor's YAML", () => {
+  it("copies a previewed threshold back into the editor's YAML", async () => {
     render(<App />);
     fireEvent.click(tab("Thresholds"));
     // Top of the yield list: renal-safety 45 -> 40, the biggest single return.
-    fireEvent.click(screen.getByRole("button", { name: /renal-safety\s+45 → 40/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /renal-safety\s+45 → 40/ }));
     fireEvent.click(screen.getByRole("button", { name: "Copy threshold back to YAML" }));
     expect(editor().value).toContain("op: lt, value: 40");
   });

@@ -32,7 +32,7 @@ describe("structuralDiff", () => {
 
   it("reports a changed criterion with the scalar that moved", () => {
     const changed = changes.find((c) => c.kind === "changed" && c.id === "anticoag-washout");
-    expect(changed?.summary).toBe("windowDays 14 → 30");
+    expect(changed?.summary).toBe("windowDays 14 → 30, verbatim changed");
   });
 
   it("leaves untouched criteria out of the diff", () => {
@@ -55,6 +55,44 @@ describe("structuralDiff", () => {
     const changed = structuralDiff(prior, rewritten).find((c) => c.id === "lvef-max");
     expect(changed?.kind).toBe("changed");
     expect(changed?.summary).toBe("condition rewritten");
+  });
+
+  it("uses core rename semantics and surfaces verbatim/ref-only changes", () => {
+    const original = prior.criteria.find((criterion) => criterion.id === "lvef-max")!;
+    const renamed = {
+      ...prior,
+      criteria: prior.criteria.map((criterion) =>
+        criterion.id === original.id
+          ? {
+              ...criterion,
+              id: "e2-lvef-max",
+            }
+          : criterion,
+      ),
+    };
+    expect(structuralDiff(prior, renamed)).toContainEqual(
+      expect.objectContaining({
+        kind: "renamed",
+        id: "e2-lvef-max",
+        fromId: "lvef-max",
+      }),
+    );
+
+    const relabelled = {
+      ...prior,
+      criteria: prior.criteria.map((criterion) =>
+        criterion.id === original.id
+          ? { ...criterion, ref: "E2", verbatim: `${criterion.verbatim} (clarified)` }
+          : criterion,
+      ),
+    };
+    expect(structuralDiff(prior, relabelled)).toContainEqual(
+      expect.objectContaining({
+        kind: "changed",
+        id: "lvef-max",
+        summary: expect.stringMatching(/ref I2 → E2.*verbatim changed/),
+      }),
+    );
   });
 });
 

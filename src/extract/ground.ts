@@ -30,6 +30,7 @@ export type RejectionReason =
   | "doc-not-found"
   | "wrong-patient"
   | "quote-not-found"
+  | "contradictory-negation"
   | "type-mismatch"
   | "unit-mismatch"
   | "missing-unit"
@@ -116,6 +117,40 @@ export function quoteAppearsVerbatim(quote: string, document: string): boolean {
   const q = normalizeNewlines(quote);
   if (q.trim().length === 0) return false; // the empty quote matches everything
   return normalizeNewlines(document).includes(q);
+}
+
+const NEGATION = /\b(?:no|not|never|without|denies?|denied|negative\s+for|absence\s+of|free\s+of)\b/i;
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Catch the narrow, high-confidence contradiction where the cited span itself
+ * negates the value being asserted (for example, `No evidence of NYHA class
+ * IV` proposed as `IV`). This is intentionally not a general NLP claim: it
+ * only examines a short clause immediately before the literal value/fact term.
+ * Passing this check still produces a `proposed` fact and never bypasses review.
+ */
+export function quoteObviouslyNegatesValue(fact: string, value: FactFileValue, quote: string): boolean {
+  if (Array.isArray(value) || value === false) return false;
+
+  const targets =
+    value === true
+      ? fact.split("_").filter((part) => part.length >= 4 && part !== "true")
+      : [String(value)];
+  const normalized = normalizeNewlines(quote).toLowerCase();
+  const positions: number[] = [];
+  for (const target of targets) {
+    const pattern = new RegExp(`\\b${escapeRegExp(target.toLowerCase())}\\b`, "g");
+    for (const match of normalized.matchAll(pattern)) positions.push(match.index ?? -1);
+  }
+  if (positions.length === 0) return false;
+
+  // If the quote also makes an unnegated assertion of the value, it is not an
+  // obvious contradiction. Ambiguous mixed clauses stay behind the human gate.
+  return positions.every((position) => {
+    const prefix = normalized.slice(Math.max(0, position - 100), position);
+    const clause = prefix.split(/[.;,!?:\n]|\b(?:but|however|instead|rather)\b/).at(-1) ?? prefix;
+    return NEGATION.test(clause);
+  });
 }
 
 // Plain decimal only. Rejects ranges ("40-45"), comparators (">60"), hedges
@@ -277,7 +312,15 @@ export function groundProposedFacts(
       const unitFailure = checkUnit(pf.fact, pf.unit, decl);
       if (unitFailure) failures.push(unitFailure);
       const coerced = coerceValue(pf.value, pf.fact, decl);
-      if (coerced.ok) value = coerced.value;
+      if (coerced.ok) {
+        value = coerced.value;
+        if (quoteObviouslyNegatesValue(pf.fact, coerced.value, pf.quote)) {
+          failures.push({
+            reason: "contradictory-negation",
+            detail: `${pf.fact}: cited quote appears to negate the proposed value ${JSON.stringify(coerced.value)}`,
+          });
+        }
+      }
       else failures.push({ reason: coerced.reason, detail: coerced.detail });
     }
 
@@ -357,7 +400,30 @@ export function verifyFactEntry(entry: FactEntry, ctx: GroundingContext, patient
     const unitFailure = checkUnit(entry.fact, entry.unit, decl);
     if (unitFailure) failures.push(unitFailure);
     const coerced = coerceValue(entry.value, entry.fact, decl);
-    if (!coerced.ok) failures.push({ reason: coerced.reason, detail: coerced.detail });
+    if (!coerced.ok) {
+      failures.push({ reason: coerced.reason, detail: coerced.detail });
+    } else {
+      // Re-verification is a contract for persisted facts, not an ingest step.
+      // Reject coercible strings here because confirmedFactsToPatient compiles
+      // the persisted representation exactly as written.
+      if (decl.type === "number" && typeof entry.value !== "number") {
+        failures.push({
+          reason: "type-mismatch",
+          detail: `${entry.fact}: persisted numeric facts must be YAML numbers, not strings`,
+        });
+      } else if (decl.type === "boolean" && typeof entry.value !== "boolean") {
+        failures.push({
+          reason: "type-mismatch",
+          detail: `${entry.fact}: persisted boolean facts must be YAML booleans, not strings`,
+        });
+      }
+      if (entry.source !== undefined && quoteObviouslyNegatesValue(entry.fact, coerced.value, entry.source.quote)) {
+        failures.push({
+          reason: "contradictory-negation",
+          detail: `${entry.fact}: cited quote appears to negate the persisted value ${JSON.stringify(coerced.value)}`,
+        });
+      }
+    }
   }
 
   if (failures.length === 0) return [];

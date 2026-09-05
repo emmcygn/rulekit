@@ -26,7 +26,7 @@ behaviour, not tested, not checked for contradiction, and when they change
 nobody can say which already-enrolled participants are affected without a manual
 chart review.
 
-rulekit treats them the way you would treat any other production logic:
+rulekit demonstrates treating them like reviewable logic:
 
 ```yaml
 - id: renal-safety
@@ -55,37 +55,39 @@ text, and the tempting move is to let a language model read the chart and answer
 verdict.** It emits typed facts, each carrying a verbatim quote from the source
 document and a confidence score. A `proposed` fact is invisible to the engine
 until a person confirms it. Eligibility stays a deterministic function of
-confirmed facts and versioned rules, and every verdict traces to a rule version
-plus a fact plus the sentence that fact came from.
+compiled facts and versioned rules. Evaluation traces name the criterion and
+observed fact; narrative quotes remain in the upstream facts file and are not
+embedded in the evaluator's patient-facts input or trace.
 
-That is not just an engineering preference. It is close to a checklist
-implementation of the FDA's **Non-Device CDS** Criterion 4 — that the clinician
-can independently review the basis for the recommendation — and of the
-**assistive, not autonomous** posture in FDA's January 2025 draft guidance on
-AI in regulatory decision-making. The vocabulary that guidance uses (context of
-use, credibility assessment, human-in-the-loop) maps onto concrete parts of this
-repo: the grounding gate, the review pane, and the eval suite wired into CI.
+That separation makes the demo inspectable; it does not establish an FDA device
+classification, satisfy any FDA guidance, or demonstrate regulatory compliance.
+Trial feasibility and recruitment operations have their own institutional,
+privacy, validation and audit requirements. This repository has no regulatory
+assessment, clinical validation, authenticated approval workflow or durable
+audit trail.
 
 ## Why anyone should care: the amendment
 
-A substantial protocol amendment carries a **median direct cost of $141K in
+A substantial protocol amendment carried a **median direct cost of $141K in
 Phase II and $535K in Phase III**, and roughly **45% of substantial amendments
 are judged avoidable** (Tufts CSDD, *Impact of Protocol Amendments on Clinical
-Trial Performance and Cost*). Eligibility criteria are a recurring cause: two
-requirements no patient can satisfy together, a criterion nobody realised
-excluded a third of the screening pool, a change whose effect on already-randomised
-participants surfaces only after it ships.
+Trial Performance and Cost*). Those study-wide figures do not show that logic
+contradictions caused the amendments or that rulekit would have avoided them.
+The demonstrated value is narrower: a closed rule language can prove some
+unsatisfiable rule sets, measure criterion attrition on the supplied synthetic
+corpus, and show which synthetic patient verdicts change between two versions.
 
-Two of those are catchable before the protocol leaves the building. For
-example, two inclusions requiring `age >= 65` and `age <= 40` produce:
+A sound example of the proof class is two inclusions requiring `age >= 65` and
+`age <= 40`, which produce:
 
 ```text
 ✕ ERROR contradictory-inclusions [older-adult, young-adult] no patient can pass:
   the inclusion constraints on age intersect to the empty set
 ```
 
-The third one — who is already enrolled and now fails — is what the behavioural
-diff and the workbench's Amendment view are for.
+The behavioural diff and the workbench's Amendment view compare versions over a
+provided corpus. They do not predict amendment cost, prove avoidability, or
+replace prospective protocol and clinical review.
 
 ## Where this sits
 
@@ -195,10 +197,10 @@ data is a criterion nobody has actually tested, and it gets flagged.
 ### 3. Diff two protocol versions behaviourally
 
 ```console
-$ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.0.yaml \
+$ npm run rules -- diff rules/trials/demo-hf-001/ruleset@1.0.1.yaml \
     rules/trials/demo-hf-001/ruleset.yaml \
     --fact-model packs/trials/fact-model.yaml --corpus fixtures/patients
-rulesetVersion 1.0.0 → 1.2.0
+rulesetVersion 1.0.1 → 1.2.0
 + added renal-safety
 ~ changed anticoag-washout
 ~ changed nyha-class-iv
@@ -224,16 +226,19 @@ $ npm run rules -- screen rules/trials/commander-hf/ruleset.yaml \
 screened 100: 0 eligible · 97 ineligible · 3 undetermined
 ```
 
-Zero eligible is the correct answer, not a bug: COMMANDER HF's real criteria
-against 100 synthetic primary-care patients should find approximately nobody.
-`screen.json` carries the full per-criterion trace for every patient.
+This is the observed output for one synthetic corpus, not a validated accuracy
+result or evidence about the real COMMANDER HF population. `screen.json` carries
+the full per-criterion trace plus engine version/commit (when available), exact
+ruleset/fact-model/input hashes, per-patient input hashes, evaluation time and
+`asOf`, and machine-visible partial/unmodeled warnings.
 
-Add `--report screen.md` for the feasibility write-up: band counts, a
+Add `--report screen.md --as-of YYYY-MM-DD` for the demonstration report: band counts, a
 per-criterion attrition table (sequential / fails-alone / sole-reason), and the
-sole-disqualifier section — the list of patients a site would gain by relaxing
-one criterion, which is the argument you attach to a sponsor's feasibility
-questionnaire. Every number derives from the engine's per-patient verdict, so
-the report and the workbench can never tell different stories.
+strict sole-disqualifier section. An unknown or unmodeled criterion prevents a
+sole-reason claim, so the section may be empty. The report is not a feasibility
+questionnaire and does not say how many real patients a site would gain. Its
+front matter records provenance and partial status; it does not verify approval
+or regulatory compliance.
 
 ### 5. Check the patient-side facts
 
@@ -281,6 +286,11 @@ the corpus is a build-time glob, so you cannot point it at your own patients
 without rebuilding. The 100-patient corpus and the real trial pack are reachable
 from the CLI only.
 
+Review clicks persist only in this browser's local storage under a generic demo
+identity. They are not authenticated, append-only, shared, signed, or a durable
+audit trail; exported review data must not be treated as an authoritative
+clinical or regulatory record.
+
 ---
 
 ## What's in the box
@@ -289,8 +299,8 @@ from the CLI only.
 
 | Pack | What it is | Why it exists |
 |---|---|---|
-| `commander-hf` | COMMANDER HF ([NCT01877915](https://clinicaltrials.gov/study/NCT01877915)), 12 criteria transcribed verbatim from the registry's `eligibilityCriteria` text. **8 modelled, 4 `unmodeled: true`.** | The honest one. Real criteria, and a third of them do not fit a closed condition language — which is the point, not the failure. |
-| `demo-hf-001` | A synthetic protocol in two versions (`ruleset@1.0.0.yaml`, `ruleset.yaml`), with a contradiction seeded between `egfr-min` and `renal-safety`. | The teaching one. It is what the workbench loads and what makes `check` and `diff` show something in ten seconds. |
+| `commander-hf` | COMMANDER HF ([NCT01877915](https://clinicaltrials.gov/study/NCT01877915)), 12 criteria transcribed verbatim from the registry's `eligibilityCriteria` text. **8 executable (2 explicitly partial), 4 `unmodeled: true`.** | The honest one. `ruleset.modeling.json` makes the partial translations machine-visible; a third of the criteria do not fit the closed language at all. |
+| `demo-hf-001` | A synthetic protocol with an immutable original `1.0.0`, a valid `1.0.1` corrigendum, and current `1.2.0`. The eGFR `[30,45)` band passes the minimum inclusion and fires the safety exclusion; it is deliberately **not** called a contradiction. | The teaching one. It makes evaluation boundaries and behavioural diff visible. `check` returns clean within its documented proof scope. |
 
 Plus `packs/trials/fact-model.yaml` (the vocabulary both are written against),
 `fixtures/patients/` (10 hand-written edge cases), `corpus/` (100 flattened
@@ -341,7 +351,7 @@ Whole pipeline is reproducible byte-for-byte from a seed. Nothing calls
   the language is sized right, and nothing stronger. Method, both directions of
   bias, and a worked example of the classifier disagreeing with a human author:
   [docs/chia-coverage.md](docs/chia-coverage.md).
-- **Extraction: 98.3% precision / 98.3% recall** over 10 notes and 58 expected
+- **Recorded fixture score: 98.3% precision / 98.3% recall** over 10 notes and 58 expected
   facts — against ground truth that exists *by construction*, because we wrote
   the notes. That is a measurement of a fixed recorded run on authored text, not
   a claim about clinical NLP performance on real records.
@@ -370,6 +380,14 @@ Whole pipeline is reproducible byte-for-byte from a seed. Nothing calls
   decision, and `undetermined` is a first-class outcome for exactly this reason.
 - **No unit conversion**, and **no temporal algebra** beyond `anyWithin` (one
   code-set match inside a day window).
+- **Absent and empty are different.** An absent fact key is `unknown`; a present
+  empty code list asserts a complete, known-empty search. There is no
+  completeness marker, open-world reasoning, terminology expansion, hierarchy
+  traversal, or multi-observation numeric time series. See
+  [FORMAT.md](FORMAT.md#5-the-fact-model-contract).
+- **No EHR integration.** Inputs are pre-normalized YAML. The included FHIR
+  scripts cover a small synthetic Synthea pipeline, not Epic/Cerner connectivity
+  or an operational clinical data feed.
 - **The workbench is demo-scale**: 10 synthetic fixtures, no upload, one bundled
   trial.
 - The published page loads Google Fonts over the network. Nothing else leaves
@@ -387,7 +405,7 @@ required.
 
    ```bash
    cp -r rules/trials/demo-hf-001 rules/trials/my-trial
-   cd rules/trials/my-trial && rm ruleset@1.0.0.yaml
+   cd rules/trials/my-trial && rm ruleset@*.yaml CORRIGENDUM.md
    ```
 
 2. **Author the criteria.** One criterion per criterion in the protocol. Paste
@@ -466,12 +484,12 @@ docs/                  data pipeline, Chia coverage
 
 ## Local-first, and who that is for
 
-No cloud dependency, no accounts, no telemetry, no data leaving the machine. The
-teams that stand to gain are the ones who cannot buy a commercial feasibility
-platform: academic trial units, investigator-initiated studies, site
-coordinators negotiating a criterion with a sponsor. A criterion-level attrition
-table you generated yourself is a negotiating position. Larger organisations
-reading or absorbing this is a fine and expected outcome.
+No cloud dependency, no accounts and no telemetry are built into the local CLI.
+The present audience is format authors and researchers studying rule-governance
+concepts on synthetic data. Academic trial units and site coordinators are
+potential design partners, not validated users: the project lacks EHR ingestion,
+real-chart validation, access controls and a durable audit trail, so its output
+is not an operational feasibility or negotiating artifact.
 
 ## License & attribution
 

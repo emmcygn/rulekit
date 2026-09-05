@@ -48,13 +48,7 @@ describe("enum criteria are first-class engine logic", () => {
       "    when: { fact: nyha_class, op: eq, value: IV }",
       "    when: { fact: nyha_class, op: in, codes: { system: nyha, values: [IV] } }",
     );
-    // The raw evaluator is defensive; checked execution additionally rejects
-    // this operator/type pairing against the fact model.
-    const r = realEngine
-      .evalPatient(asCodes, { patient: "X", facts: { nyha_class: "IV" } })
-      .results.find((x) => x.id === "nyha-class-iv")!;
-    expect(r.verdict).toBe("unknown");
-    expect(r.trace?.detail).toContain("not a code list");
+    expect(() => realEngine.evalPatient(asCodes, { patient: "X", facts: { nyha_class: "IV" } })).toThrow(/type-mismatch/);
   });
 });
 
@@ -95,7 +89,14 @@ describe("resolveChartReview", () => {
   });
 
   it("fires the exclusion when the confirmed value is IV", () => {
-    const state = decide(initial, cardId("SYN-019", "nyha_class"), "confirmed", "IV");
+    const state = decide(
+      initial,
+      cardId("SYN-019", "nyha_class"),
+      "confirmed",
+      "IV",
+      "2026-08-21T10:00:00Z",
+      { reason: "Class corrected", source: "Cardiology note reviewed" },
+    );
     const r = e4Of(state, "SYN-019");
     expect(r.verdict).toBe("fail");
     expect(r.chartReview?.detail).toContain("exclusion fired");
@@ -138,6 +139,8 @@ describe("the operator's flow: confirm yesterday's NYHA and the numbers move", (
       cardId("SYN-019", "nyha_class"),
       "confirmed",
       "IV",
+      "2026-08-21T10:00:00Z",
+      { reason: "Class corrected", source: "Cardiology note reviewed" },
     );
     expect(bandOf(state, "SYN-019")).toBe("screen-fail");
     expect(bandsFor(state)).toEqual({

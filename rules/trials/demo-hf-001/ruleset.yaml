@@ -1,6 +1,6 @@
 ruleset: demo-hf-001-eligibility
 protocol: "DEMO-HF-001 v3.0 (Amendment 2)"
-status: irb-approved
+status: synthetic-demo
 effective: 2026-08-04
 rulesetVersion: 1.2.0
 factModel: patient-facts/v1

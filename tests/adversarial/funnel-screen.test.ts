@@ -18,7 +18,7 @@
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { evalPatient } from "../../src/core/evaluator.js";
+import { evalPatientUnsafe as evalPatient } from "../../src/core/evaluator.js";
 import { parsePatient, parseRuleSet, type Overall, type RuleSet } from "../../src/core/schema.js";
 import { computeAttrition } from "../../src/core/attrition.js";
 import { computeFunnel, cohortCounts } from "../../web/src/funnel/compute.js";

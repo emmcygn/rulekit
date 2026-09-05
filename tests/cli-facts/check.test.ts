@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -102,5 +104,29 @@ describe("facts eval", () => {
 
   it("passes a floor the recorded run clears", () => {
     expect(facts("eval", "--min-precision", "0.95", "--min-recall", "0.95").code).toBe(0);
+  });
+
+  it.each([
+    ["prompt", (recording: Record<string, unknown>) => {
+      recording.promptSha256 = "0".repeat(64);
+    }],
+    ["model", (recording: Record<string, unknown>) => {
+      recording.model = "different-model";
+    }],
+  ])("fails before scoring when a recording's %s binding is stale", (_field, mutate) => {
+    const scratch = mkdtempSync(join(tmpdir(), "rulekit-recordings-"));
+    try {
+      cpSync(join(repoRoot, "evals", "recorded"), scratch, { recursive: true });
+      const path = join(scratch, "echo-2026-03-12.json");
+      const recording = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+      mutate(recording);
+      writeFileSync(path, `${JSON.stringify(recording, null, 2)}\n`);
+
+      const result = facts("eval", "--recorded", scratch);
+      expect(result.code).toBe(1);
+      expect(result.stderr).toMatch(/stale or mismatched recording/);
+    } finally {
+      rmSync(scratch, { recursive: true });
+    }
   });
 });

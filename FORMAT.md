@@ -28,14 +28,15 @@ is listed under [What the schema cannot check](#what-the-schema-cannot-check).
 
 ## 1. `ruleset.yaml` — a trial's criteria
 
-One rule set per trial version, one file. Provenance on every criterion.
+One rule set per trial version, one file. Every criterion retains its verbatim
+source wording; rule-set source metadata is optional in format v1.
 
 ```yaml
 ruleset: demo-hf-001-eligibility
 protocol: "DEMO-HF-001 v3.0 (Amendment 2)"
-status: irb-approved
+status: synthetic-demo
 effective: 2026-08-04
-rulesetVersion: 1.1.0
+rulesetVersion: 1.2.0
 factModel: patient-facts/v1
 source:
   registry: clinicaltrials.gov
@@ -78,6 +79,14 @@ patients they would have caught come out `eligible` instead of "needs chart
 review". Carrying them makes the honest answer — `undetermined` — the visible
 one. Roughly a third of real criteria land here; see
 [docs/chia-coverage.md](docs/chia-coverage.md).
+
+Format v1 has no in-band fidelity flag for an executable condition that models
+only part of its `verbatim` requirement. The reference CLI optionally reads a
+version-bound `ruleset.modeling.json` beside the selected ruleset. Its
+`partialCriteria` entries are validated against criterion ids, hashed, and
+emitted as warnings in screen JSON and report front matter. This sidecar makes a
+known limitation machine-visible; it does not make the partial translation safe
+or change its verdict to `unknown`.
 
 ---
 
@@ -130,9 +139,12 @@ Notes that carry weight:
 
 ## 3. Evaluation semantics
 
-The evaluator is a pure function of (rule set, one patient's facts). Same
-inputs, same verdict, forever — that property is the point of the whole design,
-and it is what lets an LLM propose facts (§6) without ever touching a decision.
+The evaluator is deterministic for a pinned engine version and the exact same
+rule-set, fact-model, patient-input and `asOf` bytes. Re-running that identified
+bundle produces the same verdict. A later engine version may deliberately fix
+semantics, so outputs must record the engine version/commit and content hashes;
+determinism is not a promise that every future implementation returns an old
+answer.
 
 ### Three values, not two
 
@@ -286,6 +298,15 @@ facts:
 sentence in the format: a fact model with 40 facts and a patient record with 12
 of them is the normal case, not an error, and the evaluator's job is to say so.
 
+**A present empty code list (`fact: []`) is different.** It asserts that the
+source was completely searched for the code systems declared by the fact model
+and that no entries exist. Consequently `in` and `anyWithin` are false,
+`notIn` is true, and `exists` is true because a usable (empty) list is present.
+Never write `[]` merely because a query returned no rows, a feed was unavailable,
+or only some encounters were searched: omit the key in those open-world cases so
+the result stays `unknown`. Format v1 has no completeness marker and cannot
+distinguish a complete empty search from an incomplete one after `[]` is written.
+
 Checked execution validates each declared patient value's runtime type, enum
 membership, and code system against the loaded model. Bare numeric values carry
 no per-row unit: their documented contract is that ingestion has already
@@ -369,14 +390,36 @@ is now too old for the protocol's window.
 | MINOR | a criterion is added, a threshold moves, a value set changes — anything that can flip a patient |
 | PATCH | `verbatim`, `ref`, `source`, comments. No patient can flip. |
 
-The test for MINOR-vs-PATCH is empirical, not editorial: run `rules diff` over a
-corpus. If any patient flips, it was not a patch.
+`rules diff` rejects version regressions, content changes under an unchanged
+version, breaking changes below MAJOR, and executable criterion changes below
+MINOR. Its corpus diff is supporting evidence, not the bump classifier: absence
+of a flip in a finite corpus does not prove a change is non-behavioural.
 
 **Amendments live side by side.** Keep the prior version as
 `ruleset@<version>.yaml` next to the current `ruleset.yaml`, in the same
 directory. The diff is then a file pair, reviewable in a pull request, and the
 amendment view has two real versions to compare. Git history is the audit log;
 the file pair is the artifact.
+
+Published version bytes are immutable. If a published artifact contains an
+error, retain it, publish a patch-version corrigendum, and record why consumers
+must migrate. `demo-hf-001/ruleset@1.0.0.yaml` and its `1.0.1` corrigendum show
+this pattern.
+
+### Approval and effective-date selection
+
+`status` and `effective` are descriptive metadata only. The reference engine
+does not authenticate an approver, verify an IRB/sponsor decision, choose the
+version effective on a date, or stop a draft/future/superseded file from being
+evaluated. A production system would need an external, access-controlled
+approval record binding approver, source-protocol snapshot, ruleset hash,
+fact-model hash, effective interval and withdrawal/supersession history.
+
+For this demonstration, select the intended file explicitly, confirm its hash
+and lifecycle metadata outside rulekit, and pass `rules screen --as-of
+YYYY-MM-DD`. The report records that selection but does not certify it. Never
+interpret `status: irb-approved` or a generated report as evidence of approval,
+regulatory compliance, or fitness for screening.
 
 **The format itself** is versioned by this document and `schema/`. Additive
 changes (a new optional field) keep format version 1. Anything that invalidates
@@ -400,13 +443,38 @@ Stated here rather than discovered later.
   labeled `analysis-incomplete` rather than silently presented as clean.
 - **No unit conversion.** `unit` declares, it does not convert.
 - **No temporal algebra beyond `anyWithin`.** No event ordering, no intervals,
-  no "at randomisation".
+  no numeric observation history, and no "at randomisation". Numeric facts are
+  single preselected scalars. A code entry's `daysAgo` is interpreted relative
+  to the evaluation `asOf`; rulekit does not derive it from an EHR timestamp.
+- **Closed, exact-match terminology only.** Code membership compares the
+  declared system and literal code. There is no hierarchy traversal, synonym
+  mapping, value-set expansion, or terminology-server validation.
+- **No open-world completeness model.** An absent key stays unknown; `[]` is a
+  strong assertion of a complete, known-empty code list. The format cannot
+  express "these are the records returned so far" or "this list is complete for
+  one source but not another."
 - **No effective-dating inside a rule set.** A criterion that changed mid-study
   is two rule-set versions, not one file with dates.
 - **Unmodeled criteria need chart review.** A rule set is not a screening
   decision. For any real protocol, expect a meaningful fraction of criteria to
   be `unmodeled: true`, which is why `undetermined` is a first-class outcome
   rather than a rounding error.
+- **No EHR integration.** The evaluator accepts pre-normalized YAML-shaped
+  facts. The repository's FHIR scripts flatten a small synthetic Synthea subset;
+  they are not an Epic/Cerner connector, clinical data pipeline, terminology
+  service, or deployable integration.
+
+### Safe present-day use
+
+Format v1 and the reference implementation are suitable only as an unvalidated
+demonstration with trusted local inputs and synthetic or properly de-identified
+data. Safe examples are authoring and diffing toy rule sets, exercising static
+proofs within their documented scope, and studying deterministic traces. Do not
+use current outputs for clinical, feasibility, recruitment, enrollment,
+exclusion, treatment, regulatory, or research-screening decisions. A qualified
+human must review the full source protocol; a clean check, `eligible` verdict,
+hash-stamped report, or confirmation click does not establish clinical
+correctness.
 
 ## What the schema cannot check
 

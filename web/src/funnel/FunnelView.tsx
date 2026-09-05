@@ -45,6 +45,7 @@ export function FunnelView({
   const selectedEval = evaluations.find((e) => e.patient === selected) ?? null;
   const selectedBand = selectedEval ? displayBandOf(selectedEval) : null;
   const eligible = funnel.bands["potentially-eligible"];
+  const unmodeledCount = funnel.rows.filter((row) => row.unmodeled).length;
 
   return (
     <div className="view">
@@ -80,11 +81,11 @@ export function FunnelView({
           </span>
           <span
             className="right-align"
-            title="Patients this criterion alone keeps out: it fails and every other criterion the engine can decide passes. Patients with an unknown elsewhere are not counted — relaxing this criterion would leave them undetermined, not eligible."
+            title="Strict sole reason / sole modeled reason pending chart review. The modeled count ignores only unresolved unmodeled criteria and never means eligible."
           >
-            sole
+            sole reason
             <br />
-            reason
+            strict / modeled
           </span>
         </div>
 
@@ -100,6 +101,11 @@ export function FunnelView({
             onSelect={onSelect}
           />
         ))}
+        <div className="ink3" style={{ fontSize: 11, paddingTop: 6, textAlign: "right" }}>
+          sole modeled reason pending chart review ignores only unresolved unmodeled criteria ·{" "}
+          {unmodeledCount} unmodeled criterion{unmodeledCount === 1 ? "" : "s"} still require chart review
+          · these patients are not eligible
+        </div>
       </div>
 
       <div className="totals" data-testid="funnel-totals">
@@ -234,8 +240,12 @@ function Row({
           <>
             <div className="num">{row.removedSequential === 0 ? "0" : `−${row.removedSequential}`}</div>
             <div className="num dim">{row.failsAlone}</div>
-            <div className="num dim" style={{ fontWeight: row.soleReason > 0 ? 600 : 400 }}>
-              {row.soleReason}
+            <div
+              className="num dim"
+              style={{ fontWeight: row.soleReason > 0 || row.soleModeledReason > 0 ? 600 : 400 }}
+              title={`${row.soleReason} strict sole reason; ${row.soleModeledReason} sole modeled reason pending chart review — not eligible`}
+            >
+              {row.soleReason} / {row.soleModeledReason}
             </div>
           </>
         )}

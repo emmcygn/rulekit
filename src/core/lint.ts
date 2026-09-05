@@ -5,6 +5,27 @@ export type Finding = { level: "error" | "warning" | "info"; code: string; messa
 const NUMERIC_OPS = new Set(["eq", "neq", "gt", "gte", "lt", "lte"]);
 const CODE_OPS = new Set(["in", "notIn", "anyWithin"]);
 
+// Spelling-only aliases accepted by the ingestion normalizer. These never
+// change the numeric value (unlike analyte-scoped conversions such as
+// fraction -> percent), so accepting either spelling here is safe.
+const UNIT_ALIASES: Record<string, string> = {
+  "mg/dl": "mg/dL", "MG/DL": "mg/dL", "Mg/Dl": "mg/dL", "milligrams per deciliter": "mg/dL", "mg / dL": "mg/dL",
+  "mmol/l": "mmol/L", "MMOL/L": "mmol/L", "millimoles per liter": "mmol/L",
+  "g/dl": "g/dL", "G/DL": "g/dL", "grams per deciliter": "g/dL",
+  "pg/ml": "pg/mL", "PG/ML": "pg/mL", "picograms per milliliter": "pg/mL",
+  "u/l": "U/L", "U/l": "U/L", "IU/L": "U/L",
+  mmHg: "mm[Hg]", "mm Hg": "mm[Hg]", MMHG: "mm[Hg]",
+  percent: "%", pct: "%", "%%": "%",
+  KG: "kg", kgs: "kg", kilograms: "kg", CM: "cm", centimeters: "cm",
+  "kg/m^2": "kg/m2", "kg/m²": "kg/m2",
+  "mL/min/1.73m2": "mL/min/{1.73_m2}", "mL/min/1.73 m2": "mL/min/{1.73_m2}", "ml/min/1.73m^2": "mL/min/{1.73_m2}", "mL/min per 1.73 m2": "mL/min/{1.73_m2}",
+  "x10E3/uL": "10*3/uL", "10^3/uL": "10*3/uL", "K/uL": "10*3/uL", "thousand per microliter": "10*3/uL",
+};
+
+function unitsEquivalent(a: string, b: string): boolean {
+  return a === b || UNIT_ALIASES[a] === b || UNIT_ALIASES[b] === a || (UNIT_ALIASES[a] !== undefined && UNIT_ALIASES[a] === UNIT_ALIASES[b]);
+}
+
 const isNumericLeaf = (l: Leaf): l is NumericLeaf => NUMERIC_OPS.has(l.op) && "value" in l && typeof l.value === "number";
 
 export function collectLeaves(cond: Condition): Leaf[] {
@@ -54,10 +75,12 @@ export function lintRuleSet(rs: RuleSet, fm: FactModel): Finding[] {
       // declared unit is the only place a threshold's scale is written down.
       // No conversion exists, so evaluating an ambiguous or mismatched literal
       // would be a silently wrong calculation. Both findings are hard errors.
-      if (isNumericLeaf(leaf) && decl.type === "number" && decl.unit !== undefined) {
-        if (leaf.unit === undefined) {
+      if (isNumericLeaf(leaf) && decl.type === "number") {
+        if (decl.unit === undefined && leaf.unit !== undefined) {
+          out.push({ level: "error", code: "unit-unexpected", criteria: [c.id], message: `"${c.id}" gives unit ${leaf.unit} for unitless fact "${leaf.fact}". Remove the unit or declare one in the fact model.` });
+        } else if (decl.unit !== undefined && leaf.unit === undefined) {
           out.push({ level: "error", code: "unit-undeclared", criteria: [c.id], message: `"${c.id}" compares "${leaf.fact}" against a bare ${leaf.value}; the fact model declares it in ${decl.unit}. Add "unit: ${decl.unit}" before evaluation.` });
-        } else if (leaf.unit !== decl.unit) {
+        } else if (decl.unit !== undefined && leaf.unit !== undefined && leaf.unit !== decl.unit) {
           out.push({ level: "error", code: "unit-mismatch", criteria: [c.id], message: `"${c.id}" compares in ${leaf.unit}; the fact model declares "${leaf.fact}" in ${decl.unit}. No conversion exists, so evaluation is blocked.` });
         }
       }
@@ -93,6 +116,22 @@ export function lintPatient(p: PatientFacts, fm: FactModel): Finding[] {
         if (typeof entry.system !== "string" || !decl.systems.includes(entry.system)) issue(`code ${String(entry.code)} uses undeclared system "${String(entry.system)}" (declared: ${decl.systems.join(", ")})`);
         if (entry.daysAgo !== undefined && (typeof entry.daysAgo !== "number" || !Number.isInteger(entry.daysAgo) || entry.daysAgo < 0)) issue("expected daysAgo to be a non-negative integer");
       }
+    }
+  }
+  for (const [name, decl] of Object.entries(fm.facts)) {
+    if (decl.type !== "number") continue;
+    const companionName = `${name}_unit`;
+    const observed = p.facts[companionName];
+    if (observed === undefined) continue;
+    const issue = (message: string): void => {
+      out.push({ level: "error", code: "invalid-patient-unit", criteria: [], message: `${p.patient}.${companionName}: ${message}` });
+    };
+    if (typeof observed !== "string" || observed.length === 0) {
+      issue("expected a non-empty unit string");
+    } else if (decl.unit === undefined) {
+      issue(`fact "${name}" is declared unitless, so a companion unit is unexpected`);
+    } else if (!unitsEquivalent(observed, decl.unit)) {
+      issue(`unit "${observed}" does not match declared unit "${decl.unit}" or a spelling-only alias; conversion is required before evaluation`);
     }
   }
   return out;

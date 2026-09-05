@@ -9,7 +9,9 @@ const formatValue = (value: string | number | boolean, unit?: string): string =>
   `${typeof value === "boolean" ? String(value) : value}${unit ? ` ${unit}` : ""}`;
 
 const ACCEPT_NON_EMPTY = (_item: ProposedFactCard, draft: string): EditCheck =>
-  draft.trim().length > 0 ? { ok: true } : { ok: false, message: "Enter a value." };
+  draft.trim().length > 0
+    ? { ok: true, value: draft.trim() }
+    : { ok: false, message: "Enter a value." };
 
 function QuoteInContext({
   quote,
@@ -74,6 +76,8 @@ function Card({
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState(String(item.value));
+  const [reason, setReason] = useState("");
+  const [correctionSource, setCorrectionSource] = useState("");
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
 
@@ -89,8 +93,16 @@ function Card({
       setError(check.message);
       return;
     }
+    if (reason.trim().length === 0 || correctionSource.trim().length === 0) {
+      setError("Enter both a correction reason and the source you checked.");
+      return;
+    }
     setError(null);
-    onEdit(item, draft);
+    onEdit(item, {
+      value: check.value,
+      reason: reason.trim(),
+      source: correctionSource.trim(),
+    });
     setEditing(false);
   };
 
@@ -189,6 +201,30 @@ function Card({
                 }}
               />
             )}
+          </label>
+          <label>
+            <span className="rk-card__doc">correction reason</span>
+            <input
+              className="rk-edit__input"
+              aria-label={`correction reason for ${item.fact}`}
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+                setError(null);
+              }}
+            />
+          </label>
+          <label>
+            <span className="rk-card__doc">source checked for corrected value</span>
+            <input
+              className="rk-edit__input"
+              aria-label={`correction source for ${item.fact}`}
+              value={correctionSource}
+              onChange={(e) => {
+                setCorrectionSource(e.target.value);
+                setError(null);
+              }}
+            />
           </label>
           <button type="button" className="rk-btn rk-btn--primary" onClick={save}>
             Save

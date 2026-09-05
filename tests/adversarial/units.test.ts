@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { checkRuleSet } from "../../src/core/conflicts.js";
-import { evalPatient, evalPatientChecked } from "../../src/core/evaluator.js";
+import { evalPatientUnsafe as evalPatient, evalPatientChecked } from "../../src/core/evaluator.js";
 import type { FactModel, RuleSet } from "../../src/core/schema.js";
 
 // The classic pair. Glucose in mmol/L is ~1/18 of the mg/dL number.

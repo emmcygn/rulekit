@@ -83,10 +83,13 @@ const BAD_RULESETS: [name: string, yaml: string][] = [
   ["criterion with both when and unmodeled", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, unmodeled: true, when: {fact: age, op: gte, value: 18}}]`],
   ["unmodeled: false", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, unmodeled: false}]`],
   ["uppercase criterion id", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: Age, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
+  ["reserved overall criterion id", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: overall, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
   ["unknown kind", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: maybe, verbatim: v, when: {fact: age, op: gte, value: 18}}]`],
   ["unknown leaf op", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: between, value: 18}}]`],
   ["stray key on a leaf", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18, windowDays: 30}}]`],
   ["numeric op with a string value", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: "18"}}]`],
+  ["empty numeric unit", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: age, op: gte, value: 18, unit: ""}}]`],
+  ["empty scalar string", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: sex, op: eq, value: ""}}]`],
   ["empty all", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {all: []}}]`],
   ["empty code value set", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: exclusion, verbatim: v, when: {fact: medications, op: in, codes: {system: rxnorm, values: []}}}]`],
   ["exists leaf carrying a value", `ruleset: x\nrulesetVersion: 1.0.0\nfactModel: patient-facts/v1\ncriteria: [{id: a, kind: inclusion, verbatim: v, when: {fact: lvef, op: exists, value: 3}}]`],
@@ -97,6 +100,32 @@ describe("schema and reference parser agree on malformed rule sets", () => {
   it.each(BAD_RULESETS)("rejects: %s", (_name, yaml) => {
     expect(validate(RULESET, parseYaml(yaml)).length).toBeGreaterThan(0);
     expect(() => parseRuleSet(yaml)).toThrow();
+  });
+});
+
+describe("schema and reference parser enforce matching collection limits", () => {
+  it("rejects oversized criteria and inline code sets", () => {
+    const criteria = Array.from({ length: 1001 }, (_, i) => ({ id: `c${i}`, kind: "inclusion", verbatim: "v", when: { fact: "age", op: "gte", value: 18 } }));
+    const tooManyCriteria = { ruleset: "x", rulesetVersion: "1.0.0", factModel: "patient-facts/v1", criteria };
+    expect(validate(RULESET, tooManyCriteria).length).toBeGreaterThan(0);
+    expect(() => parseRuleSet(JSON.stringify(tooManyCriteria))).toThrow();
+
+    const values = Array.from({ length: 1001 }, (_, i) => `v${i}`);
+    const tooManyCodes = { ruleset: "x", rulesetVersion: "1.0.0", factModel: "patient-facts/v1", criteria: [{ id: "a", kind: "inclusion", verbatim: "v", when: { fact: "conditions", op: "in", codes: { system: "snomed", values } } }] };
+    expect(validate(RULESET, tooManyCodes).length).toBeGreaterThan(0);
+    expect(() => parseRuleSet(JSON.stringify(tooManyCodes))).toThrow();
+  });
+
+  it("rejects oversized patient fact bags and code lists", () => {
+    const facts = Object.fromEntries(Array.from({ length: 10001 }, (_, i) => [`f${i}`, i]));
+    const tooManyFacts = { patient: "P", facts };
+    expect(validate(PATIENT_FACTS, tooManyFacts).length).toBeGreaterThan(0);
+    expect(() => parsePatient(JSON.stringify(tooManyFacts))).toThrow();
+
+    const conditions = Array.from({ length: 10001 }, (_, i) => ({ code: String(i), system: "snomed" }));
+    const tooManyCodes = { patient: "P", facts: { conditions } };
+    expect(validate(PATIENT_FACTS, tooManyCodes).length).toBeGreaterThan(0);
+    expect(() => parsePatient(JSON.stringify(tooManyCodes))).toThrow();
   });
 });
 

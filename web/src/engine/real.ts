@@ -31,6 +31,7 @@ import {
   type PatientFacts,
   type RuleSet,
 } from "../../../src/core/index.js";
+import defaultFactModelYaml from "../../../packs/trials/fact-model.yaml?raw";
 import type { Engine, Evaluation, Finding, Flip } from "./api.js";
 
 /* ---------------------------------------------------------------- parsing */
@@ -52,6 +53,22 @@ function memoize<T>(parse: (text: string) => T): (text: string) => T {
 /** Parse + memoize; the threshold slider re-evaluates the cohort per tick. */
 export const ruleSetOf = memoize<RuleSet>(parseRuleSet);
 const factModelOf = memoize<FactModel>(parseFactModel);
+const defaultFactModel = factModelOf(defaultFactModelYaml);
+const modelByRuleSet = new Map<string, FactModel>();
+const blockedRuleSets = new Set<string>();
+
+function rememberModel(rulesetYaml: string, fm: FactModel): void {
+  if (modelByRuleSet.size >= CACHE_LIMIT && !modelByRuleSet.has(rulesetYaml)) modelByRuleSet.clear();
+  modelByRuleSet.set(rulesetYaml, fm);
+  blockedRuleSets.delete(rulesetYaml);
+}
+
+function modelFor(...rulesetYamls: string[]): FactModel {
+  if (rulesetYamls.some((yaml) => blockedRuleSets.has(yaml))) {
+    throw new Error("evaluation blocked: fact-model-schema: the associated fact model is invalid");
+  }
+  return rulesetYamls.map((yaml) => modelByRuleSet.get(yaml)).find((fm) => fm !== undefined) ?? defaultFactModel;
+}
 
 const message = (err: unknown): string => (err instanceof Error ? err.message : String(err));
 
@@ -71,7 +88,7 @@ const bySeverity = (findings: Finding[]): Finding[] =>
 
 export const realEngine: Engine = {
   evalPatient(rulesetYaml: string, patient: PatientFacts): Evaluation {
-    return coreEvalPatient(ruleSetOf(rulesetYaml), patient);
+    return coreEvalPatient(ruleSetOf(rulesetYaml), modelFor(rulesetYaml), patient);
   },
 
   check(rulesetYaml: string, factModelYaml: string): Finding[] {
@@ -83,16 +100,20 @@ export const realEngine: Engine = {
       return [{ level: "error", code: "schema", message: message(err), criteria: [] }];
     }
     try {
-      return bySeverity(checkRuleSet(rs, factModelOf(factModelYaml)));
+      const fm = factModelOf(factModelYaml);
+      rememberModel(rulesetYaml, fm);
+      return bySeverity(checkRuleSet(rs, fm));
     } catch (err) {
-      // The fact model is a separate document in a separate editor tab. Losing
-      // it costs the lint pass, not the conflict pass — so still report the
-      // conflicts, and say why the fact-model findings are missing.
+      // Still report rule-only conflicts, but fail closed: without a parsed
+      // fact model neither rule/model checks nor patient evaluation are safe.
+      modelByRuleSet.delete(rulesetYaml);
+      if (blockedRuleSets.size >= CACHE_LIMIT && !blockedRuleSets.has(rulesetYaml)) blockedRuleSets.clear();
+      blockedRuleSets.add(rulesetYaml);
       return bySeverity([
         {
-          level: "warning",
+          level: "error",
           code: "fact-model-schema",
-          message: `${message(err)} — fact-model checks (unknown facts, types, units, code systems) are not running.`,
+          message: `${message(err)} — evaluation is blocked because fact-model checks cannot run.`,
           criteria: [],
         },
         ...detectConflicts(rs),
@@ -101,6 +122,17 @@ export const realEngine: Engine = {
   },
 
   behavioralDiff(aYaml: string, bYaml: string, corpus: PatientFacts[]): Flip[] {
-    return coreBehavioralDiff(ruleSetOf(aYaml), ruleSetOf(bYaml), corpus);
+    const a = ruleSetOf(aYaml);
+    const b = ruleSetOf(bYaml);
+    const fm = modelFor(bYaml, aYaml);
+    // Validate the contracts even for an empty corpus, then validate each
+    // patient before delegating to the deterministic diff primitive.
+    coreEvalPatient(a, fm, { patient: "__contract_validation__", facts: {} });
+    coreEvalPatient(b, fm, { patient: "__contract_validation__", facts: {} });
+    for (const patient of corpus) {
+      coreEvalPatient(a, fm, patient);
+      coreEvalPatient(b, fm, patient);
+    }
+    return coreBehavioralDiff(a, b, corpus);
   },
 };

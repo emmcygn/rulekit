@@ -19,7 +19,7 @@ import { parseFactsFile, type FactEntry, type FactsFile } from "../extract/schem
 import { verifyFactEntry, type GroundingContext } from "../extract/ground.js";
 import { loadNotesDir, toDocuments } from "../extract/notes.js";
 import { loadRecorded } from "../extract/recorded.js";
-import { parseResponse } from "../extract/pipeline.js";
+import { buildRequest, parseResponse } from "../extract/pipeline.js";
 import { FACT_MODEL_PATH } from "../extract/fact-model.js";
 import { groundProposedFacts } from "../extract/ground.js";
 import { parseExpectedFacts, scoreExtraction, formatEvalReport, type ScoredCase } from "../extract/eval.js";
@@ -158,13 +158,19 @@ program
   .action((opts: { notes: string; factModel: string; expected: string; recorded?: string; minPrecision?: number; minRecall?: number }) => {
     let report;
     try {
-      const ctx = loadContext(resolve(opts.notes), resolve(opts.factModel));
+      const notes = loadNotesDir(resolve(opts.notes));
+      const factModelYaml = readFileSync(resolve(opts.factModel), "utf8");
+      const ctx: GroundingContext = { factModel: parseFactModel(factModelYaml), documents: toDocuments(notes) };
       const expected = parseExpectedFacts(readFileSync(resolve(opts.expected), "utf8"));
       const cases: ScoredCase[] = expected.cases.map((c) => {
-        const recorded = opts.recorded ? loadRecorded(c.doc, resolve(opts.recorded)) : loadRecorded(c.doc);
+        const note = notes[c.doc];
+        if (!note) throw new Error(`expected case '${c.doc}' has no source note`);
+        const request = buildRequest(note, factModelYaml);
+        const recorded = opts.recorded ? loadRecorded(c.doc, resolve(opts.recorded), request) : loadRecorded(c.doc, undefined, request);
         return {
           doc: c.doc,
           expected: c.expected,
+          recording: recorded,
           result: groundProposedFacts(parseResponse(recorded.parsed_output), {
             doc: c.doc,
             extractedBy: `llm/${recorded.model}`,
@@ -172,7 +178,7 @@ program
           }),
         };
       });
-      report = scoreExtraction(cases);
+      report = scoreExtraction(cases, { dataset: expected.metadata });
     } catch (err) {
       process.stderr.write(`facts eval: ${(err as Error).message}\n`);
       process.exitCode = 1;

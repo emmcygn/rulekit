@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
+import type Anthropic from "@anthropic-ai/sdk";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { scoreExtraction, parseExpectedFacts, formatEvalReport, type ScoredCase } from "../../src/extract/eval.js";
 import { groundProposedFacts, type GroundingContext, type GroundingResult } from "../../src/extract/ground.js";
 import { loadNotesDir, toDocuments, NOTES_DIR } from "../../src/extract/notes.js";
 import { loadRecorded, RECORDED_DIR } from "../../src/extract/recorded.js";
-import { parseResponse } from "../../src/extract/pipeline.js";
-import { loadFactModel } from "../../src/extract/fact-model.js";
+import { buildRequest, parseResponse } from "../../src/extract/pipeline.js";
+import { loadFactModel, readFactModelYaml } from "../../src/extract/fact-model.js";
 
 const FACT_MODEL = loadFactModel();
+const FACT_MODEL_YAML = readFactModelYaml();
 const NOTES = loadNotesDir(NOTES_DIR);
 const CTX: GroundingContext = { factModel: FACT_MODEL, documents: toDocuments(NOTES) };
 const EXPECTED = parseExpectedFacts(readFileSync(join(RECORDED_DIR, "..", "expected-facts.yaml"), "utf8"));
@@ -22,6 +24,11 @@ describe("parseExpectedFacts", () => {
 
   it("rejects an unknown key", () => {
     expect(() => parseExpectedFacts("cases:\n  - doc: x\n    expcted: []\n")).toThrow(/invalid expected-facts/);
+  });
+
+  it("makes the small synthetic dataset limitation machine-readable", () => {
+    expect(EXPECTED.metadata).toMatchObject({ id: "rulekit-synthetic-notes-v1", synthetic: true, caseCount: 10 });
+    expect(EXPECTED.metadata.limitations).toMatch(/not representative clinical validation.*statistical confidence/i);
   });
 });
 
@@ -182,17 +189,66 @@ describe("confidence calibration", () => {
   });
 });
 
+describe("capture resource metrics", () => {
+  it("aggregates latency and complete token/cache/thinking usage without inventing a price", () => {
+    const usage: Anthropic.Messages.Usage = {
+      input_tokens: 100,
+      output_tokens: 40,
+      cache_creation_input_tokens: 80,
+      cache_read_input_tokens: 20,
+      cache_creation: { ephemeral_5m_input_tokens: 80, ephemeral_1h_input_tokens: 0 },
+      output_tokens_details: { thinking_tokens: 15 },
+      server_tool_use: null,
+      service_tier: "batch",
+      inference_geo: null,
+    };
+    const report = scoreExtraction([
+      {
+        doc: "one",
+        expected: [],
+        result: empty,
+        recording: {
+          capture: { mode: "live", metrics: { responseModel: "claude-opus-5-20260901", latencyMs: 250, latencyKind: "batch-wall", usage } },
+        },
+      },
+      {
+        doc: "two",
+        expected: [],
+        result: empty,
+        recording: {
+          capture: { mode: "live", metrics: { responseModel: "claude-opus-5-20260901", latencyMs: 750, latencyKind: "batch-wall", usage } },
+        },
+      },
+    ]);
+
+    expect(report.operational.latency).toEqual({ samples: 2, meanMs: 500, p50Ms: 250, p95Ms: 750 });
+    expect(report.operational.usage).toEqual({
+      samples: 2,
+      inputTokens: 200,
+      outputTokens: 80,
+      cacheCreationInputTokens: 160,
+      cacheReadInputTokens: 40,
+      thinkingTokens: 30,
+    });
+    expect(report.operational.estimatedCostUsd).toBeNull();
+  });
+});
+
 describe("the committed corpus run", () => {
-  const cases: ScoredCase[] = EXPECTED.cases.map((c) => ({
-    doc: c.doc,
-    expected: c.expected,
-    result: groundProposedFacts(parseResponse(loadRecorded(c.doc).parsed_output), {
+  const cases: ScoredCase[] = EXPECTED.cases.map((c) => {
+    const recording = loadRecorded(c.doc, RECORDED_DIR, buildRequest(NOTES[c.doc]!, FACT_MODEL_YAML));
+    return {
       doc: c.doc,
-      extractedBy: "llm/claude-opus-5",
-      ctx: CTX,
-    }),
-  }));
-  const report = scoreExtraction(cases);
+      expected: c.expected,
+      recording,
+      result: groundProposedFacts(parseResponse(recording.parsed_output), {
+        doc: c.doc,
+        extractedBy: "llm/claude-opus-5",
+        ctx: CTX,
+      }),
+    };
+  });
+  const report = scoreExtraction(cases, { dataset: EXPECTED.metadata });
 
   it("scores the recorded responses over all 10 notes", () => {
     expect(report.cases).toBe(10);
@@ -243,5 +299,8 @@ describe("the committed corpus run", () => {
     expect(text).toContain("not calibrated probabilities");
     expect(text).toContain("FP clinic-2026-02-04 on_sglt2_inhibitor");
     expect(text).toContain("over-blocked");
+    expect(text).toContain("10 synthetic notes");
+    expect(text).toContain("not statistical confidence estimates");
+    expect(text).toContain("without fabricating capture metrics");
   });
 });

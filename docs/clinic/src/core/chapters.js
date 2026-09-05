@@ -48,7 +48,7 @@ export const CHAPTERS = [
   { id: '02-engine',   num: '02', title: 'The engine',            plain: ['engine', 'engine-notes'], vh:  90 },
   { id: '03-compile',  num: '02', title: 'The sentence compiles', plain: ['p-compile'],                           vh:  90 },
   { id: '04-three',    num: '02', title: 'Three answers',         plain: ['p-three'],                             vh: 108 },
-  { id: '05-clash',    num: '02', title: 'The contradiction',     plain: ['clash-intro', 'p-clash'],              vh: 108 },
+  { id: '05-clash',    num: '02', title: 'The exclusion boundary', plain: ['clash-intro', 'p-clash'],             vh: 108 },
   { id: '06-chasm',    num: '02', title: 'One calculation',       plain: ['chasm', 'onecalc'],                    vh:  80 },
   { id: '07-ai',       num: '03', title: 'The AI part',           plain: ['sw-ai', 'ai-intro', 'p-ai'],           vh: 120 },
   { id: '08-intake',   num: '04', title: 'Ten charts',            plain: ['intake'],                              vh:  62 },

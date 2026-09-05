@@ -7,6 +7,14 @@
 #
 # `expected` is what the note STATES. Anything else the model emits is a false
 # positive, including facts that are clinically plausible.
+metadata:
+  id: rulekit-synthetic-notes-v1
+  synthetic: true
+  caseCount: 10
+  limitations: >-
+    Ten author-created synthetic notes and 58 expected facts are a deterministic
+    regression fixture only; they are not representative clinical validation and
+    do not support confidence intervals, statistical confidence, or subgroup claims.
 cases:
   - doc: echo-2026-03-12
     patient: SYN-042

@@ -20,13 +20,9 @@ describe("realEngine.evalPatient", () => {
     expect(r.trace?.detail).toContain("missing");
   });
 
-  it("treats a non-numeric lab value as not evaluable rather than guessing", () => {
+  it("fails closed on a non-numeric lab value", () => {
     const messy = { patient: "SYN-999", facts: { age: 69, lvef: 39, egfr: ">60" } };
-    const results = realEngine.evalPatient(DEMO_RULESET_CURRENT, messy).results;
-    const at = (id: string) => results.find((r) => r.id === id)!;
-    expect(at("egfr-min").verdict).toBe("unknown");
-    expect(at("renal-safety").verdict).toBe("unknown");
-    expect(at("renal-safety").trace?.detail).toContain("non-numeric");
+    expect(() => realEngine.evalPatient(DEMO_RULESET_CURRENT, messy)).toThrow(/invalid-patient-fact/);
   });
 
   it("fires an exclusion into a fail and traces the comparison", () => {
@@ -129,9 +125,13 @@ describe("realEngine.check", () => {
   });
 
   it("still runs the conflict pass when the fact model does not parse", () => {
-    const codes = realEngine.check(DEMO_RULESET_CURRENT, "name: 1\n").map((f) => f.code);
+    const malformed = realEngine.check(DEMO_RULESET_CURRENT, "name: 1\n");
+    const codes = malformed.map((f) => f.code);
     expect(codes).toContain("analysis-incomplete");
     expect(codes).toContain("fact-model-schema");
+    expect(malformed.find((f) => f.code === "fact-model-schema")?.level).toBe("error");
+    expect(() => realEngine.evalPatient(DEMO_RULESET_CURRENT, patient("SYN-042"))).toThrow(/fact-model-schema/);
+    realEngine.check(DEMO_RULESET_CURRENT, DEMO_FACT_MODEL);
   });
 
   it("flags a rule that references a fact the model does not declare", () => {

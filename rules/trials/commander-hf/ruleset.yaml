@@ -14,9 +14,10 @@
 # review that structured facts cannot supply.
 #
 # Two modelled criteria are *partial* transcriptions; each carries a comment
-# saying what the model does not capture. Nothing here is a claim of clinical
-# fidelity — this is a demonstration of rule-governance tooling, not medical
-# software, and not for clinical, feasibility, or research screening use.
+# saying what the model does not capture, and ruleset.modeling.json exposes
+# those limitations to CLI output. Nothing here is a claim of clinical fidelity
+# — this is a demonstration of rule-governance tooling, not medical software,
+# and not for clinical, feasibility, or research screening use.
 
 ruleset: commander-hf-eligibility
 rulesetVersion: 1.0.0

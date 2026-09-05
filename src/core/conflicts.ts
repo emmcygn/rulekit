@@ -31,6 +31,8 @@ type Analysis = {
   /** Per-fact values the criterion's `neq` leaves rule out. */
   neqs: Map<string, number[]>;
   codes: CodeConstraint[];
+  /** Exactly one `in` leaf and no surrounding or additional logic. */
+  simpleCodeIn?: CodeConstraint;
   fullyAnalyzed: boolean;
 };
 
@@ -65,6 +67,7 @@ function criterionIntervals(cond: Condition): Analysis {
     intervals,
     neqs,
     codes,
+    simpleCodeIn: chain.complete && leaves.length === 1 && codes.length === 1 && codes[0]!.op === "in" ? codes[0] : undefined,
     fullyAnalyzed: chain.complete && nonInterval === 0,
   };
 }
@@ -108,6 +111,22 @@ export function detectConflicts(rs: RuleSet): Finding[] {
     for (const negative of inclusionCodes.filter((x) => x.code.op === "notIn" && x.id !== positive.id && sameCodeDomain(x.code, positive.code))) {
       if (!subset(positive.code.values, negative.code.values)) continue;
       out.push({ level: "error", code: "contradictory-inclusions", criteria: [positive.id, negative.id], message: `no patient can pass: "${positive.id}" requires a ${positive.code.system} code from {${positive.code.values.join(",")}} while "${negative.id}" forbids that entire set — for all inputs, not just a test corpus` });
+    }
+  }
+
+  // The simple cross-kind code-set proof: every code that can satisfy the
+  // inclusion also fires the exclusion. Restrict this to a single `in` leaf
+  // on each side so `all`/`any`/`not` cannot make the implication unsound.
+  for (const inclusion of analyzed.filter((x) => x.kind === "inclusion" && x.simpleCodeIn !== undefined)) {
+    for (const exclusion of analyzed.filter((x) => x.kind === "exclusion" && x.simpleCodeIn !== undefined)) {
+      if (!sameCodeDomain(inclusion.simpleCodeIn!, exclusion.simpleCodeIn!) || !subset(inclusion.simpleCodeIn!.values, exclusion.simpleCodeIn!.values)) continue;
+      out.push({
+        level: "error",
+        code: "unsatisfiable-ruleset",
+        criteria: [inclusion.id, exclusion.id],
+        message: `no patient can pass: inclusion "${inclusion.id}" requires a ${inclusion.simpleCodeIn!.system} code from {${inclusion.simpleCodeIn!.values.join(",")}}, all of which fire exclusion "${exclusion.id}" — for all inputs, not just a test corpus`,
+        evidence: `${inclusion.simpleCodeIn!.fact}: inclusion set {${inclusion.simpleCodeIn!.values.join(",")}} is contained by exclusion set {${exclusion.simpleCodeIn!.values.join(",")}}`,
+      });
     }
   }
 
@@ -161,7 +180,8 @@ export function detectConflicts(rs: RuleSet): Finding[] {
 
   // An exclusion is contradictory only when it eliminates the entire domain
   // admitted by all inclusions. Partial overlap is ordinary exclusion logic.
-  for (const e of analyzed.filter((x) => x.kind === "exclusion" && x.fullyAnalyzed && x.intervals.size > 0)) {
+  const inclusionsAlreadyContradict = [...admitted.values()].some((value) => isEmpty(value.interval));
+  for (const e of analyzed.filter((x) => !inclusionsAlreadyContradict && x.kind === "exclusion" && x.fullyAnalyzed && x.intervals.size > 0)) {
     const eliminatesAll = [...e.intervals].every(([fact, exclIv]) => contains(exclIv, admitted.get(fact)?.interval ?? FULL));
     if (!eliminatesAll) continue;
     const sources = [...new Set([...e.intervals.keys()].flatMap((fact) => admitted.get(fact)?.sources.map((s) => s.id) ?? []))];

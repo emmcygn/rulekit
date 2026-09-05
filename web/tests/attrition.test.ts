@@ -120,6 +120,7 @@ describe("attritionFrom — the contract shape", () => {
   it("does not claim sole reason while a parked criterion remains unknown", () => {
     const f = attritionFrom([evaluation("A", "fpU"), evaluation("B", "fuU")]);
     expect(f.rows.map((r) => r.soleReason)).toEqual([0, 0, 0]);
+    expect(f.rows.map((r) => r.soleModeledReason)).toEqual([1, 0, 0]);
   });
 
   it("returns an empty report for an empty cohort", () => {

@@ -88,6 +88,37 @@ describe("F2 — exact criterion renames are explicit", () => {
     expect(back[0]).toMatchObject({ from: "ineligible", to: "eligible" });
     expect(back[0]!.responsible).toEqual(["renal-safety"]);
   });
+
+  it("does not call a wholesale replacement a rename just because its ref was reused", () => {
+    const replacement = rs("2.0.0", adult, {
+      id: "e3-comorbidity",
+      ref: "E3",
+      kind: "exclusion",
+      verbatim: "Age below 50",
+      when: { fact: "age", op: "lt", value: 50, unit: "years" },
+    });
+    expect(structuralDiff(v1, replacement)).toMatchObject({
+      added: ["e3-comorbidity"],
+      removed: ["renal-safety"],
+      renamed: [],
+    });
+  });
+
+  it("tracks an exact rename even when its protocol ref also changes", () => {
+    const movedRef = rs("2.0.0", adult, {
+      id: "e4-renal-safety",
+      ref: "E4",
+      kind: "exclusion",
+      verbatim: "eGFR < 30",
+      when: { fact: "egfr", op: "lt", value: 30 },
+    });
+    expect(structuralDiff(v1, movedRef)).toMatchObject({
+      added: [],
+      removed: [],
+      changed: ["e4-renal-safety"],
+      renamed: [{ from: "renal-safety", to: "e4-renal-safety" }],
+    });
+  });
 });
 
 describe("F3 — rule content can change with the version string standing still", () => {

@@ -1,18 +1,19 @@
-// Chapter 05 — "The contradiction".
+// Chapter 05 — "The exclusion boundary".
 //
 // Two clauses written pages apart, by different authors, drawn as two large
 // translucent walls standing on one kidney-score number line. Rule 1 covers
 // everything from 30 upward; rule 2 covers everything below 45. They slide
 // together, cross, and where they cross there is a slab of scores that one
-// clause admits and the other bars: [30, 45). No legal value exists in it.
+// clause admits and the other bars: [30, 45). Values in that band are legal
+// inputs and deterministically produce an ineligible verdict.
 //
 // THE SEAM IS THE ONE ACCENTED OBJECT IN THIS ROOM, AND IN THIS STRETCH OF THE
 // PIECE. #E2582A appears exactly twice here — on the slab standing in the
 // overlap, and on the interval that names it — and those two are the same
 // focal element said twice. Everything else is paper, ink, rule grey and the
-// one data blue of the candidate values. No status colour: nothing in this room
-// is red for bad or green for good, because the point is not that a patient
-// failed, it is that the statute cannot answer.
+// one data blue of the candidate values. No status colour: the adjacent copy
+// carries the important distinction that this is an exclusion firing, not a
+// contradiction proved by the checker.
 //
 // GEOMETRY IS PLACED WHERE THE CAMERA CAN SEE IT, WHICH IS NOT WHERE THE
 // STATION IS. cameraKeys '05-clash' flies the camera from 9u BEHIND this
@@ -69,10 +70,9 @@ const TH_OPEN = 0.44, TH_SHUT = 0.13;
 const GLASS_OP = 0.22;
 const SEAM_D = 0.20;
 
-// Candidate kidney scores, walked along the line. plain.html's own claim is
-// that the checker proves the clash "for every possible patient", so the room
-// shows a spread of values rather than one patient: the ones that land inside
-// [30, 45) lift off the line and stall inside the seam with no answer to go to.
+// Candidate kidney scores, walked along the line. The room shows a spread of
+// values so the [30, 45) exclusion boundary is visible; the adjacent copy
+// states that these values receive an ineligible answer.
 const CAND = 28;
 const CAND_LO = 3, CAND_HI = 77;
 
@@ -148,7 +148,7 @@ export default {
 
     // ── the seam ──────────────────────────────────────────────────────────
     // The single accented object. Its width is exactly V_HI - V_LO score
-    // points, so it is not a highlight drawn over the collision — it IS the
+    // points, so it is not a highlight drawn over the boundary — it IS the
     // interval, measured on the same line as everything else.
     const seamMat = cloneOwned(M.accent);
     seamMat.transparent = true;
