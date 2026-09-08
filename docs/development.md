@@ -128,7 +128,7 @@ docker build -t rulekit-demo .
 docker run --rm -p 8080:8080 rulekit-demo
 ```
 
-Open [localhost:8080](http://localhost:8080). These are local preview commands, not a publication step. The Docker build requires registry access. A hosted demo's URL, access, and external links should be checked separately before sharing.
+Open [localhost:8080](http://localhost:8080). The Docker build requires registry access.
 
 ## Dependency maintenance
 

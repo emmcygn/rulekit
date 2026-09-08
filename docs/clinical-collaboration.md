@@ -19,7 +19,7 @@ The most useful feedback is specific: “this needs a measurement date,” “th
 
 ## Five-minute demo route
 
-Use the [local setup](../README.md#run-it-locally), or ask for a walkthrough through the LinkedIn conversation. A public hosted demo URL is not assumed here.
+Use the [local setup](../README.md#run-it-locally), or [get in touch](#get-in-touch) for a guided walkthrough.
 
 | Step | What to inspect | Question to bring back |
 | --- | --- | --- |
@@ -48,8 +48,8 @@ The initial collaboration should stay with public protocol material and syntheti
 
 ## Get in touch
 
-**Reply to or message me through the LinkedIn post that brought you here.** A useful first message is: your role, the workflow you would like to discuss, and whether you would prefer a walkthrough or to review a public criterion.
+**[Open a collaboration issue](https://github.com/emmcygn/rulekit/issues/new?template=collaboration.yml)** with your role, the workflow you would like to discuss, and whether you would prefer a walkthrough or to review a public criterion. If you found RuleKit through LinkedIn, you can also reply to the post or message me there.
 
-You can also [open a collaboration issue](https://github.com/emmcygn/rulekit/issues/new?template=collaboration.yml). GitHub issues are public when the repository is public: do not include patient information, confidential protocols, or private contact details. No GitHub account is needed to start a LinkedIn conversation.
+GitHub issues are public: do not include patient information, confidential protocols, or private contact details. No GitHub account is needed to start a LinkedIn conversation.
 
 [Back to the repository](../README.md) · [Project direction and milestones](project-brief.md)

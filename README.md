@@ -111,7 +111,7 @@ The next milestone is a small workflow study with people who manage protocols an
 
 The project does not establish clinical effectiveness or commercial demand. The [project brief](docs/project-brief.md) separates implemented behavior from hypotheses and proposed milestones.
 
-**Interested?** Reply to or message me through the LinkedIn post that brought you here, or [open a collaboration issue](https://github.com/emmcygn/rulekit/issues/new?template=collaboration.yml). See the [collaboration brief](docs/clinical-collaboration.md) for what an initial conversation would cover.
+**Interested?** [Open a collaboration issue](https://github.com/emmcygn/rulekit/issues/new?template=collaboration.yml), or reply to the post or message me on LinkedIn if that is where you found RuleKit. See the [collaboration brief](docs/clinical-collaboration.md) for what an initial conversation would cover.
 
 ## Scope and limitations
 
