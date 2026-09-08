@@ -203,6 +203,8 @@ body[data-tier="high"] #panels .panel{
   #panels .gloss-note{font-size:.86em}
   #panels .panel > *{margin-top:0;margin-bottom:0}
   #panels .panel > * + *{margin-top:.55em}
+  /* Keep the collaboration link and source credits inside the closing dock. */
+  #panels #panel-10-close > * + *{margin-top:.4em}
 }
 /* A landscape window under 760px wide — 740x600, a half-screen browser — still
    takes the bottom dock, and 46svh of 600 is 276px, which chapters 01 and 07

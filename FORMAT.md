@@ -15,7 +15,8 @@ Machine-checkable half, in `schema/`:
 | [`patient-facts.schema.json`](schema/patient-facts.schema.json) | what the evaluator consumes about a patient | `fixtures/patients/*.yaml`, `corpus/patients/*.yaml` |
 | [`facts-file.schema.json`](schema/facts-file.schema.json) | facts with provenance and review state | `corpus/facts/*.yaml` |
 
-`tests/schema/format.test.ts` validates every shipped artifact against these,
+`tests/schema/format.test.ts` validates the shipped rule versions, fact model,
+patient fixtures, clean synthetic corpus, and provenance fact files against these,
 and asserts that the schema and the reference parser agree on ~35 malformed
 documents. Where they deliberately disagree, the divergence is a named test and
 is listed under [What the schema cannot check](#what-the-schema-cannot-check).
@@ -38,10 +39,6 @@ status: synthetic-demo
 effective: 2026-08-04
 rulesetVersion: 1.2.0
 factModel: patient-facts/v1
-source:
-  registry: clinicaltrials.gov
-  id: NCT01877915
-  url: https://clinicaltrials.gov/study/NCT01877915
 criteria:
   - id: age-min
     ref: I1
@@ -49,6 +46,10 @@ criteria:
     verbatim: "Age 18 years or older"
     when: { fact: age, op: gte, value: 18 }
 ```
+
+This example is synthetic and intentionally has no registry source. For a
+registered study, attach its actual `source.registry`, `source.id`, and
+`source.url`; see the [COMMANDER HF pack](rules/trials/commander-hf/ruleset.yaml).
 
 | Field | Required | Meaning |
 |---|---|---|

@@ -1,0 +1,28 @@
+name: Clinical workflow feedback or collaboration
+description: Suggest a review scenario, share workflow feedback, or explore contributing. No coding required.
+title: "[Collaboration] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the workflow in your own words. This issue is public: use fabricated examples only, with no patient information, confidential protocols or private contact details.
+        See the [clinical collaboration guide](https://github.com/emmcygn/rulekit/blob/main/docs/clinical-collaboration.md) for ways to help.
+  - type: textarea
+    id: context
+    attributes:
+      label: What work are you trying to do?
+      description: Your perspective and the review or trial workflow you want to discuss.
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: What would you like us to understand or change?
+      description: A confusing screen, missing step, useful scenario, or collaboration idea.
+    validations:
+      required: true
+  - type: textarea
+    id: next-step
+    attributes:
+      label: What would a useful next step be?
+      description: For example, reviewing a synthetic scenario, discussing the workflow here, or helping test a change.

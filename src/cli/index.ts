@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Command } from "commander";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";

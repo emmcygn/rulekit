@@ -257,7 +257,7 @@
 <section class="sec" id="hero" data-section data-title="Thesis">
   <div class="wrap-wide">
     <p class="hero-mark"><i></i>rulekit</p>
-    <h1>Eligibility criteria are the most consequential logic in a clinical trial. Almost everywhere, they are prose in a Word document.</h1>
+    <h1>Clinical-trial eligibility criteria contain logic worth making explicit, reviewing and testing.</h1>
     <p class="hero-kicker">This is a thesis about treating them as code instead — versioned, tested, conflict-checked — told in one scroll. Agents propose evidence. Humans confirm it. A deterministic engine is the only thing that ever decides.</p>
 
     <figure class="fig hero-fig" role="group" aria-label="Two eligibility intervals on a number line: an inclusion admitting 30 and above, an exclusion firing below 45, and their ordinary overlap from 30 to 45 highlighted as an exclusion boundary">
@@ -308,7 +308,7 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">01</span>the problem</p>
     <h2 data-reveal>Law, written as prose, copied by hand</h2>
-    <p class="lede" data-reveal><span class="gloss">Eligibility criteria<span class="gloss-note">who may join a trial</span></span> decide who gets an experimental drug. They are not versioned as behaviour, not tested, not checked for contradiction — and when they change, nobody can say who is affected without a manual chart review.</p>
+    <p class="lede" data-reveal><span class="gloss">Eligibility criteria<span class="gloss-note">who may join a trial</span></span> specify who may take part. This prototype explores keeping their source wording beside versioned, executable interpretations, then testing those interpretations and comparing their outputs on synthetic patient facts.</p>
     <div class="prose" data-reveal>
       <p>The <span class="gloss">protocol<span class="gloss-note">the trial's rulebook document</span></span> states each criterion once, in a paragraph. Then every team that needs it makes its own working copy — and watch what happens to one number on the way down:</p>
     </div>
@@ -380,7 +380,7 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>prose → code</p>
     <h2 data-reveal>One sentence becomes one rule</h2>
-    <p class="lede" data-reveal>Keep scrolling and watch a real criterion cross over. The trick is not the YAML — it is that the protocol's exact words make the trip too.</p>
+    <p class="lede" data-reveal>Keep scrolling and watch a criterion from the synthetic demo cross over. The trick is not the YAML — it is that the protocol's exact words make the trip too.</p>
   </div>
 </section>
 
@@ -388,7 +388,7 @@
   <div class="scrub-stage">
     <div class="pc-big" data-step="0" style="text-align:center;max-width:var(--wrap);margin:0 auto">
       <p class="pc-quote"><span class="qm">“</span>eGFR at least 30&nbsp;mL/min/1.73m²<span class="qm">”</span></p>
-      <p class="pc-kicker">Inclusion criterion I3, as the protocol writes it. eGFR is a kidney-function lab value. Now scroll: each field of the rule lights up as it appears.</p>
+      <p class="pc-kicker">Inclusion criterion I3, as the synthetic demo protocol writes it. eGFR is a kidney-function lab value. Now scroll: each field of the rule lights up as it appears.</p>
     </div>
     <div class="pc-grid" data-step="1+">
       <figure class="fig" role="group" aria-label="A YAML rule assembling field by field from the protocol sentence" style="margin:0">
@@ -403,7 +403,7 @@
       <div class="pc-notes">
         <div class="pc-note" data-step="1"><span class="nt">id</span>A stable name. It appears in every trace, coverage report and diff downstream, so renaming one is a breaking change — ids are treated as API.</div>
         <div class="pc-note" data-step="2"><span class="nt">ref · kind</span><span class="mono">ref</span> is the protocol's own numbering (I3), not ours. <span class="mono">kind</span> says which way the criterion points — inclusion admits, exclusion removes. That orientation matters enormously in chapter 03.</div>
-        <div class="pc-note" data-step="3"><span class="nt">verbatim — the load-bearing field</span>The protocol's exact sentence, never edited to fit the language. The words travel <em>with</em> the logic, so the file stays auditable against the source document forever. If a criterion can't be expressed at all, it is kept as <span class="mono">unmodeled: true</span> with its verbatim text — carried, never dropped.</div>
+        <div class="pc-note" data-step="3"><span class="nt">verbatim — the load-bearing field</span>The protocol's exact sentence, never edited to fit the language. The words travel <em>with</em> the logic, so a reviewer can compare the interpretation with its stated source. If a criterion can't be expressed at all, it is kept as <span class="mono">unmodeled: true</span> with its verbatim text — carried, never dropped.</div>
         <div class="pc-note" data-step="4"><span class="nt">when — the executable meaning</span>“at least 30” becomes <span class="mono">op: gte, value: 30</span> against the declared fact <span class="mono">egfr</span>. Sentence and semantics now live in one diffable, reviewable file. A human wrote this line and a human reviews it — no model translates protocols by itself.</div>
       </div>
     </div>
@@ -555,7 +555,7 @@
       </figure>
       <div class="kl-notes">
         <div data-step="0">
-          <div class="kl-note"><span class="nt">step 1 · a real patient</span>SYN-042 is one of the synthetic fixtures. Their chart has age and LVEF, but no eGFR result. In the format's own words: <strong>an absent key is unknown, never false</strong> — the single most important sentence in the spec. Scroll on.</div>
+          <div class="kl-note"><span class="nt">step 1 · a synthetic patient</span>SYN-042 is one of the synthetic fixtures. Their chart has age and LVEF, but no eGFR result. In the format's own words: <strong>an absent key is unknown, never false</strong> — the single most important sentence in the spec. Scroll on.</div>
         </div>
         <div data-step="1">
           <div class="kl-note"><span class="nt">step 2 · facts flow into leaves</span>Each leaf compares one fact. <span class="mono">age = 63 ≥ 18</span> → true. <span class="mono">lvef = 38 ≤ 40</span> → true. And <span class="mono">egfr</span>? There is nothing to compare. The leaf evaluates <em>unknown</em> — a first-class third value, not an error and not a default.</div>
@@ -576,7 +576,7 @@
           <div class="versus">
             <div class="v-card bad"><span class="v-tag">a two-valued engine</span>egfr absent → treated as false → the exclusion <span class="mono">egfr lt 45</span> never fires → the patient <strong>silently passes</strong> a renal-safety check that was never actually checked.</div>
             <div class="v-card"><span class="v-tag">rulekit</span>egfr absent → unknown → the criterion is unknown → the patient lands in <span class="mono">undetermined</span>, the pile that says “a human must look”.</div>
-            <div class="kl-note"><span class="nt">step 5 · the one everyone gets wrong</span><strong>Missing data never silently passes.</strong> Boolean logic has no way to say “we don't know”, so two-valued screeners quietly convert ignorance into an answer. The third value exists precisely so they can't.</div>
+            <div class="kl-note"><span class="nt">step 5 · missing evidence stays visible</span><strong>Missing data never silently passes.</strong> A program that converts missing evidence into false can silently pass an exclusion. The third value makes that uncertainty explicit; this example does not describe the behavior of other screening products.</div>
           </div>
         </div>
       </div>
@@ -613,7 +613,7 @@
           <span class="pid">SYN-007</span>
           <span class="marks"><i class="mk mk-pass"></i><i class="mk mk-pass"></i><i class="mk mk-fail"></i><i class="mk mk-unknown"></i></span>
           <span class="arrow">→</span><span class="out">ineligible</span>
-          <p class="why">One confirmed fail settles it. The unknown no longer matters — nobody pulls the rest of this chart. That is why fail deliberately beats unknown.</p>
+          <p class="why">A failed criterion settles the overall engine result as ineligible. Unknown criteria remain in the trace; the output does not determine whether a clinician should review the rest of a chart.</p>
         </div>
         <div class="cr">
           <span class="pid">SYN-019</span>
@@ -1114,7 +1114,7 @@
           </g>
         </svg>
         </div>
-        <figcaption class="fig-cap" data-step="4+">Every patient with eGFR in [30,&#8202;45) passes the inclusion and is then excluded &#8212; for all inputs, not just this corpus. The checker said so before anyone was screened.</figcaption>
+        <figcaption class="fig-cap" data-step="4+">Numeric eGFR values in [30,&#8202;45) pass this inclusion and fire this exclusion. This is an evaluation boundary; the static checker does not report a contradiction between these two rules.</figcaption>
       </figure>
 
       <div class="b-verdict" data-step="5+">
@@ -1223,7 +1223,7 @@
       <div class="b-caption-slot">
         <div class="b-law" data-step="4+">
           <span class="b-law-tag">the one-status-per-patient law</span>
-          A patient's band comes from the engine's verdict and nothing else &#8212; the CLI and the workbench can never tell different stories.
+          The CLI and workbench share evaluation and attrition logic. Their counts can be compared when the engine version, rules, facts and evaluation date match.
         </div>
         <div class="b-bug" data-step="5+">
           That sentence is a scar, not a slogan. A review of this repo caught the funnel draining patients in criterion order while the CLI bucketed by overall verdict &#8212; on the 100-patient commander-hf corpus the two disagreed on <b>every headline number</b> (0 vs 2 potentially eligible, 97 vs 92 screen failures), and swapping two criteria in the YAML &#8212; a no-op to the engine &#8212; moved a patient between the demo's two biggest buckets. The fix is one rule in <span class="mono">src/core/attrition.ts</span>: the waterfall may only <i>distribute</i> patients who are already screen failures.
@@ -1742,8 +1742,8 @@ rulesetVersion 1.0.1 &#8594; 1.2.0
 <section class="sec sec-band" id="coda" data-section data-title="What exists">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">CODA</span>what exists today</p>
-    <h2 data-reveal>Not a pitch deck. A repo.</h2>
-    <p class="lede" data-reveal>Everything above runs on a laptop, against files in a git repo — no backend, no accounts, no telemetry. Apache-2.0.</p>
+    <h2 data-reveal>A runnable prototype, with explicit limits</h2>
+    <p class="lede" data-reveal>The bundled demos run on a laptop against files in a git repo, using recorded extraction responses. Live extraction is optional and sends notes to the configured model provider. Apache-2.0.</p>
 
     <div class="coda-grid" data-reveal-children data-stagger="110">
       <div class="coda-cell">
@@ -1773,14 +1773,16 @@ rulesetVersion 1.0.1 &#8594; 1.2.0
     </div>
 
     <blockquote class="claim" data-reveal>
-      The honest claim, which is narrower than it first sounds: there is <strong>no open implementation</strong> of the full two-sided architecture — typed fact + verbatim quote + confidence + confirm/edit/reject + a deterministic engine as the only decider — as one artifact, with the format specified separately from the engine.
-      <span class="who">README.md · positioning, stated with its own caveats attached</span>
+      This prototype brings together typed fact proposals, source quotes, confidence scores, confirm/edit/reject review and a deterministic evaluator. The draft format is specified separately from the engine. These are inspectable design choices, not evidence of clinical validation or a claim of market novelty.
+      <span class="who">the architecture demonstrated by this repository</span>
     </blockquote>
 
     <div class="warnpanel" data-reveal>
       <span class="wt">⚠ not medical software</span>
       This is a demonstration of rule-governance tooling. It is not validated, not cleared by any regulator, and not for clinical, feasibility, or research screening use. Every patient, note, clinician and institution in the repo is synthetic and fabricated; the trial criteria are transcribed from real public registry text, but the numbers this tool produces are about invented people.
     </div>
+
+    <div class="prose" data-reveal><p><a href="https://github.com/emmcygn/rulekit/blob/main/docs/clinical-collaboration.md">Clinical operations and trial managers: help review one public criterion and a synthetic amendment scenario.</a></p><p><a href="https://github.com/emmcygn/rulekit">Explore the repository and runnable examples.</a></p></div>
 
     <div class="closing" data-reveal>
       <i></i>

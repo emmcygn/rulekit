@@ -1,7 +1,7 @@
 {
   "name": "rulekit",
   "version": "0.2.0",
-  "description": "Clinical-trial eligibility criteria as versioned, tested, conflict-checked YAML rules \u2014 deterministic engine, feasibility workbench, and an LLM facts compiler where humans confirm and only the engine decides",
+  "description": "Synthetic-data prototype for versioned clinical-trial eligibility rules, deterministic evaluation, amendment comparison, and human-reviewed fact proposals",
   "scripts": {
     "test": "vitest run",
     "lint": "eslint .",
@@ -21,7 +21,7 @@
     "recordings:migrate": "tsx scripts/record-responses.ts --migrate",
     "recordings:record": "tsx scripts/record-responses.ts",
     "extract:corpus": "tsx scripts/extract-corpus.ts",
-    "eval": "npm run build && promptfoo eval -c evals/promptfooconfig.yaml"
+    "eval": "npm run build && tsx scripts/eval-recorded.ts"
   },
   "keywords": [
     "clinical-trials",
@@ -31,9 +31,12 @@
     "feasibility",
     "yaml"
   ],
-  "author": "",
+  "author": "Emmanuel Cuyugan",
   "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.2.0",
@@ -55,6 +58,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mannycygn/rulekit"
+    "url": "https://github.com/emmcygn/rulekit"
+  },
+  "bugs": {
+    "url": "https://github.com/emmcygn/rulekit/issues"
   }
 }

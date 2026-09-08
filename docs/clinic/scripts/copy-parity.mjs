@@ -219,9 +219,9 @@ const CLAIM_RULES = [
   },
   { rule: 'no-ehr-connector', panel: '09-build', must: ['no ehr connector'] },
   {
-    rule: 'no-open-implementation',
+    rule: 'prototype-scope',
     panel: '10-close',
-    must: ['there is no open implementation of this whole shape in one place'],
+    must: ['this prototype'],
   },
   {
     rule: 'not-medical-software',
@@ -245,7 +245,7 @@ const CLAIM_RULES = [
   {
     rule: 'documents-made-up',
     panel: '01-clinical',
-    must: ['here are real failures in our (dummy) data.'],
+    must: ['this illustration uses invented documents and synthetic patients.'],
   },
   {
     rule: 'three-marks-no-fourth',

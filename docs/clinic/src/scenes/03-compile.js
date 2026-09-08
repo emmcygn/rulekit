@@ -1,7 +1,7 @@
 // Chapter 03 — "The sentence compiles".
 //
 // The protocol's own sentence hangs in the air as a strip of phrase tokens.
-// Over four sub-beats the grammar drops away, the three load-bearing words fly
+// Over four sub-beats the comparison is highlighted, and its three parts fly
 // forward and take their posts as a 3D node tree (boxes joined by tubes), the
 // tree wires itself up and a blue pulse runs down it as it evaluates, and the
 // original wording arrives above the logic on an accent tether — carried along,
@@ -9,7 +9,7 @@
 //
 // The four beats are the same four steps as plain.html's `#p-compile` scrub:
 //   0.00-0.25  the statute line, as the protocol states it
-//   0.25-0.50  the three load-bearing words; the rest is grammar
+//   0.25-0.50  the three comparison parts; units remain part of the declared fact model
 //   0.50-0.75  the words take their posts
 //   0.75-1.00  the verbatim line rides along
 // The 3D timings below run WELL ahead of those boundaries: the camera settles
@@ -29,17 +29,15 @@ import { createSwarm } from '../lib/instancedSwarm.js';
 import { cloneOwned } from '../lib/materials.js';
 import { sub, smoothstep, lerp, clamp01 } from '../lib/easing.js';
 
-// The statute's own words. `load` marks the three that actually carry the law.
+// The synthetic criterion's own words. `load` marks the comparison's three nodes.
 const TOKENS = [
-  { t: 'participants', load: false }, { t: 'are', load: false }, { t: 'required', load: false },
-  { t: 'to', load: false }, { t: 'have', load: false }, { t: 'an', load: false },
-  { t: 'eGFR', load: true }, { t: 'of', load: false }, { t: 'at least', load: true },
-  { t: '30', load: true }, { t: 'at', load: false }, { t: 'screening', load: false },
+  { t: 'eGFR', load: true }, { t: 'at least', load: true },
+  { t: '30', load: true }, { t: 'mL/min/1.73m²', load: false },
 ];
 
 const POST_LABEL = ['fact: egfr', 'op: gte', 'value: 30'];
 const ROOT_LABEL = 'egfr-min';
-const SRC_LABEL = 'the protocol · section 5.2';
+const SRC_LABEL = 'synthetic demo · inclusion I3';
 const VERB_TAG = 'verbatim';
 const VERB_TEXT = '"eGFR at least 30 mL/min/1.73m²"';
 

@@ -855,7 +855,7 @@
   </div>
   <div class="wrap-wide">
     <p class="hero-mark"><i></i>rulekit</p>
-    <h1>A trial's candidate entry rules live in a PDF. You cannot deterministically assess a PDF against thousands of candidates, so the mistakes turn up after the money is spent. rulekit turns rules into code you can test.</h1>
+    <h1>Clinical-trial eligibility rules, made reviewable. rulekit is a prototype for versioning and testing executable criteria, with human-reviewed evidence and synthetic patients.</h1>
     <p class="byline">by Manny Cuyugan</p>
     
     <!-- The framing, before anything else: the thing this project exists inside
@@ -863,8 +863,8 @@
          one paragraph and one source line on purpose, because the reader who
          needs it most is the one who has not yet been told there is a problem. -->
     <div class="prose" data-reveal style="max-width:62ch;margin-top:26px">
-      <p>Drug development costs have been doubling in price every decade. The climb has a name: Eroom's law, cheekily spelling Moore's law backwards. Output per research dollar has halved roughly every nine years, and the cost of one new medicine has climbed for sixty years without pause. Some of that climb is chemistry getting harder. Part of it is paperwork failing, and that part is fixable: cheaper trials via better and smarter workflows.</p>
-      <p>Trials are usually rules written as prose in a mountain of documents, read five ways by different parties, and often amended mid-trial at six figures a change.</p>
+      <p>Drug-research efficiency has a documented history of decline. The climb has a name: Eroom's law, cheekily spelling Moore's law backwards. The cited study described output per research dollar as having halved roughly every nine years over its historical sample. This project tests a narrower idea: whether explicit, reviewable criteria can help people inspect protocol logic. It has not measured trial cost savings.</p>
+      <p>The scenarios below illustrate how differing interpretations can appear in copied criteria. They use invented documents and synthetic patients.</p>
     </div>
     <p class="small" data-reveal style="max-width:62ch;margin-top:12px">Source: Scannell, Blanckley, Boldon &amp; Warrington, "Diagnosing the decline in pharmaceutical R&amp;D efficiency", Nature Reviews Drug Discovery (2012).</p>
 
@@ -919,10 +919,10 @@
 <section class="sec sec-band" id="clinical" data-section data-title="The clinical side" data-thread="prose">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">01</span>the clinical side</p>
-    <h2 data-reveal>Trial rules need expensive and often manual review.</h2>
-    <p class="lede" data-reveal>A clinical trial tests a new medicine on volunteers. Its <span class="gloss">eligibility criteria<span class="gloss-note">the rules for who may join</span></span> decide who gets the experimental drug and who is turned away for their own safety.</p>
+    <h2 data-reveal>Trial criteria need careful review.</h2>
+    <p class="lede" data-reveal>A clinical trial studies an intervention in people. Its <span class="gloss">eligibility criteria<span class="gloss-note">the rules for who may join</span></span> specify who may take part.</p>
     <div class="prose" data-reveal>
-      <p>Those criteria are written in statute language: "participants are required to have", "must be excluded if". It sounds exact the way a law sounds exact, and it works the way a law works, through whoever happens to be applying it. The <span class="gloss">protocol<span class="gloss-note">the trial's rulebook document</span></span> is the statute book. There is no court attached. Every screener at every hospital rules on it alone, and a wrong ruling can hurt somebody.</p>
+      <p>Criteria can include thresholds, timing requirements and clinical judgement. The <span class="gloss">protocol<span class="gloss-note">the trial's rulebook document</span></span> supplies the source wording; translating that wording into a checklist or query adds an interpretation. This demo makes that interpretation explicit so it can be reviewed.</p>
       <p>So five teams copy the law into whatever tool they use, and each copy is a reading, not the law. Below is one rule about <span class="gloss">eGFR<span class="gloss-note">a standard kidney score</span></span>: the trial wants a score of 30 or better. Watch what happens to that number.</p>
     </div>
   </div>
@@ -955,7 +955,7 @@
           <span class="dc-body">requirement raised to <span class="drift-mark">at least 40</span></span>
         </div>
       </div>
-      <figcaption class="fig-cap">Here are real failures in our (dummy) data. "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 is admitted by the statute and thrown out by the database query. Five different readings of one law now exist, none of them binding, and nobody can say which one is current.</figcaption>
+      <figcaption class="fig-cap">This illustration uses invented documents and synthetic patients. "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 is admitted by the statute and thrown out by the database query. Five different readings of one law now exist, none of them binding, and nobody can say which one is current.</figcaption>
     </figure>
   </div>
 
@@ -1026,7 +1026,7 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine</p>
     <h2 data-reveal>Write the rules once, in a format a machine can run</h2>
-    <p class="lede" data-reveal>my rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other. The next scene performs the translation on the statute's own words, one word at a time.</p>
+    <p class="lede" data-reveal>rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other. The next scene performs the translation on the statute's own words, one word at a time.</p>
   </div>
 </section>
 
@@ -1039,8 +1039,8 @@
       <p class="stage-sub">the difference between a statute and working code, in four moves</p>
 
       <div class="cp-srcbox" data-step="0+">
-        <span class="dc-tag">the protocol &#183; section 5.2</span>
-        <p class="cp-sent">&#8220;&#8230;participants are required to have an <span class="cp-w" data-tok="fact">eGFR</span> of <span class="cp-w" data-tok="op">at least</span> <span class="cp-w" data-tok="value">30</span> at the time of screening&#8230;&#8221;</p>
+        <span class="dc-tag">synthetic demo &#183; inclusion I3</span>
+        <p class="cp-sent">&#8220;<span class="cp-w" data-tok="fact">eGFR</span> <span class="cp-w" data-tok="op">at least</span> <span class="cp-w" data-tok="value">30</span> mL/min/1.73m&#178;&#8221;</p>
       </div>
 
       <div class="cp-link" aria-hidden="true"><i></i><span>carried along, word for word</span></div>
@@ -1049,15 +1049,15 @@
         <div class="cl"><span class="n">1</span><span><span class="dim">-</span> <span class="k">id</span>: egfr-min</span></div>
         <div class="cl"><span class="n">2</span><span>  <span class="k">kind</span>: inclusion</span></div>
         <div class="cl hl-accent cl-vb"><span class="n">3</span><span>  <span class="k">verbatim</span>: <span class="s">"<span class="cp-vb">eGFR at least 30 mL/min/1.73m&#178;</span>"</span></span></div>
-        <div class="cl"><span class="n">4</span><span>  <span class="k">when</span>: { <span class="k">fact</span>: <span class="cp-slot" data-slot="fact">egfr</span>, <span class="k">op</span>: <span class="cp-slot" data-slot="op">gte</span>, <span class="k">value</span>: <span class="cp-slot" data-slot="value">30</span> }</span></div>
+        <div class="cl"><span class="n">4</span><span>  <span class="k">when</span>: { <span class="k">fact</span>: <span class="cp-slot" data-slot="fact">egfr</span>, <span class="k">op</span>: <span class="cp-slot" data-slot="op">gte</span>, <span class="k">value</span>: <span class="cp-slot" data-slot="value">30</span>, <span class="k">unit</span>: mL/min/1.73m2 }</span></div>
       </div>
 
       <div class="cp-notes">
         <div data-step="0">
-          <div class="note"><span class="nt">step 1 &#183; one line of statute</span>The sentence as the protocol states it. Precise-sounding words, nothing attached that could run them. Scroll.</div>
+          <div class="note"><span class="nt">step 1 &#183; one synthetic criterion</span>A criterion from the synthetic demo protocol, with its original wording preserved. Scroll.</div>
         </div>
         <div data-step="1">
-          <div class="note"><span class="nt">step 2 &#183; three words carry the law</span>A measurement, a direction, a threshold. The rest of the sentence is grammar. The engine only needs those three.</div>
+          <div class="note"><span class="nt">step 2 &#183; three parts of the comparison</span>A measurement, a direction, a threshold. The unit belongs to the fact model and the rule. Timing requirements need their own representation; a numeric comparison does not check when a measurement was taken.</div>
         </div>
         <div data-step="2">
           <div class="note"><span class="nt">step 3 &#183; the words take their posts</span>"eGFR" becomes the fact to look up. "at least" becomes <span class="mono">gte</span>, greater than or equal. "30" stays 30. Each word lands in a slot a machine can read, and the pale ghosts above mark where they came from.</div>
@@ -1079,7 +1079,7 @@
       <div class="note"><span class="nt">who writes it</span>A person writes this file and a person reviews it. No AI translates the protocol on its own. When a rule will not fit the language, it stays as plain text and gets labelled that way, rather than quietly disappearing.</div>
     </div>
     <div class="prose" data-reveal style="margin-top:22px">
-      <p>One file holds every rule, and every edit to it is tracked the way code changes are tracked. That alone kills the five drifting readings: there is one binding text again, and this one runs. The three ideas that follow are what you get once the law is a file.</p>
+      <p>One versioned file keeps the source wording beside a reviewable interpretation. Teams can inspect changes and run the same rules against the same inputs. A file alone does not establish which version a site is authorized to use. The three ideas that follow are what you get once the law is a file.</p>
     </div>
   </div>
 </section>
@@ -1117,12 +1117,12 @@
         </div>
         <div data-step="1">
           <div class="versus">
-            <div class="v-card bad"><span class="v-tag">most screening software</span>A yes-or-no program has nowhere to put "we don't know". The missing kidney score gets read as "no problem", and the patient sails past a safety rule that nobody ever checked. Nobody notices either, because a rule that was skipped looks exactly like a rule that passed.</div>
+            <div class="v-card bad"><span class="v-tag">a missing-data failure mode</span>If a program treats missing evidence as a negative finding, an exclusion can silently pass without the required measurement. This illustrates an implementation error, not a claim about other screening products.</div>
           </div>
         </div>
         <div data-step="2">
           <div class="versus">
-            <div class="v-card"><span class="v-tag">rulekit</span>The missing score comes back as <strong>don't know</strong>, a real answer rather than an error. That don't-know carries up through every rule built on it, so the patient's overall result reads "undetermined" and the chart lands in the pile for human review.</div>
+            <div class="v-card"><span class="v-tag">rulekit</span>The missing score comes back as <strong>don't know</strong>, a real answer rather than an error. If no criterion fails, this unresolved requirement leaves the overall result "undetermined". The trace keeps the missing evidence visible for review.</div>
           </div>
         </div>
         <div data-step="3">
@@ -1135,7 +1135,7 @@
                 <span class="p-verdict"><span class="p-stamp">refused</span></span>
               </div>
             </div>
-            <div class="note"><span class="nt">the rule that never bends</span>The system never turns a don't-know into a yes. There is no code path that does it. A patient counts as eligible only when every rule actually passes on confirmed facts, and one confirmed "no" settles the case on its own.</div>
+            <div class="note"><span class="nt">the rule that never bends</span>An eligible result requires every criterion to pass. A failed criterion makes the overall result ineligible; otherwise, any unknown leaves it undetermined.</div>
           </div>
         </div>
       </div>
@@ -1252,8 +1252,8 @@
 <section class="sec" id="onecalc" data-section data-title="One calculation" data-thread="code">
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">02</span>the engine &#183; idea three</p>
-    <h2 data-reveal>Every number comes from one calculation</h2>
-    <p class="lede" data-reveal>A patient's verdict is computed exactly once for a pinned engine and input bundle. The printed report and the visual app both read that result, so two screens can share the same counts.</p>
+    <h2 data-reveal>The report and workbench share evaluation logic</h2>
+    <p class="lede" data-reveal>The CLI and workbench use the same evaluator and attrition logic. Matching engine versions, rules, facts and evaluation dates let their counts be compared.</p>
   </div>
   <div class="wrap-wide">
     <div data-zoomin>
@@ -1298,7 +1298,7 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">The dot next to a patient's name and the totals on every screen come from that one verdict. There is no second copy of the math to drift.</figcaption>
+      <figcaption class="fig-cap">Patient traces and totals are derived from evaluation results. Shared code and regression tests help keep the displays consistent.</figcaption>
     </figure>
     </div>
   </div>
@@ -1385,7 +1385,7 @@
           <div class="note"><span class="nt">step 1 &#183; the raw material</span>This is what screening data actually looks like: a paragraph one clinician wrote for another. The fact the trial needs, the severity grade, is sitting in the middle of a sentence. Scroll, and watch the AI dig it out.</div>
         </div>
         <div data-step="1-2">
-          <div class="note"><span class="nt">a suggestion, with its receipt</span>The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can check the suggestion against the note in a few seconds, without having to trust the LLM at all.</div>
+          <div class="note"><span class="nt">a suggestion, with its receipt</span>The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can inspect the quoted passage and its context. Finding a quote does not prove that the proposed value is clinically correct.</div>
         </div>
         <div data-step="3">
           <div class="note"><span class="nt">approved, and only now visible</span>The click stores a generic demo reviewer label and timestamp in this browser. Until that click, the engine cannot see the suggestion. This local state is not authenticated or a durable audit trail.</div>
@@ -1430,12 +1430,12 @@
   <div class="wrap">
     <p class="eyebrow" data-reveal><span class="ch">04</span>what exists</p>
     <h2 data-reveal>What runs today</h2>
-    <p class="lede" data-reveal>A public code repository that runs locally without an account or required cloud service. Automated regression suites run on every change. The repository has no EHR connector, and every person in this project is synthetic.</p>
+    <p class="lede" data-reveal>A public code repository whose bundled demos run locally without an account or required cloud service. CI is configured to run automated regression suites on pushes and pull requests. The repository has no EHR connector, and every person in this project is synthetic.</p>
 
     <div class="coda-grid" data-zoomin data-reveal-children data-stagger="110">
       <div class="coda-cell">
         <span class="cv">CI</span>
-        <p class="cl2">automated regression suites, re-run on every change (green <span class="gloss">CI<span class="gloss-note">checks that run on every change</span></span> at publication time)</p>
+        <p class="cl2">automated regression suites configured for pushes and pull requests</p>
       </div>
       <div class="coda-cell">
         <span class="cv">2</span>
@@ -1507,7 +1507,7 @@
     <div class="panel" data-reveal style="margin-top:26px">
       <h3>The honest coverage number</h3>
       <p style="font-size:14.5px;line-height:1.6;margin-bottom:10px"><span class="big-num" style="font-size:clamp(28px,4vw,44px)"><span data-count-to="56.7" data-count-format="dec1">0</span>%</span></p>
-      <p style="font-size:14px;line-height:1.6;color:var(--ink2)">Of 12,060 entry criteria pulled from 996 real trials, 56.7% look like the rule language could express them as written, 12.2% partially, and 31.1% not at all. That is a <strong>heuristic estimate</strong>: pattern matching over the text, never checked against human judges. It reads two ways at once. The language handles more than half of what real trials ask, and a third of it is beyond what the language can say. Both numbers are the result.</p>
+      <p style="font-size:14px;line-height:1.6;color:var(--ink2)">Of 12,060 entry criteria pulled from 996 real trials, 56.7% look like the rule language could express them as written, 12.2% partially, and 31.1% not at all. That is a <strong>heuristic estimate</strong>: pattern matching over the text, never checked against human judges. It reads two ways at once. The classifier flags candidates for modeling and cases that may need a richer representation. Human-authored translations are needed to assess actual coverage.</p>
     </div>
     </div>
   </div>
@@ -1609,13 +1609,13 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">What it is made of, plainly. The rules are text files, not code. One typed engine reads them. Two screens read the engine. The note-reading step sits below the line and can only send work upward through a person. The outer box is the test suite, and it was written first.</figcaption>
+      <figcaption class="fig-cap">What it is made of, plainly. The rules are text files, not code. One typed engine reads them. Two screens read the engine. The note-reading step sits below the line and can only send work upward through a person. The outer box represents automated tests around these components.</figcaption>
     </figure>
   </div>
 
   <div class="wrap">
     <div class="prose" data-reveal>
-      <p>The rule format was written down before the engine existed, so the code had something fixed to be wrong against. Reviewers were then told to attack it, and a claimed flaw only counted if it came with code that proved it. Every proven flaw became a permanent <span class="gloss">regression test<span class="gloss-note">keeps fixed bugs fixed</span></span> before anyone was allowed to fix it. Three of the scars:</p>
+      <p>The draft rule format defines behavior that the engine can be checked against. The repository includes <span class="gloss">regression tests<span class="gloss-note">keep fixed bugs fixed</span></span> for boundary cases and earlier implementation errors. Three examples:</p>
     </div>
     <div class="buildlist" data-zoomin data-reveal-children data-stagger="130">
       <div class="note"><span class="nt">the over-eager checker</span>The conflict checker once announced a clash that could not actually happen. A reviewer proved it, the checker learned to keep quiet in that case, and the false alarm is pinned down as a test in <span class="mono">tests/adversarial/conflicts.test.ts</span>.</div>
@@ -1680,7 +1680,7 @@
         </g>
       </svg>
       </div>
-      <figcaption class="fig-cap">The whole history is in the repository, reviews and reversals included.</figcaption>
+      <figcaption class="fig-cap">The repository includes regression tests for these failure modes.</figcaption>
     </figure>
   </div>
 
@@ -1790,14 +1790,15 @@
 
     <div data-zoomin>
     <blockquote class="claim" data-reveal>
-      The narrow claim: there is <strong>no open implementation</strong> of this whole shape in one place. AI suggestions that carry their quotes. Human approval as the only way in. A <span class="gloss">deterministic<span class="gloss-note">same pinned engine and input, same answer</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.
-      <span class="who">from the project README, stated with its own caveats attached</span>
+      This prototype is open for review. AI suggestions that carry their quotes. Human confirmation before AI proposals enter evaluation. A <span class="gloss">deterministic<span class="gloss-note">same pinned engine and input, same answer</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.
+      <span class="who">the architecture demonstrated by this repository</span>
     </blockquote>
     </div>
 
     <div class="prose" data-reveal>
-      <p>Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://claude.ai/code/artifact/f6f26ee6-5f16-457a-b01d-0aa4b1443ff3">technical thesis</a> (also <span class="mono">docs/thesis.html</span> in the repository), which is this same story told longer, for engineers, with the engine's real output in it.</p>
-      <p>The repository itself is at <a href="https://github.com/mannycygn/rulekit">github.com/mannycygn/rulekit</a>. There will also be <a class="link-soon" href="#" aria-disabled="true">the engineering read</a><span class="soon">link to follow</span>, a shorter account of the build decisions and the things that had to be reversed.</p>
+      <p>Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://github.com/emmcygn/rulekit/blob/main/docs/development.md">development guide</a> for setup, architecture and verification.</p>
+      <p><a href="https://github.com/emmcygn/rulekit/blob/main/docs/clinical-collaboration.md">Clinical operations and trial managers: read the collaboration brief.</a></p>
+      <p><a href="https://github.com/emmcygn/rulekit">Explore the rulekit repository.</a> For the implementation details, read the <a href="https://github.com/emmcygn/rulekit/blob/main/docs/development.md">engineering guide</a>.</p>
     </div>
 
     <div class="closing" data-reveal>
@@ -1809,7 +1810,7 @@
       <p class="small" style="margin-bottom:30px">Every verdict this page handed down is one of these three marks. There is no fourth.</p>
       <i></i>
       <p class="cm"><span class="kin-w" style="--kd:0s">agents propose</span><span class="kin-w sep" style="--kd:.4s">&#183;</span><span class="kin-w" style="--kd:.55s">humans confirm</span><span class="kin-w sep" style="--kd:.95s">&#183;</span><span class="kin-w" style="--kd:1.1s">the engine decides</span></p>
-      <p class="small" style="margin-top:14px">In that order, every time, with no way around the middle step.</p>
+      <p class="small" style="margin-top:14px">AI-proposed facts stay outside evaluation until a person confirms them.</p>
     </div>
 
     <p class="byline-close" data-reveal="fade">by Emmanuel Cuyugan</p>

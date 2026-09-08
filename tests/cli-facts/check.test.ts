@@ -12,7 +12,7 @@ type Run = { code: number; stdout: string; stderr: string };
 
 function facts(...args: string[]): Run {
   try {
-    const stdout = execFileSync("npx", ["tsx", CLI, ...args], { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    const stdout = execFileSync(process.execPath, ["--import", "tsx", CLI, ...args], { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
     return { code: 0, stdout, stderr: "" };
   } catch (err) {
     const e = err as { status?: number; stdout?: string; stderr?: string };

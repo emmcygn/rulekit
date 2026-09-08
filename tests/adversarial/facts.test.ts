@@ -93,7 +93,7 @@ describe("G1 — a quote from a DIFFERENT patient's note is rejected (REGRESSION
     let status = 0;
     let out: string;
     try {
-      out = execFileSync("npx", ["tsx", join(ROOT, "src", "cli-facts", "index.ts"), "check", dir], {
+      out = execFileSync(process.execPath, ["--import", "tsx", join(ROOT, "src", "cli-facts", "index.ts"), "check", dir], {
         cwd: ROOT,
         encoding: "utf8",
       });
