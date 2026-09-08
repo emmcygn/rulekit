@@ -51,12 +51,15 @@ sensitive material or that every kind of secret has been detected.
 - **Docker build was not run:** Docker Desktop's engine was unavailable. The
   package builds and deployment-configuration tests passed. A container build
   and hosted-route check remain necessary before claiming deployment verification.
-- **Remote CI has not run for this prepared version.** The updated workflow adds
-  Windows alongside Linux; its actual GitHub run should be reviewed after pushing.
-- **GitHub visibility and publication are separate steps.** The repository was
-  private when inspected. Check the final shared link while signed out before
-  posting to LinkedIn. No LinkedIn post or visibility change was made during
-  this local preparation.
+- **Remote CI was pending at the time of this local review.** The updated workflow
+  adds Windows alongside Linux. See [PR #15](https://github.com/emmcygn/rulekit/pull/15)
+  for the subsequent merge status and checks, and [GitHub Actions](https://github.com/emmcygn/rulekit/actions)
+  for current CI results.
+- **Publication was pending at the time of this local review.** The repository
+  was private when inspected; this records the preparation, not its current
+  visibility. Check the [repository](https://github.com/emmcygn/rulekit) while
+  signed out before posting to LinkedIn. No LinkedIn post or visibility change
+  was made during this local preparation.
 
 ## Suggested public positioning
 
