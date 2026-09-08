@@ -1,11 +1,13 @@
-# rulekit extraction eval — OFFLINE by default.
+# rulekit extraction eval — recorded responses by default.
 #
 #   npm run build && npx promptfoo eval -c evals/promptfooconfig.yaml
 #   (or just: npm run eval)
 #
-# This config makes no network call and needs no API key. The provider serves
+# This provider makes no live model calls and needs no API key. It serves
 # the committed responses in evals/recorded/. For a live run against the real
 # model, see promptfooconfig.live.yaml and evals/README.md.
+# npm run eval applies promptfoo's supported opt-outs; see evals/README.md for
+# the upstream opt-out notification that prevents a no-network guarantee.
 description: rulekit facts compiler — 10-note synthetic regression fixture (recorded responses; not statistical confidence)
 
 prompts:

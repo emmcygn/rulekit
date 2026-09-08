@@ -1,6 +1,6 @@
 /**
- * The recorded-response provider: how `npx promptfoo eval` runs with no network
- * and no API key.
+ * The recorded-response provider: committed fixtures with no live model calls
+ * or API key. See evals/README.md for the promptfoo CLI's network behavior.
  *
  * Each note has one committed response in `evals/recorded/`, produced by the
  * pinned model against the pinned prompt. This provider serves them. It is a

@@ -40,6 +40,7 @@ const yamlIn = (dir: string): string[] =>
 const RULESETS = [
   "rules/trials/demo-hf-001/ruleset.yaml",
   "rules/trials/demo-hf-001/ruleset@1.0.0.yaml",
+  "rules/trials/demo-hf-001/ruleset@1.0.1.yaml",
   "rules/trials/commander-hf/ruleset.yaml",
 ];
 

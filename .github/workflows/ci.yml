@@ -2,11 +2,14 @@ name: ci
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with: { node-version-file: .nvmrc }
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -24,9 +27,10 @@ jobs:
       # script" no matter how healthy the code is.
       - run: npm run facts:check
 
-      # The extraction eval, twice over. Both are offline — the recorded
-      # responses in evals/recorded/ are committed, no API key exists here, and
-      # neither step makes a network call.
+      # Both extraction evaluations use committed recordings and no model key.
+      # The promptfoo wrapper opts out of telemetry and update checks, but the
+      # upstream tool may still send an opt-out notice; see evals/README.md.
+      # facts:eval runs the local evaluator without that third-party CLI.
       #   promptfoo:  per-case pass/fail, exits 100 on a regression
       #   facts eval: corpus-level precision/recall floors
       - run: npm run eval
@@ -40,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with: { node-version-file: .nvmrc }
       # web/ is its own package, but it builds against the repo around it: the
       # engine (src/core) and the demo data it bundles rather than copies
       # (rules/trials/demo-hf-001, packs/trials, fixtures/patients). Renaming or
@@ -61,10 +65,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - run: npm install
+        with: { node-version-file: .nvmrc }
+      - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run build
 
   walkthrough:
     runs-on: ubuntu-latest
@@ -74,7 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with: { node-version-file: .nvmrc }
       - run: npm ci
       # Build FIRST, and not only to prove it builds. tests/budget.test.js reads
       # dist/assets/ for its 250KB gzip ceiling and SKIPS ITSELF IN SILENCE when
@@ -89,6 +94,6 @@ jobs:
       # claims-discipline labels ("synthetic", the 56.7% heuristic caveat, the
       # not-medical-software notice) must survive somewhere a phone renders.
       - run: npm run parity
-      # `npm run smoke` is deliberately absent. It drives the built bundle in a
-      # real browser through puppeteer-core and needs a local Chrome this runner
-      # does not have. It stays a pre-merge local gate: `npm run verify`.
+      # Browser smoke remains a local pre-merge gate: `npm run verify` uses
+      # installed Chrome, or the browser at PUPPETEER_EXECUTABLE_PATH.
+      # A browser must be provisioned explicitly before adding this step to CI.

@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible problem with code, documentation or the demo.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use synthetic examples only. Remove credentials, patient information and confidential content from logs and screenshots.
+        For security concerns, follow [SECURITY.md](https://github.com/emmcygn/rulekit/blob/main/SECURITY.md) instead.
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How can we reproduce it?
+      description: Include the page or command, steps, and any bundled synthetic fixture involved.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Version and environment
+      description: Commit or version, operating system, browser, and Node version if relevant.

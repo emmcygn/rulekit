@@ -1,0 +1,8 @@
+# Keep recorded prompt hashes and historical YAML bytes stable on every OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

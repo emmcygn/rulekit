@@ -2,8 +2,11 @@
   "name": "@rulekit/review-pane",
   "version": "0.1.0",
   "private": true,
-  "description": "Standalone ReviewQueue component for the rulekit facts compiler. Not wired into web/ — mount it there when the Review tab is built.",
+  "description": "ReviewQueue component for the rulekit facts compiler, with a standalone harness and a parity-checked copy in the workbench Review tab.",
   "type": "module",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "scripts": {

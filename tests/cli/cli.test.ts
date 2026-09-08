@@ -1,10 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { afterAll, describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+
+const tempRoot = resolve(tmpdir());
+const tempDir = mkdtempSync(join(tempRoot, "rulekit-cli-"));
+const tempPath = (name: string): string => join(tempDir, name);
+afterAll(() => {
+  if (dirname(resolve(tempDir)) !== tempRoot) throw new Error("refusing to remove a directory outside the test temp root");
+  rmSync(tempDir, { recursive: true, force: true });
+});
 
 function run(args: string[]): { status: number; stdout: string } {
   try {
-    const stdout = execFileSync("npx", ["tsx", "src/cli/index.ts", ...args], { encoding: "utf8" });
+    const stdout = execFileSync(process.execPath, ["--import", "tsx", "src/cli/index.ts", ...args], { encoding: "utf8" });
     return { status: 0, stdout };
   } catch (e) {
     const err = e as { status: number; stdout: string };
@@ -62,7 +72,7 @@ describe("rules CLI", () => {
   it("diff rejects content changes without a version bump", () => {
     const r = run(["diff", "rules/trials/demo-hf-001/ruleset.yaml", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml"]);
     expect(r.stdout).not.toContain("unbumped-version"); // identical files: no change
-    const temp = "/tmp/rulekit-unbumped.yaml";
+    const temp = tempPath("rulekit-unbumped.yaml");
     writeFileSync(temp, readFileSync("rules/trials/demo-hf-001/ruleset@1.0.1.yaml", "utf8").replace("windowDays: 14", "windowDays: 21"));
     const same = run(["diff", "rules/trials/demo-hf-001/ruleset@1.0.1.yaml", temp, "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml"]);
     expect(same.status).toBe(1);
@@ -72,13 +82,13 @@ describe("rules CLI", () => {
   });
 
   it("diff rejects regressed versions and behavior changes in patch releases", () => {
-    const regression = "/tmp/rulekit-regressed.yaml";
+    const regression = tempPath("rulekit-regressed.yaml");
     writeFileSync(regression, readFileSync("rules/trials/demo-hf-001/ruleset.yaml", "utf8").replace("rulesetVersion: 1.2.0", "rulesetVersion: 1.0.0"));
     const backwards = run(["diff", "rules/trials/demo-hf-001/ruleset.yaml", regression, "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml"]);
     expect(backwards.status).toBe(1);
     expect(backwards.stdout).toContain("rulesetVersion regressed from 1.2.0 to 1.0.0");
 
-    const patch = "/tmp/rulekit-patch-change.yaml";
+    const patch = tempPath("rulekit-patch-change.yaml");
     writeFileSync(patch, readFileSync("rules/trials/demo-hf-001/ruleset@1.0.1.yaml", "utf8")
       .replace("rulesetVersion: 1.0.1", "rulesetVersion: 1.0.2")
       .replace("windowDays: 14", "windowDays: 21"));
@@ -86,7 +96,7 @@ describe("rules CLI", () => {
     expect(tooSmall.status).toBe(1);
     expect(tooSmall.stdout).toContain("criterion behavior or identity changed in patch release");
 
-    const renamed = "/tmp/rulekit-renamed-minor.yaml";
+    const renamed = tempPath("rulekit-renamed-minor.yaml");
     writeFileSync(renamed, readFileSync("rules/trials/demo-hf-001/ruleset@1.0.1.yaml", "utf8")
       .replace("rulesetVersion: 1.0.1", "rulesetVersion: 1.1.0")
       .replace("id: age-min", "id: age-min-renamed"));
@@ -97,9 +107,9 @@ describe("rules CLI", () => {
   });
 
   it("screen writes reproducibility and modeling metadata with every evaluation", () => {
-    const r = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--as-of", "2026-09-05", "--out", "/tmp/rulekit-screen.json"]);
+    const r = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--as-of", "2026-09-05", "--out", tempPath("rulekit-screen.json")]);
     expect(r.status).toBe(0);
-    const out = JSON.parse(readFileSync("/tmp/rulekit-screen.json", "utf8"));
+    const out = JSON.parse(readFileSync(tempPath("rulekit-screen.json"), "utf8"));
     expect(out.counts.eligible + out.counts.ineligible + out.counts.undetermined).toBe(10);
     expect(out.metadata).toMatchObject({
       schemaVersion: "rulekit-screen/v1",
@@ -132,11 +142,11 @@ describe("rules CLI", () => {
       unmodeledCriteria: [],
       warnings: [],
     });
-    rmSync("/tmp/rulekit-screen.json");
+    rmSync(tempPath("rulekit-screen.json"));
   });
 
   it("screen exposes partial rulesets and unmodeled criteria as machine-visible warnings", () => {
-    const path = "/tmp/rulekit-screen-partial.json";
+    const path = tempPath("rulekit-screen-partial.json");
     const r = run(["screen", "rules/trials/commander-hf/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--out", path]);
     expect(r.status).toBe(0);
     const out = JSON.parse(readFileSync(path, "utf8"));
@@ -158,7 +168,7 @@ describe("rules CLI", () => {
   });
 
   it("screen report front matter and body both warn when the ruleset is partial", () => {
-    const path = "/tmp/rulekit-screen-partial.md";
+    const path = tempPath("rulekit-screen-partial.md");
     const r = run(["screen", "rules/trials/commander-hf/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--report", path]);
     expect(r.status).toBe(0);
     const report = readFileSync(path, "utf8");
@@ -171,12 +181,12 @@ describe("rules CLI", () => {
   });
 
   it("screen rejects an invalid evaluation as-of date", () => {
-    const r = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--as-of", "2026-02-30", "--out", "/tmp/unused.json"]);
+    const r = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--as-of", "2026-02-30", "--out", tempPath("unused.json")]);
     expect(r.status).toBe(1);
   });
 
   it("screen --report writes bands, the per-criterion table and the sole-disqualifier section", () => {
-    const path = "/tmp/rulekit-screen-report.md";
+    const path = tempPath("rulekit-screen-report.md");
     const r = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--report", path]);
     expect(r.status).toBe(0);
     const md = readFileSync(path, "utf8");
@@ -200,19 +210,19 @@ describe("rules CLI", () => {
   });
 
   it("screen --report does not change the JSON payload except for its run timestamp", () => {
-    const json = "/tmp/rulekit-screen-both.json";
-    const md = "/tmp/rulekit-screen-both.md";
-    const only = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--out", "/tmp/rulekit-screen-only.json"]);
+    const json = tempPath("rulekit-screen-both.json");
+    const md = tempPath("rulekit-screen-both.md");
+    const only = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--out", tempPath("rulekit-screen-only.json")]);
     expect(only.status).toBe(0);
     const both = run(["screen", "rules/trials/demo-hf-001/ruleset.yaml", "--corpus", "fixtures/patients", "--fact-model", "packs/trials/fact-model.yaml", "--out", json, "--report", md]);
     expect(both.status).toBe(0);
-    const jsonOnly = JSON.parse(readFileSync("/tmp/rulekit-screen-only.json", "utf8"));
+    const jsonOnly = JSON.parse(readFileSync(tempPath("rulekit-screen-only.json"), "utf8"));
     const jsonBoth = JSON.parse(readFileSync(json, "utf8"));
     delete jsonOnly.metadata.evaluation.timestamp;
     delete jsonBoth.metadata.evaluation.timestamp;
     for (const patient of jsonOnly.patients) delete patient.metadata.evaluation.timestamp;
     for (const patient of jsonBoth.patients) delete patient.metadata.evaluation.timestamp;
     expect(jsonBoth).toEqual(jsonOnly);
-    for (const f of [json, md, "/tmp/rulekit-screen-only.json"]) rmSync(f);
+    for (const f of [json, md, tempPath("rulekit-screen-only.json")]) rmSync(f);
   });
 });

@@ -1,21 +1,23 @@
 # @rulekit/review-pane
 
-The review queue from design spec §11 — the human half of the two-sided
-authoring story. An LLM proposes facts with provenance; a person confirms,
+The review queue is the human half of the two-sided authoring story.
+An LLM proposes facts with provenance; a person confirms,
 edits, or rejects each one; only confirmed facts reach the engine.
 
-**Standalone on purpose.** Its own `package.json`, its own vite, its own test
-run. It is not wired into `web/` — when the workbench's Review tab is built it
-imports `ReviewQueue` from here. Keeping it separate means the component can be
-developed, tested, and looked at without booting the workbench, and it has no
-dependency on the rulekit core package (the host maps a `FactEntry` from a
-facts.yaml onto the plain `ProposedFactCard` shape).
+**A standalone component harness.** This package has its own build and tests.
+The workbench's Review tab uses copies of `ReviewQueue.tsx`, `sort.ts`,
+`types.ts`, and `tokens.css` from here; `web/tests/review-pane-copy.test.ts`
+requires those copies to stay identical. Edit the files in this package first,
+then copy the changes to `web/src/review/` and run both test suites.
+The component has no dependency on the rulekit core package: the host maps
+a `FactEntry` from a facts file onto the plain `ProposedFactCard` shape.
 
 ```bash
-npm install
+npm ci
 npm run dev      # dev harness at localhost:5173, seeded from the real corpus
-npm test         # 33 component + sort tests
+npm test
 npm run typecheck
+npm run build
 ```
 
 ## Usage
@@ -26,7 +28,7 @@ import { ReviewQueue } from "@rulekit/review-pane";
 <ReviewQueue
   items={cards}
   onConfirm={(item) => stampConfirmed(item)}   // writes reviewedBy + reviewedAt
-  onEdit={(item, value) => stampEdited(item, value)}
+  onEdit={(item, correction) => stampEdited(item, correction)}
   onReject={(item) => stampRejected(item)}
 />;
 ```

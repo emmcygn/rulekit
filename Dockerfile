@@ -21,7 +21,7 @@
 # the link back to /walkthrough.
 
 # ---- build stage ----
-FROM node:22-alpine AS build
+FROM node:22.22.2-alpine AS build
 WORKDIR /app
 
 # Root deps first (engine: zod, yaml — needed by web's typecheck of ../src/core).
@@ -44,9 +44,9 @@ RUN npm --prefix web run build
 RUN npm --prefix docs/clinic run build
 
 # ---- serve stage ----
-FROM node:22-alpine AS serve
+FROM node:22.22.2-alpine AS serve
 WORKDIR /app
-RUN npm install -g serve@14
+RUN npm install -g serve@14.2.6
 
 # Assemble the served tree: landing page at the root, workbench under /app.
 COPY --from=build /app/web/dist ./site/app

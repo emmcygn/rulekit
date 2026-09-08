@@ -108,7 +108,7 @@ describe('checkParity', () => {
       'chia-heuristic-labelled',
       'overlap-not-a-contradiction',
       'no-ehr-connector',
-      'no-open-implementation',
+      'prototype-scope',
       'not-medical-software',
       'tufts-sourced',
       'eroom-sourced',
@@ -164,7 +164,7 @@ describe('checkParity', () => {
 
   it('catches the made-up-documents sentence going missing', () => {
     const tampered = indexHtml.replace(
-      'Here are real failures in our (dummy) data.',
+      'This illustration uses invented documents and synthetic patients.',
       'The failure below is documented.',
     );
     expect(tampered).not.toBe(indexHtml);
@@ -175,7 +175,7 @@ describe('checkParity', () => {
   it('fails a claim whose panel has been deleted outright', () => {
     const tampered = indexHtml.replace('data-panel="10-close"', 'data-panel="10-gone"');
     const { claims } = checkParity(tampered, plainHtml);
-    for (const rule of ['no-open-implementation', 'not-medical-software', 'three-marks-no-fourth']) {
+    for (const rule of ['prototype-scope', 'not-medical-software', 'three-marks-no-fourth']) {
       expect(claims.find((c) => c.rule === rule).ok, rule).toBe(false);
     }
   });
@@ -239,8 +239,8 @@ describe('claims are co-located with the copy a phone renders', () => {
 
   it('catches the made-up-documents sentence being demoted into .ext-tall', () => {
     const tampered = indexHtml.replace(
-      '<p class="small">Here are real failures in our (dummy) data.',
-      '<p class="small ext-tall">Here are real failures in our (dummy) data.',
+      '<p class="small">This illustration uses invented documents and synthetic patients.',
+      '<p class="small ext-tall">This illustration uses invented documents and synthetic patients.',
     );
     expect(tampered).not.toBe(indexHtml);
     const claim = checkParity(tampered, plainHtml).claims.find((c) => c.rule === 'documents-made-up');

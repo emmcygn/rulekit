@@ -28,38 +28,33 @@
 // it on the way out, so `npm run verify` is one command rather than "remember
 // to start a server first".
 //
-// Needs puppeteer-core and a local Chrome. Neither is a dependency of this
-// package — the browser is a machine you already have, not a 300MB download in
-// every install — so both are looked up, not required:
-//   PUPPETEER_EXECUTABLE_PATH  path to Chrome (default: macOS Google Chrome)
-const CHROME = process.env.PUPPETEER_EXECUTABLE_PATH
-  || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-
-let puppeteer;
-try {
-  puppeteer = (await import('puppeteer-core')).default;
-} catch {
-  console.error('smoke: puppeteer-core is not installed.\n  npm i -D puppeteer-core   (or run this from a directory that has it)');
-  process.exit(2);
-}
+// npm ci installs puppeteer-core without downloading a browser. Use the system
+// Chrome on Windows, macOS, or Linux; an explicit path also supports Chromium.
+//   PUPPETEER_EXECUTABLE_PATH  optional path to a Chromium-family browser
+import puppeteer from 'puppeteer-core';
+const browserLocation = process.env.PUPPETEER_EXECUTABLE_PATH
+  ? { executablePath: process.env.PUPPETEER_EXECUTABLE_PATH }
+  : { channel: 'chrome' };
 
 // Not named URL: that would shadow the global URL constructor the response
 // handler below uses to read a pathname.
 const TARGET = process.argv[2] || `http://localhost:${process.env.PORT || 4173}/`;
 const errors = [];
 
-// Spawn `serve dist` unless we were handed a URL to point at. The binary is
-// spawned directly rather than through npx so that killing it kills the server
-// and not a wrapper that leaves the port held.
+// Spawn the server through Node, without a platform-specific .bin shim or a
+// shell wrapper. Killing this child also releases its listening port.
 let server = null;
 if (!process.argv[2]) {
   const { spawn } = await import('node:child_process');
   const { fileURLToPath: toPath } = await import('node:url');
   const root = toPath(new URL('..', import.meta.url));
   const port = String(process.env.PORT || 4173);
-  server = spawn(toPath(new URL('../node_modules/.bin/serve', import.meta.url)),
-    ['dist', '-l', port, '--no-clipboard'],
-    { cwd: root, stdio: 'ignore' });
+  server = spawn(process.execPath, [toPath(new URL('./serve.mjs', import.meta.url))],
+    { cwd: root, env: { ...process.env, PORT: port }, stdio: 'ignore', windowsHide: true });
+  server.on('error', (error) => {
+    console.error(`smoke: could not start the static server: ${error.message}`);
+    process.exit(2);
+  });
   // Without unref() the live child handle keeps this process's event loop alive
   // after the last assertion, and the run hangs on a green result forever.
   server.unref();
@@ -85,8 +80,8 @@ if (!process.argv[2]) {
 }
 
 const b = await puppeteer.launch({
-  executablePath: CHROME,
-  headless: 'new',
+  ...browserLocation,
+  headless: true,
   // SwiftShader, so this runs the same on a headless box with no GPU. It is a
   // "does it run" test, not a "how fast" test.
   args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
@@ -251,6 +246,22 @@ const barMoves = [];
   const frames = (n) => bar.evaluate((k) => new Promise((r) => {
     let i = 0; const t = () => (++i >= k ? r() : requestAnimationFrame(t)); requestAnimationFrame(t);
   }), n);
+  // A frame count does not establish that the damped camera has arrived.
+  // At 70 frames it can still be travelling from the previous scroll depth;
+  // measuring that travel as a resize effect produces false failures. Wait
+  // for both the requested viewport and scroll state, without snapping either.
+  const settled = async (height, y) => {
+    const target = y / (1100 * PHONE.height / 100 - (PHONE.height + BAR));
+    await bar.waitForFunction((h, expectedTarget) => {
+      const c = window.__clinic, s = c.driver.state;
+      return Math.abs(c.stage.camera.aspect - window.innerWidth / h) < 1e-6
+        // scrollTo dispatches its scroll event asynchronously. Do not mistake
+        // the previous depth's settled state for arrival at this one.
+        && Math.abs(s.targetGlobal - expectedTarget) < 1e-4
+        && Math.abs(s.global - s.targetGlobal) < 1e-6 && s.atRest;
+    }, { timeout: 10000, polling: 'raf' }, height, target);
+    await frames(2); // let the next rendered frame consume the settled state
+  };
   const pose = () => bar.evaluate(() => {
     const c = window.__clinic, cam = c.stage.camera, s = c.driver.state;
     return { x: cam.position.x, y: cam.position.y, z: cam.position.z, ch: s.index, p: s.p };
@@ -258,10 +269,10 @@ const barMoves = [];
   for (const y of [1266, 3798, 5064, 6330, 7596]) {
     await bar.setViewport({ ...PHONE, isMobile: true, hasTouch: true });
     await bar.evaluate((yy) => window.scrollTo(0, yy), y);
-    await frames(70);
+    await settled(PHONE.height, y);
     const before = await pose();
     await bar.setViewport({ ...PHONE, height: PHONE.height + BAR, isMobile: true, hasTouch: true });
-    await frames(70);
+    await settled(PHONE.height + BAR, y);
     const after = await pose();
     const move = Math.hypot(after.x - before.x, after.y - before.y, after.z - before.z);
     barMoves.push({ y, before, after, move });

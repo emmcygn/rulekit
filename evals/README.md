@@ -15,13 +15,13 @@ Two harnesses, on purpose:
 | `npm run eval` (promptfoo) | per-case: did this note extract correctly, and what exactly went wrong? Model × prompt matrix. | yes — exits 100 on any regression |
 | `npm run facts:eval` | corpus-level: precision, recall, grounding pass rate, confidence calibration. | yes — `--min-precision 0.95 --min-recall 0.95` |
 
-## Running it offline (the default)
+## Running recorded responses (the default)
 
 ```bash
-npm run eval          # == npm run build && promptfoo eval -c evals/promptfooconfig.yaml
+npm run eval          # builds, then runs scripts/eval-recorded.ts
 ```
 
-**No API key. No network. No cost.** `evals/providers/recorded.js` serves the
+**No live model calls; no API key or model inference cost.** `evals/providers/recorded.js` serves the
 committed responses in `evals/recorded/` — one per note, produced by the pinned
 model against the pinned prompt. Before serving a response, the provider checks
 its model, prompt version and rendered hash, output-schema version and hash,
@@ -29,7 +29,15 @@ inference settings, and full rendered-request hash. A changed note, fact model,
 prompt, schema, model, or setting therefore fails before scoring. It is a
 fixture, not a cache: it never falls
 back to a live call, and a note without a recording fails the run loudly rather
-than quietly reaching for the network.
+than quietly making a model request.
+
+The wrapper fixes the recorded config and sets promptfoo's supported
+`PROMPTFOO_DISABLE_TELEMETRY` and `PROMPTFOO_DISABLE_UPDATE` flags, overriding
+inherited values. **This is not a no-network guarantee:** promptfoo 0.122.0
+still sends an opt-out notification despite its telemetry flag. For a strictly
+local evaluation, use `npm run facts:eval`, which runs rulekit's standalone
+corpus evaluator without promptfoo. Dependency installation still needs the
+package registry. See [the dependency review](../docs/dependency-audit.md).
 
 Everything else in the harness is production code. `evals/prompt.js` renders the
 same `prompts/extract-facts.v1.md` through the same renderer the pipeline uses,
@@ -51,7 +59,7 @@ npx promptfoo eval -c evals/promptfooconfig.live.yaml
 `evals/providers/live.js` is the only module in the repo that constructs an
 Anthropic client, and it does so lazily inside `callApi`, so importing the
 harness never touches credentials. It calls the production `buildRequest()`, so
-a live run and an offline run differ only in where the response comes from — the
+a live run and a recorded run use the same request builder — the
 model id, the prompt, and the structured-output schema are the same objects.
 
 To sweep a model matrix, uncomment the second provider block in
@@ -116,11 +124,11 @@ expected-facts.yaml      ground truth — the single source, read by both harnes
 tests.js                 generates promptfoo cases from expected-facts.yaml
 prompt.js                renders prompts/extract-facts.v1.md
 lib.js                   shared loader for the built pipeline
-providers/recorded.js    offline: serves evals/recorded/
+providers/recorded.js    recorded: serves evals/recorded/
 providers/live.js        live: calls buildRequest() through the real SDK
 assertions/grounded.js   the real grounding gate + exact-fact matcher
 recorded/*.json          one committed response per note
-promptfooconfig.yaml     offline config (the default)
+promptfooconfig.yaml     recorded config (the default)
 promptfooconfig.live.yaml  live config
 ```
 

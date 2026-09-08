@@ -5,11 +5,16 @@ A scroll-driven three.js staging of `../plain.html`. Same story, same words; the
 
 ## Run it
 
-    npm install
-    npm run dev        # http://localhost:5173 — add ?hud=1 for the perf HUD, ?ch=N to jump
+Use Node 22.22.2 from the repository's `.nvmrc`. Run these commands from
+`docs/clinic`:
+
+    npm ci
+    npm run dev        # syncs the reading page, then serves http://localhost:5173
     npm test           # unit tests, scene budgets, and the copy-parity check
     npm run build      # syncs plain.html into public/, then builds to dist/
-    npm start          # serves dist/ the way Railway does
+    npm start          # serves the standalone dist/ at http://localhost:3000
+
+Add `?hud=1` for the performance HUD or `?ch=N` to jump to a chapter.
 
 ## Before you merge: `npm run verify`
 
@@ -24,9 +29,15 @@ a real browser (`npm run smoke`, which serves `dist/` itself on port 4173 — se
 `PORT` to move it). The smoke pass also re-measures every panel at 380x780 and
 fails if a card's copy no longer fits inside it.
 
-Smoke needs a local Chrome and `puppeteer-core`; neither is installed here (a
-300MB browser download per install is not worth it). Point
-`PUPPETEER_EXECUTABLE_PATH` at Chrome if it is not in the default macOS place.
+`npm ci` installs the locked `puppeteer-core` dependency without downloading a
+browser. Smoke discovers a standard Google Chrome installation on Windows,
+macOS, or Linux. Set `PUPPETEER_EXECUTABLE_PATH` to an installed Chrome or
+Chromium executable for a custom location. The smoke script starts its server
+through Node and stops it when the run ends; it does not need a shell-specific
+executable wrapper.
+
+CI runs the build and unit/copy/budget tests. The browser smoke check remains a
+local pre-merge gate, so run `npm run verify` before sharing walkthrough changes.
 
 ## Rules that matter
 
@@ -34,9 +45,8 @@ Smoke needs a local Chrome and `puppeteer-core`; neither is installed here (a
   `public/` and appends one back-link block to the copy.
 - Panel prose is transplanted verbatim. `npm run parity` fails the build if a
   sentence drifts or a claims-discipline label goes missing.
-- Budgets: 300 draw calls, 500k triangles, 250KB gzip JS. `tests/budget.test.js`
-  enforces the first two; check the third with
-  `for f in dist/assets/*.js; do gzip -c "$f" | wc -c; done`.
+- Budgets: 300 draw calls, 500k triangles, and 250 KiB (256,000 bytes) of gzipped
+  JavaScript. `tests/budget.test.js` enforces all three when a build exists.
 - New scene? Follow the module contract in `src/core/sceneManager.js`, declare a
   `budget`, instance anything plural, and author a portrait camera variant in
   `src/core/cameraKeys.js`.
@@ -77,8 +87,9 @@ it, so the two cannot drift apart silently.
 
 ### The `/plain` contract — do not break this
 
-`src/main.js` redirects visitors with no WebGL, or with reduced-motion set, to
-`/plain`. **The host must answer `/plain` with `plain.html`.** If it answers with
+`src/main.js` redirects visitors without WebGL2 to `/plain`. Other visitors can
+choose the reading version from its link on the page. **The host must answer
+`/plain` with `plain.html`.** If it answers with
 `index.html` instead, those visitors bounce between the two forever.
 
 `serve` gets this right with no config: `cleanUrls` defaults to on, so `/plain`
@@ -88,13 +99,13 @@ resolves to `plain.html` and `/plain.html` 301s to `/plain`. Two consequences:
   every unmatched path to `index.html`, `/plain` included, and the loop is back.
 - **Never add a catch-all rewrite** to a `serve.json`. Missing paths should 404.
 
-Verified against the assembled site, the way the Dockerfile lays it out:
+Route contract for the assembled site built by the Dockerfile:
 
 | request | expected |
 |---|---|
-| `/walkthrough` | 200, the 3D clinic |
-| `/plain` | 200, `plain.html`, back-link to `/walkthrough` |
-| `/plain.html` | 301 → `/plain`, then 200 |
+| `/walkthrough` | Redirects to `/walkthrough/`, then 200, the 3D clinic |
+| `/plain` | Redirects to `/plain/`, then 200, `plain.html`, back-link to `/walkthrough/` |
+| `/plain.html` | Redirects to the clean reading-page URL, then 200 |
 | `/walkthrough/?ch=4` | 200, the 3D clinic |
 | `/anything-else` | 404 — *not* `index.html` |
 
@@ -104,6 +115,7 @@ answers at `/` and its `/plain` still works — but the back-link inside that
 Use `npm run dev` for local work; `npm start` is for checking the bundle, not the
 links.
 
-`PORT` is written as `${PORT:-3000}` on purpose. `serve -l` with an empty argument
-exits with `ARG_MISSING_REQUIRED_LONGARG`, which on Railway is a restart loop, so
-the default is the difference between a bad port and a dead service.
+`scripts/serve.mjs` reads `PORT` with a default of `3000`, using the same Node
+entry point on Windows, macOS, and Linux. The smoke command supplies `4173` by
+default. The assembled Docker service uses port `8080`; it serves all four
+site routes together rather than this standalone build.
