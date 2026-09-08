@@ -19,7 +19,7 @@ The most useful feedback is specific: “this needs a measurement date,” “th
 
 ## Five-minute demo route
 
-Use the [local setup](../README.md#run-it-locally), or [get in touch](#get-in-touch) for a guided walkthrough.
+Use the [local setup](development.md#install-and-run), or [get in touch](#get-in-touch) for a guided walkthrough.
 
 | Step | What to inspect | Question to bring back |
 | --- | --- | --- |

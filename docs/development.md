@@ -13,12 +13,18 @@ The repository enforces LF line endings through `.gitattributes`: recorded promp
 ## Install and run
 
 ```sh
+git clone https://github.com/emmcygn/rulekit.git
+cd rulekit
 npm ci
 npm --prefix web ci
 npm --prefix web run dev
 ```
 
+For an existing checkout, start at `npm ci` from the repository root.
+
 Open [localhost:5173](http://localhost:5173). Install root dependencies first: the workbench typechecks and bundles the shared engine outside its own directory. Each package has its own lockfile; this is not an npm workspace.
+
+Try **Amendment** to compare the bundled protocol versions, then **Review** to inspect a proposed fact and its source quote. The browser cohort contains ten hand-written synthetic patients. Review decisions persist in browser local storage; use a fresh browser profile for an untouched demonstration.
 
 For a production build preview:
 
