@@ -4,6 +4,8 @@
 
 RuleKit is a working prototype that turns eligibility criteria into versioned YAML rules, checks for some kinds of contradiction, and shows how a protocol amendment changes results for a synthetic cohort. It includes a TypeScript engine, CLI, and browser workbench.
 
+The demo runs on a laptop against files in this Git repository. No backend or account is needed.
+
 **I'm looking for clinical operations professionals and trial managers to help shape the next step.** Read the [clinical collaboration brief](docs/clinical-collaboration.md) for a short walkthrough and a concrete first contribution. No coding or patient data required.
 
 > **Demonstration only.** All patient data is synthetic. RuleKit has no clinical validation and is not for real patient screening, enrolment, or operational feasibility decisions.
