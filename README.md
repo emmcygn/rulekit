@@ -5,7 +5,7 @@ code.** Agents propose evidence. Humans confirm it. A deterministic engine is
 the only thing that ever decides.
 
 TypeScript engine + CLI + a browser workbench. Apache-2.0. No backend, no
-accounts, no telemetry — it runs on a laptop against files in a git repo.
+accounts, no telemetry. Everything runs on a laptop against files in a git repo.
 
 > ### ⚠ Not medical software
 >
