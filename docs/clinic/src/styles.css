@@ -26,14 +26,15 @@ body[data-tier="high"] #vignette{
 #panels{position:fixed;inset:0;z-index:2;pointer-events:none}
 #rail{position:fixed;z-index:3}
 #spacer{position:relative;z-index:-1;width:1px}
-/* The flat-edition toggle lives at the top of the DOCUMENT, not the viewport:
-   position:absolute anchors it to the page, so it is visible on arrival and
-   scrolls away with the hero instead of following the reader (owner decision —
-   no sticky chrome). White ground because it sits over the 3D scene. */
-#flatlink{position:absolute;top:14px;right:16px;z-index:4;font-family:var(--mono);
-          font-size:12px;color:var(--ink2);text-decoration:none;
-          background:#fff;border:1px solid var(--rule);padding:3px 8px;
-          box-shadow:0 1px 2px rgba(0,0,0,.06)}
+/* The workbench stays available throughout; the reading link scrolls away. */
+#workbench-link,#flatlink{z-index:4;display:inline-flex;align-items:center;justify-content:center;
+          min-height:44px;font:500 12px/1.4 var(--sans);text-decoration:none;padding:8px 12px}
+#workbench-link{position:fixed;top:14px;right:16px;width:144px;
+          background:var(--ink);border:1px solid var(--ink);color:#fff;font-weight:600}
+#workbench-link:hover{background:var(--ink2);border-color:var(--ink2)}
+#workbench-link:focus-visible,#flatlink:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+#flatlink{position:absolute;top:14px;right:172px;color:var(--ink2);
+          background:#fff;border:1px solid var(--rule)}
 #flatlink:hover{color:var(--ink)}
 #perfbanner{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5;
             background:#fff;border:1px solid var(--rule);padding:12px 16px;font-size:14px}
@@ -89,14 +90,11 @@ body[data-tier="high"] #panels .panel{
     height:40svh;max-height:40svh;border-left:0;border-right:0;border-bottom:0;
     padding:16px 18px 22px;
   }
-  #flatlink{top:10px;right:10px;font-size:11px;padding:2px 7px}
-  /* viewport-fit=cover (index.html) extends the layout under a notched/Dynamic-
-     Island phone's unsafe edges, so the chip needs its own inset or it sits
-     under the notch on the first screen — and #flatlink is anchored to the top
-     of the DOCUMENT, which is exactly where that hardware is. Redeclared, not
-     folded into the rule above: a browser without env() support keeps the plain
-     10px rather than dropping the whole declaration. */
-  #flatlink{top:calc(10px + env(safe-area-inset-top))}
+  /* Leave the chapter rail clear and keep the button beside the cost chart. */
+  #workbench-link{top:calc(44px + env(safe-area-inset-top,0px));
+    left:max(10px,env(safe-area-inset-left,0px));right:auto}
+  #flatlink{top:calc(44px + env(safe-area-inset-top,0px));
+    right:max(10px,env(safe-area-inset-right,0px))}
 }
 #panels .frame-lede{font:600 clamp(19px,2.6vw,24px)/1.25 var(--sans);letter-spacing:-.01em;margin-bottom:10px;text-wrap:balance}
 #panels .pitch-box{border:1px solid var(--rule);background:var(--paper,#fff);padding:10px 12px;margin:10px 0 8px}
