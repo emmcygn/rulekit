@@ -37,9 +37,15 @@ describe("DEMO-HF-001 content (spec weeks 1-2 milestone)", () => {
       expect(text, surface).not.toContain("the teaching pack with its contradiction seeded on purpose");
       expect(text, surface).not.toContain("The checker proves that for every possible patient, then fails the build");
     }
-    expect(read("README.md")).toContain("deliberately **not** called a contradiction");
-    expect(read("docs/plain.html")).toContain("ordinary eligibility behavior, not a contradiction and not a failing check");
-    expect(read("docs/clinic/index.html")).toContain("does not report a contradiction or fail the build");
+    // The README summarizes checker scope; the detailed surfaces explain the band.
+    expect(read("README.md")).toContain("checks for some kinds of contradiction");
+    for (const surface of ["deploy/landing.html", "docs/plain.html", "docs/clinic/index.html"]) {
+      const text = read(surface);
+      expect(text, surface).toContain("Values from 30 up to, but excluding, 45 pass the inclusion and trigger the exclusion.");
+      expect(text, surface).toContain("The overall result is ineligible.");
+      expect(text, surface).toContain("This is ordinary exclusion behavior.");
+      expect(text, surface).toContain("does not report a contradiction or fail the build");
+    }
   });
 
   it("all 13 rule-set test cases pass", () => {

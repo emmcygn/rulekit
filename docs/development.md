@@ -37,6 +37,8 @@ Vite prints the preview URL. The workbench includes one synthetic protocol and t
 
 ## Verification
 
+For README, landing-page, or walkthrough copy changes, run `npm test` from the repository root as well as the relevant package checks below. Root tests check public claims against the demo's behavior.
+
 For engine, schema, CLI, normalization, or extraction changes:
 
 ```sh
