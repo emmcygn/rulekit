@@ -10,8 +10,8 @@ Use Node 22.22.2 from the repository's `.nvmrc`. Run these commands from
 
     npm ci
     npm run dev        # syncs the reading page, then serves http://localhost:5173
-    npm test           # unit tests, scene budgets, and the copy-parity check
     npm run build      # syncs plain.html into public/, then builds to dist/
+    npm test           # unit tests, scene budgets, preview packaging, and copy parity
     npm start          # serves the standalone dist/ at http://localhost:3000
 
 Add `?hud=1` for the performance HUD or `?ch=N` to jump to a chapter.
@@ -38,6 +38,26 @@ executable wrapper.
 
 CI runs the build and unit/copy/budget tests. The browser smoke check remains a
 local pre-merge gate, so run `npm run verify` before sharing walkthrough changes.
+
+## Link preview
+
+The public walkthrough at `https://medirulekit.emmanuelcuyugan.com/walkthrough/`
+includes static Open Graph metadata and a 1200 × 627 PNG for link previews.
+The PNG is committed under `public/social/`, so builds do not need Chrome or
+image generation services to package it.
+
+To change the card, edit `social/preview.html`, then run:
+
+    node scripts/render-social.mjs
+    npm run build
+    npm test
+
+Rendering uses the repository's workbench screenshot, Google Fonts, and an
+installed Chrome browser. `PUPPETEER_EXECUTABLE_PATH` is supported. Use a new
+image filename when replacing the published card and update the metadata and
+preview test together. After deployment, inspect the walkthrough URL in
+[LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/) to refresh
+its cached preview.
 
 ## Rules that matter
 

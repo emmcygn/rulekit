@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RuleKit walkthrough preview</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; width: 1200px; height: 627px; overflow: hidden;
+      background: #f4f6f8; color: #1a1d21; font-family: 'Public Sans', Arial, sans-serif; }
+    main { position: relative; width: 100%; height: 100%; }
+    .copy { position: absolute; inset: 52px auto 46px 54px; width: 570px; }
+    .brand { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.8px; }
+    .brand::before { content: ''; display: inline-block; width: 16px; height: 16px;
+      margin-right: 12px; background: #793843; }
+    h1 { margin: 89px 0 24px; font-size: 56px; line-height: 1.08;
+      font-weight: 700; letter-spacing: -2.2px; }
+    .description { margin: 0; max-width: 440px; color: #585f66; font-size: 23px; line-height: 1.45; }
+    .footer { position: absolute; bottom: 0; left: 0; }
+    .invite { margin: 0 0 12px; font-size: 19px; font-weight: 600; }
+    .scope { margin: 0; color: #585f66; font-size: 16px; }
+    .product { position: absolute; top: 44px; right: 48px; width: 462px; height: 523px;
+      margin: 0; overflow: hidden; border: 1px solid #d8dee4; border-radius: 8px;
+      background: #fff; box-shadow: 0 16px 40px #1a1d2112; }
+    .product figcaption { display: flex; align-items: center; height: 40px; padding: 0 16px;
+      border-bottom: 1px solid #d8dee4; color: #585f66; font-size: 13px; background: #fff; }
+    .product img { display: block; width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="copy">
+      <p class="brand">RuleKit</p>
+      <h1>Change a criterion.<br>See who it affects.</h1>
+      <p class="description">Explore protocol amendments<br>with a synthetic trial cohort.</p>
+      <div class="footer">
+        <p class="invite">Explore the interactive walkthrough</p>
+        <p class="scope">Open-source prototype · Clinical trial eligibility</p>
+      </div>
+    </div>
+    <figure class="product">
+      <figcaption>Inside the workbench</figcaption>
+      <img src="../../images/workbench-amendment.png" alt="RuleKit workbench showing a protocol amendment and changes in synthetic participant results.">
+    </figure>
+  </main>
+</body>
+</html>
