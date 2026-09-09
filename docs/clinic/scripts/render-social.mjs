@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
-const output = new URL('../public/social/rulekit-walkthrough-v1.png', import.meta.url);
+const output = new URL('../public/social/medirulekit-workflow-v2.png', import.meta.url);
 await mkdir(fileURLToPath(new URL('.', output)), { recursive: true });
 const browser = await puppeteer.launch({
   headless: true,

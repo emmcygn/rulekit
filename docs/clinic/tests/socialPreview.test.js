@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 
 const pageUrl = 'https://medirulekit.emmanuelcuyugan.com/walkthrough/';
-const imagePath = 'social/rulekit-walkthrough-v1.png';
+const imagePath = 'social/medirulekit-workflow-v2.png';
 const imageUrl = new URL(imagePath, pageUrl).href;
 
 function readHtml(path) {
@@ -37,7 +37,7 @@ describe.each([
     expect(canonical[0].href).toBe(pageUrl);
     expect(meta('og:url')).toBe(pageUrl);
     expect(meta('og:type')).toBe('website');
-    expect(meta('og:site_name')).toBe('RuleKit');
+    expect(meta('og:site_name')).toBe('medirulekit');
 
     const title = head.match(/<title>([^<]+)<\/title>/i)?.[1];
     expect(title?.length).toBeGreaterThan(10);
