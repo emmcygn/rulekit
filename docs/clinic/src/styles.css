@@ -317,3 +317,14 @@ body[data-tier="high"] #panels .panel{
   #panel-00-hero .pitch-box .pitch{font-size:13.5px}
   #panel-00-hero p.small{margin-bottom:6px}
 }
+
+/* Shorter panels leave room for readable type without covering more of the scene. */
+#panels .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.03em;text-transform:none}
+@media (min-width:761px) and (min-height:561px){
+  #panels .small{font-size:14.5px;line-height:1.5}
+  #panel-00-hero .frame-lede{font-size:clamp(22px,2.2vw,28px);line-height:1.2}
+}
+@media (max-width:760px) and (orientation:portrait){
+  #panels .small{font-size:14px;line-height:1.45}
+  #panels h2,#panels .frame-lede{font-size:20px;line-height:1.22}
+}

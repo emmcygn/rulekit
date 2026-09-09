@@ -129,7 +129,7 @@ const CARD_HOME_PORTRAIT = [
 ];
 
 const NOTE_LABEL = 'synthetic note · patient SYN-042';
-const DOOR_LABEL = 'a person approves, or it does not exist';
+const DOOR_LABEL = 'Human confirmation required';
 
 // ── beats ─────────────────────────────────────────────────────────────────
 // The note crosses under the lens between p ≈ 0.25 and p ≈ 0.75, so the reading

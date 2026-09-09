@@ -63,7 +63,7 @@ const FEED_X = GX - TUBE_LEN;   // the mouth of the intake tube
 //
 // Portrait narrows the ANGLE, never the radius, so all three stay exactly R
 // from the gate in either orientation. 0.72 of the fan is what a 31°-wide
-// frustum holds with all three labels inside it — wider and "don't know" walks
+// frustum holds with all three labels inside it — wider and "unknown" walks
 // off the right edge.
 const FAN = 0.40;
 const PORTRAIT_FAN = 0.72;
@@ -82,12 +82,12 @@ const LABEL_DZ = Math.cos(LABEL_YAW) * 0.42;
 const TUBE_T = 0.26;
 
 const EXITS = [
-  { key: 'pass',    ang: -FAN, label: 'yes' },
-  { key: 'fail',    ang:  0,   label: 'no' },
-  { key: 'unknown', ang:  FAN, label: "don't know" },
+  { key: 'pass',    ang: -FAN, label: 'pass' },
+  { key: 'fail',    ang:  0,   label: 'fail' },
+  { key: 'unknown', ang:  FAN, label: 'unknown' },
 ];
 
-// Fixed routing: 4 in 10 pass, 3 fail, 3 land on "don't know". Not a rounding
+// Fixed routing: 4 in 10 pass, 3 fail, 3 land on "unknown". Not a rounding
 // error, not a leftover — a third of the traffic, stated as a constant.
 // Interleaved rather than blocked (0,0,0,0,1,1,1,2,2,2), because consecutive
 // indices carry consecutive phases: a blocked table sends four cubes down the
@@ -182,7 +182,7 @@ export default {
       );
       // The labels do NOT ride in the slot. A slot is turned by its own fan
       // angle, and a label inheriting that turn is read at a different
-      // obliquity on each exit — "don't know", the outermost, ends up visibly
+      // obliquity on each exit — "unknown", the outermost, ends up visibly
       // skewed while "yes" is square, which is exactly the quiet demotion this
       // room exists to avoid. So all three hang off the room group at ONE fixed
       // orientation: turned LABEL_YAW toward the flight path and tipped back

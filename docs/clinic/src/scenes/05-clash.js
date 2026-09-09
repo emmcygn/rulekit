@@ -77,9 +77,9 @@ const CAND = 28;
 const CAND_LO = 3, CAND_HI = 77;
 
 const T_RULE_1 = 'eGFR at least 30';
-const S_RULE_1 = 'rule 1 · lets in';
+const S_RULE_1 = 'rule 1 · inclusion';
 const T_RULE_2 = 'eGFR below 45 at screening';
-const S_RULE_2 = 'rule 2 · turns away';
+const S_RULE_2 = 'rule 2 · exclusion';
 const BAND_LABEL = '[30, 45)';
 
 // Both orientations, laid out at build time and chosen in update(). Portrait is

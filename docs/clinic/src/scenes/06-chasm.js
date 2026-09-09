@@ -99,12 +99,12 @@ const WALK_FROM = -7.6, WALK_TO = 7.6;
 const SCREENS = 12;
 const CORE_R = 0.62;
 
-const L_ONE = 'one calculation';
-const L_ALWAYS = 'same pinned engine + input, same answer';
-const L_REPORT = 'printed report';
-const L_APP = 'visual app';
-const L_COUNT = '7 screen fail of 10';
-const L_STATUTE = 'the floor is the evaluated rule set';
+const L_ONE = 'Shared evaluation';
+const L_ALWAYS = 'Pinned engine + inputs, same result';
+const L_REPORT = 'report';
+const L_APP = 'workbench';
+const L_COUNT = '7 of 10 ineligible';
+const L_STATUTE = 'eGFR exclusion interval';
 const L_BAND = '[30, 45)';
 
 // Both orientations, built up front, chosen in update(). Portrait is ~31° wide

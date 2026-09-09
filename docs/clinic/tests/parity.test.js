@@ -27,8 +27,8 @@ describe('normalise', () => {
 
   it('collapses the gloss markup into readable text', () => {
     expect(
-      normalise('<span class="gloss">eGFR<span class="gloss-note">a standard kidney score</span></span>'),
-    ).toBe('egfr a standard kidney score');
+      normalise('<span class="gloss">eGFR<span class="gloss-note">estimated glomerular filtration rate</span></span>'),
+    ).toBe('egfr estimated glomerular filtration rate');
   });
 
   it('reads the figure plain.html counts up to, not its zero placeholder', () => {
@@ -102,18 +102,22 @@ describe('checkParity', () => {
     const failed = claims.filter((c) => !c.ok);
     expect(failed, JSON.stringify(failed, null, 2)).toEqual([]);
     expect(claims.map((c) => c.rule)).toEqual([
+      'synthetic-labelled-00',
+      'synthetic-labelled-04',
       'synthetic-labelled-07',
       'synthetic-labelled-08',
       'synthetic-labelled-09',
-      'chia-heuristic-labelled',
       'overlap-not-a-contradiction',
       'no-ehr-connector',
       'prototype-scope',
-      'not-medical-software',
-      'tufts-sourced',
+      'not-for-screening',
+      'amendment-costs-sourced',
+      'amendment-costs-not-savings',
       'eroom-sourced',
+      'no-measured-cost-savings',
       'documents-made-up',
-      'three-marks-no-fourth',
+      'missing-evidence-stays-unknown',
+      'human-confirmation-required',
     ]);
   });
 
@@ -147,17 +151,17 @@ describe('checkParity', () => {
     expect(orphans[0].sentence).toMatch(/no plain\.html section named no-such-section/);
   });
 
-  it('catches a stripped heuristic label', () => {
-    const tampered = indexHtml.replace(/heuristic estimate/g, 'coverage figure');
+  it('catches an implied cost-savings claim', () => {
+    const tampered = indexHtml.replace('This prototype has not measured cost savings.', 'This prototype reduces trial costs.');
     expect(tampered).not.toBe(indexHtml);
     const { claims } = checkParity(tampered, plainHtml);
-    expect(claims.find((c) => c.rule === 'chia-heuristic-labelled').ok).toBe(false);
+    expect(claims.find((c) => c.rule === 'no-measured-cost-savings').ok).toBe(false);
   });
 
-  it('catches a dropped not-medical-software warning', () => {
+  it('catches a dropped prototype limitation', () => {
     const tampered = indexHtml.replace(/not cleared by any regulator/g, 'reviewed internally');
     const { claims } = checkParity(tampered, plainHtml);
-    const failed = claims.find((c) => c.rule === 'not-medical-software');
+    const failed = claims.find((c) => c.rule === 'not-for-screening');
     expect(failed.ok).toBe(false);
     expect(failed.detail).toMatch(/not cleared by any regulator/);
   });
@@ -175,7 +179,7 @@ describe('checkParity', () => {
   it('fails a claim whose panel has been deleted outright', () => {
     const tampered = indexHtml.replace('data-panel="10-close"', 'data-panel="10-gone"');
     const { claims } = checkParity(tampered, plainHtml);
-    for (const rule of ['prototype-scope', 'not-medical-software', 'three-marks-no-fourth']) {
+    for (const rule of ['prototype-scope', 'not-for-screening']) {
       expect(claims.find((c) => c.rule === rule).ok, rule).toBe(false);
     }
   });
@@ -228,19 +232,19 @@ describe('claims are co-located with the copy a phone renders', () => {
 
   it('catches a claim sentence moved behind .ext', () => {
     const tampered = indexHtml.replace(
-      '<p class="src">Source: Tufts',
-      '<p class="src ext">Source: Tufts',
+      '<p class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30227022/">',
+      '<p class="src ext"><a href="https://pubmed.ncbi.nlm.nih.gov/30227022/">',
     );
     expect(tampered).not.toBe(indexHtml);
-    const claim = checkParity(tampered, plainHtml).claims.find((c) => c.rule === 'tufts-sourced');
+    const claim = checkParity(tampered, plainHtml).claims.find((c) => c.rule === 'amendment-costs-sourced');
     expect(claim.ok).toBe(false);
     expect(claim.detail).toMatch(/hides behind \.ext/);
   });
 
   it('catches the made-up-documents sentence being demoted into .ext-tall', () => {
     const tampered = indexHtml.replace(
-      '<p class="small">This illustration uses invented documents and synthetic patients.',
-      '<p class="small ext-tall">This illustration uses invented documents and synthetic patients.',
+      'This illustration uses invented documents and synthetic patients.',
+      '<span class="ext-tall">This illustration uses invented documents and synthetic patients.</span>',
     );
     expect(tampered).not.toBe(indexHtml);
     const claim = checkParity(tampered, plainHtml).claims.find((c) => c.rule === 'documents-made-up');
@@ -248,13 +252,9 @@ describe('claims are co-located with the copy a phone renders', () => {
     expect(claim.detail).toMatch(/hides behind \.ext/);
   });
 
-  it('keeps the exemption list to the one documented case', () => {
+  it('keeps all required qualifications visible on phones', () => {
     const exempt = CLAIM_RULES.filter((r) => r.allowViewportGated);
-    expect(exempt.map((r) => r.rule)).toEqual(['three-marks-no-fourth']);
-    for (const r of exempt) {
-      expect(r.why, `${r.rule} is exempt with no reason given`).toBeTruthy();
-      expect(r.why.length).toBeGreaterThan(40);
-    }
+    expect(exempt).toEqual([]);
   });
 });
 

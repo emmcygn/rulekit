@@ -1,28 +1,26 @@
 #!/usr/bin/env node
 //
-// Copy parity — spec section 11.
+// Keep walkthrough panels consistent with the canonical text page.
 //
 // The eleven panels in index.html carry prose transplanted word for word from
-// design/rulekit-thesis/plain.html. This script proves that is still true.
+// docs/plain.html. This script checks sentence parity and visible scope.
 //
 // The invariant: every prose sentence inside a panel must appear, normalised,
 // somewhere inside the concatenated text of the plain.html sections that
 // panel's `data-plain` names (the same mapping as CHAPTERS[].plain in
 // src/core/chapters.js). Anything else is an orphan — the copy has drifted, and
-// the fix is always to the panel, never to this script and never to plain.html.
+// copy edits must update the canonical source and its panel together.
 //
 // Three jobs:
 //   1. Parity      — no orphan sentences.
 //   2. Claims      — a fixed list of assertions that must hold however the
 //      discipline     panels are later edited (synthetic labelled synthetic,
-//                     56.7% labelled a heuristic estimate, and so on).
+//                     historical costs sourced, prototype limits visible).
 //   3. Co-location — every one of those claim sentences has to survive in the
 //                    copy a PHONE renders. `.ext` and `.ext-tall` are
 //                    display:none below 1200x760, so a claim that lives only
 //                    inside one of them is a claim most readers never see. The
 //                    check runs against the panel with those elements removed.
-//                    One rule is exempted on purpose, and says why: see
-//                    `allowViewportGated` below.
 //
 // Runnable as `npm run parity` (exit 0 / 1); importable for tests/parity.test.js.
 
@@ -136,18 +134,7 @@ export function panelsOf(indexHtml) {
 // transplant verbatim, the rule is to drop it from the panel, not to allowlist
 // a rewrite. Only add here when the fragment carries no prose claim of its own.
 // ---------------------------------------------------------------------------
-export const ALLOWLIST = [
-  {
-    panel: '04-three',
-    sentence: 'one synthetic patient &#183; age: 63 &#183; heart pump strength: 38 &#183; kidney score: missing',
-    why: 'assembled readout — #p-three labels its facts card "one synthetic patient · what the chart contains" and lists the values underneath; the panel splices label and values into one mono line. Every token is the source\'s; only the card furniture is gone.',
-  },
-  {
-    panel: '07-ai',
-    sentence: 'nyha_class = III &#183; confidence 0.94',
-    why: 'assembled readout — #p-ai draws the fact ("nyha_class = III") and the confidence number (0.94) as separate parts of a fact card; the panel prints them as one mono line. No claim of its own.',
-  },
-];
+export const ALLOWLIST = [];
 
 // Normalise once so an allowlist entry written with markup-ish punctuation still
 // matches; entries are compared after the same flattening the panels get.
@@ -203,15 +190,14 @@ export function stripViewportGated(html) {
 // Every rule is checked twice: the needle must be in the panel at all, and — by
 // default — it must still be there once the viewport-gated elements are
 // stripped out. A rule opts out of the second check with `allowViewportGated`,
-// which must carry a `why`. There is exactly one, and it is not a licence to
-// hide a claim: chapter 10's room prints the three marks in 3D, so the card
-// would otherwise say it twice.
+// which must carry a `why`. The current copy needs no viewport exemptions.
 // ---------------------------------------------------------------------------
 const CLAIM_RULES = [
+  { rule: 'synthetic-labelled-00', panel: '00-hero', must: ['invented documents and synthetic patients'] },
+  { rule: 'synthetic-labelled-04', panel: '04-three', must: ['synthetic patient'] },
   { rule: 'synthetic-labelled-07', panel: '07-ai', must: ['synthetic'] },
   { rule: 'synthetic-labelled-08', panel: '08-intake', must: ['synthetic'] },
   { rule: 'synthetic-labelled-09', panel: '09-build', must: ['synthetic'] },
-  { rule: 'chia-heuristic-labelled', panel: '09-build', must: ['56.7%', 'heuristic estimate'] },
   {
     rule: 'overlap-not-a-contradiction',
     panel: '05-clash',
@@ -224,20 +210,31 @@ const CLAIM_RULES = [
     must: ['this prototype'],
   },
   {
-    rule: 'not-medical-software',
+    rule: 'not-for-screening',
     panel: '10-close',
-    must: ['not medical software', 'not validated', 'not cleared by any regulator'],
+    must: ['not validated', 'not cleared by any regulator', 'not for clinical, feasibility, or research screening use'],
   },
-  { rule: 'tufts-sourced', panel: '01-clinical', must: ['tufts center for the study of drug development'] },
-  // The framing figure the piece now opens on, held to the same rule as the
-  // Tufts line: chapter 00's room shows a cost climbing and names it "Eroom's
-  // law", so the claim behind that shape and the paper it comes from have to be
-  // on the card, at every width. The 3D carries the pointer; the citation is not
-  // allowed to be the thing that gets cut to make the phone card fit.
+  {
+    rule: 'amendment-costs-sourced',
+    panel: '01-clinical',
+    must: ['$141k in phase ii', '$535k in phase iii', 'median direct costs', 'getz et al.', '2016'],
+  },
+  {
+    rule: 'amendment-costs-not-savings',
+    panel: '01-clinical',
+    must: ['amendment costs, not savings demonstrated by rulekit'],
+  },
+  // Historical industry figures need their time frame, source and scope at
+  // every viewport. They do not demonstrate an outcome from this prototype.
   {
     rule: 'eroom-sourced',
     panel: '00-hero',
-    must: ['halved roughly every nine years', 'scannell', 'nature reviews drug discovery'],
+    must: ['2012 analysis', 'about 80 times lower than in 1950', 'historical trend', 'scannell', 'nature reviews drug discovery'],
+  },
+  {
+    rule: 'no-measured-cost-savings',
+    panel: '00-hero',
+    must: ['this prototype has not measured cost savings'],
   },
   // The one sentence that stops the invented paperwork from reading as a real
   // incident. Losing it was the worst thing the copy could do to itself, so it
@@ -248,11 +245,14 @@ const CLAIM_RULES = [
     must: ['this illustration uses invented documents and synthetic patients.'],
   },
   {
-    rule: 'three-marks-no-fourth',
-    panel: '10-close',
-    must: ['one of these three marks', 'there is no fourth'],
-    allowViewportGated: true,
-    why: 'chapter 10 prints the three marks and "there is no fourth" in the room itself at ch10, so the sentence is on screen for a phone reader; keeping it in base card copy as well would say it twice, and the portrait card has no room for the repeat.',
+    rule: 'missing-evidence-stays-unknown',
+    panel: '04-three',
+    must: ['without egfr', 'unknown', 'every criterion must pass', 'any failure makes the result ineligible', 'an unknown leaves it undetermined'],
+  },
+  {
+    rule: 'human-confirmation-required',
+    panel: '07-ai',
+    must: ['exact source quote', 'human confirmation before evaluation', 'does not prove the proposed value is clinically correct'],
   },
 ];
 
@@ -335,10 +335,10 @@ export function report({ orphans, claims }) {
       console.error(`      ${o.sentence}`);
     }
     console.error(
-      '  Fix the panel, never this script and never plain.html. If a sentence',
+      '  Update the canonical source and its panel together. If a sentence',
     );
     console.error(
-      '  cannot survive the transplant unchanged, drop it rather than reword it.',
+      '  is optional detail, omit it from the panel without changing its meaning.',
     );
   }
   for (const c of badClaims) {

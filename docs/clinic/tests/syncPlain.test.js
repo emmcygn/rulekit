@@ -26,7 +26,7 @@ describe('injectBacklink', () => {
 
   it('leaves every claim in the source intact', () => {
     const out = injectBacklink(source);
-    for (const needle of ['56.7%', 'heuristic estimate', 'This prototype', 'not medical software']) {
+    for (const needle of ['This prototype has not measured cost savings', 'A 2016 study', 'synthetic patients', 'not cleared by any regulator']) {
       expect(out).toContain(needle);
     }
   });

@@ -43,17 +43,17 @@
 // this re-cut, so chapter 00 is paid for out of slack and not out of headroom.
 
 export const CHAPTERS = [
-  { id: '00-hero',     num: '00', title: 'Start',                 plain: ['hero'],                                vh: 110 },
-  { id: '01-clinical', num: '01', title: 'The clinical side',     plain: ['clinical'],                            vh: 110 },
-  { id: '02-engine',   num: '02', title: 'The engine',            plain: ['engine', 'engine-notes'], vh:  90 },
-  { id: '03-compile',  num: '02', title: 'The sentence compiles', plain: ['p-compile'],                           vh:  90 },
-  { id: '04-three',    num: '02', title: 'Three answers',         plain: ['p-three'],                             vh: 108 },
-  { id: '05-clash',    num: '02', title: 'The exclusion boundary', plain: ['clash-intro', 'p-clash'],             vh: 108 },
-  { id: '06-chasm',    num: '02', title: 'One calculation',       plain: ['chasm', 'onecalc'],                    vh:  80 },
-  { id: '07-ai',       num: '03', title: 'The AI part',           plain: ['sw-ai', 'ai-intro', 'p-ai'],           vh: 120 },
-  { id: '08-intake',   num: '04', title: 'Ten charts',            plain: ['intake'],                              vh:  62 },
-  { id: '09-build',    num: '05', title: 'What exists, and the build', plain: ['exists', 'build'],                vh: 100 },
-  { id: '10-close',    num: '06', title: 'Close',                 plain: ['assembly', 'close'],                   vh: 122 },
+  { id: '00-hero',     num: '00', title: 'Development costs',     plain: ['hero'],                                vh: 110 },
+  { id: '01-clinical', num: '01', title: 'Protocol changes',      plain: ['clinical'],                            vh: 110 },
+  { id: '02-engine',   num: '02', title: 'Rule engine',           plain: ['engine', 'engine-notes'],              vh:  90 },
+  { id: '03-compile',  num: '02', title: 'Rule structure',        plain: ['p-compile'],                           vh:  90 },
+  { id: '04-three',    num: '02', title: 'Criterion outcomes',    plain: ['p-three'],                             vh: 108 },
+  { id: '05-clash',    num: '02', title: 'Exclusion boundary',    plain: ['clash-intro', 'p-clash'],              vh: 108 },
+  { id: '06-chasm',    num: '02', title: 'Shared evaluation',     plain: ['chasm', 'onecalc'],                    vh:  80 },
+  { id: '07-ai',       num: '03', title: 'Evidence review',       plain: ['sw-ai', 'ai-intro', 'p-ai'],           vh: 120 },
+  { id: '08-intake',   num: '04', title: 'Synthetic fixtures',    plain: ['intake'],                              vh:  62 },
+  { id: '09-build',    num: '05', title: 'Workbench',             plain: ['exists', 'build'],                      vh: 100 },
+  { id: '10-close',    num: '06', title: 'Collaborate',           plain: ['assembly', 'close'],                   vh: 122 },
 ];
 
 export const TOTAL_VH = CHAPTERS.reduce((s, c) => s + c.vh, 0);

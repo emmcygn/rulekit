@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>rulekit — the research clinic</title>
-  <meta name="description" content="A prototype for versioned, tested clinical-trial eligibility criteria, demonstrated on synthetic patients.">
+  <title>RuleKit | Eligibility review</title>
+  <meta name="description" content="Review protocol wording, executable eligibility rules and synthetic patient results. A walkthrough for clinical operations teams and engineers.">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600&family=Martian+Mono:wght@600&display=swap">
   <link rel="stylesheet" href="/src/styles.css">
 </head>
@@ -12,162 +12,91 @@
   <canvas id="stage" aria-hidden="true"></canvas>
   <div id="vignette" aria-hidden="true"></div>
   <nav id="rail" aria-label="chapters"></nav>
-  <!-- Real DOM text, in reading order, so the page is selectable, findable and
-       screen-reader-readable whatever the camera is doing. Every sentence below
-       is plain.html's own, transplanted word for word from the sections named
-       in `data-plain`; nothing here is rewritten. What is missing was CUT, not
-       reworded — the card is a hard ~40svh box in portrait with no inner
-       scroll, so each panel carries its chapter's claim, its figures and their
-       source line, and lets the 3D beat carry the rest.
-
-       `.ext` marks copy that only a landscape/desktop card has room for. It is
-       the same verbatim plain.html prose, display:none'd on a portrait phone by
-       one rule in styles.css — a viewport decision, never an editorial one.
-       Everything a claim depends on (synthetic labels, the heuristic label,
-       the prototype scope, the Tufts figures and their source) is outside
-       `.ext` and shows at every width. -->
+  <!-- Accessible text stays in reading order. Panel prose also appears in
+       docs/plain.html at the sections named by data-plain. Optional .ext copy
+       adds detail on larger screens; required scope statements remain visible. -->
   <main id="panels">
     <section class="panel" id="panel-00-hero" data-panel="00-hero" data-plain="hero" data-side="left" aria-labelledby="h-00-hero">
-      <p class="eyebrow"><span class="ch">00</span>rulekit</p>
-      <h2 id="h-00-hero" class="frame-lede">Drug-research efficiency has a documented history of decline.</h2>
-      <p class="small">The climb has a name: Eroom's law<span class="ext">, cheekily spelling Moore's law backwards</span>. The cited study described output per research dollar as having halved roughly every nine years over its historical sample.<span class="ext"> This project tests a narrower idea: whether explicit, reviewable criteria can help people inspect protocol logic.</span> It has not measured trial cost savings.</p>
-      <p class="small ext">The scenarios below illustrate how differing interpretations can appear in copied criteria. They use invented documents and synthetic patients.</p>
-      <p class="src">Source: Scannell, Blanckley, Boldon &amp; Warrington,<span class="ext"> "Diagnosing the decline in pharmaceutical R&amp;D efficiency",</span> Nature Reviews Drug Discovery (2012).</p>
-      <div class="pitch-box">
-        <p class="pitch">Clinical-trial eligibility rules, made reviewable. rulekit is a prototype for versioning and testing executable criteria, with human-reviewed evidence and synthetic patients.</p>
-        <!-- .ext: the new pitch is a third longer than the old one and the
-             380x780 card overran by 12px with the byline in base copy. The
-             closing card credits the author at every width, so this is the
-             one line here that carries no claim. -->
-        <p class="small ext">by Manny Cuyugan</p>
-      </div>
-      <!-- The framing, and the three sentences outside `.ext` are BASE copy at
-           every width: the cost of a new medicine climbing, the name that curve
-           has, and the part of it this project is about. That is the issue the
-           whole piece is an answer to, and a phone reader gets it or nobody
-           does. The room opens on the same climb in 3D and captions it with two
-           fragments of this paragraph, "Eroom's law" and "the cost of one new
-           medicine" — pointers only. The CLAIM ("have halved roughly every nine
-           years") and its source line stay here on the card at every width,
-           because a figure a room cannot cite is decoration.
-           `.ext` holds the etymology, the sixty-year span, the concessive about
-           chemistry and the three worked examples of the paperwork failing:
-           colour, not claim, and the only reason any of it is gated is that
-           380x780 is 358px of box. -->
-
-      <!-- .ext: the hero figure's caption. The figure's own three labels are
-           gone from plain.html, so nothing here restates them. Measured, not
-           guessed — at 380x780 the card is 358px of box and the framing
-           paragraph and its source line spend most of it. -->
-      <p class="small ext">In short: Clinical trial prose that has to be manually read becomes a set of checks on facts that a machine can run, and the machine is allowed to say "I don't know" instead of guessing.</p>
+      <p class="eyebrow"><span class="ch">00</span>Drug development</p>
+      <h2 id="h-00-hero" class="frame-lede">R&amp;D spending has outpaced drug approvals.</h2>
+      <p class="small">In a 2012 analysis, drug approvals per inflation-adjusted R&amp;D dollar were about 80 times lower than in 1950. This historical trend is known as Eroom's law.</p>
+      <p class="small">RuleKit examines how teams review eligibility interpretations and amendment effects. This prototype has not measured cost savings.</p>
+      <p class="small">The walkthrough uses invented documents and synthetic patients.</p>
+      <p class="src"><a href="https://www.nature.com/articles/nrd3681">Scannell et al., Nature Reviews Drug Discovery, 2012</a></p>
     </section>
     <section class="panel" id="panel-01-clinical" data-panel="01-clinical" data-plain="clinical" data-side="right" aria-labelledby="h-01-clinical">
-      <p class="eyebrow"><span class="ch">01</span>the clinical side</p>
-      <h2 id="h-01-clinical">Trial criteria need careful review.</h2>
-      <p class="small ext">A clinical trial studies an intervention in people. Its <span class="gloss">eligibility criteria<span class="gloss-note">the rules for who may join</span></span> specify who may take part.</p>
-      <p class="small">This illustration uses invented documents and synthetic patients.<span class="ext-tall"> "At least 30" quietly becomes "over 30", so a patient who scores exactly 30 is admitted by the statute and thrown out by the database query. Five different readings of one law now exist, none of them binding, and nobody can say which one is current.</span></p>
-      <p class="small"><span class="big-num">$141K</span><br>median direct cost of one substantial amendment in <span class="gloss">Phase II<span class="gloss-note">the mid-stage test</span></span></p>
-      <p class="small"><span class="big-num">$535K</span><br>median direct cost in <span class="gloss">Phase III<span class="gloss-note">the large late-stage test</span></span></p>
-      <p class="small"><span class="big-num">~45%</span><br>of substantial amendments judged avoidable</p>
-      <p class="src">Source: Tufts Center for the Study of Drug Development, on the cost of protocol amendments.</p>
-      <p class="small ext-tall">These are published aggregate amendment figures, not a rulekit outcome. The study does not establish that logic contradictions caused those amendments or that this checker would have avoided them.</p>
+      <p class="eyebrow"><span class="ch">01</span>Protocol changes</p>
+      <h2 id="h-01-clinical">Protocol amendments carry implementation costs.</h2>
+      <p class="small">A 2016 study reported median direct costs of <strong>$141K in Phase II</strong> and <strong>$535K in Phase III</strong> for a substantial amendment.</p>
+      <p class="small">These are amendment costs, not savings demonstrated by RuleKit. This illustration uses invented documents and synthetic patients.</p>
+      <p class="small ext">“At least 30” includes 30. “Over 30” does not. Compare the source criterion with its checklist or query, then test the boundary.</p>
+      <p class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30227022/">Getz et al., Therapeutic Innovation &amp; Regulatory Science, 2016</a></p>
     </section>
     <section class="panel" id="panel-02-engine" data-panel="02-engine" data-plain="engine engine-notes" data-side="left" aria-labelledby="h-02-engine">
-      <p class="eyebrow"><span class="ch">02</span>the engine</p>
-      <h2 id="h-02-engine">Write the rules once, in a format a machine can run</h2>
-      <p class="lede">rulekit keeps each entry rule as a few lines of structured text. The protocol's original sentence sits right next to the logic, in the same file, so anyone can hold one up against the other.</p>
-      <div class="ext">
-        <p class="small"><strong>line 3 &#183; the original words.</strong> <span class="mono">verbatim</span> is the protocol's exact sentence, copied in and never touched again.</p>
-        <p class="small"><strong>line 4 &#183; the runnable meaning.</strong> <span class="mono">when</span> is that same sentence turned into logic: <span class="mono">egfr</span> must be <span class="mono">gte</span> (greater than or equal to) 30. A machine can run this line. A person can still read it.</p>
-      </div>
-      <p class="small"><strong>who writes it.</strong> A person writes this file and a person reviews it. No AI translates the protocol on its own.</p>
-      <p class="small ext-tall">One versioned file keeps the source wording beside a reviewable interpretation. Teams can inspect changes and run the same rules against the same inputs. A file alone does not establish which version a site is authorized to use.</p>
+      <p class="eyebrow"><span class="ch">02</span>Rule authoring</p>
+      <h2 id="h-02-engine">Keep source wording beside the rule.</h2>
+      <p class="lede">Each YAML rule stores the protocol sentence alongside its executable interpretation.</p>
+      <p class="small">A person writes and reviews the rule. Criteria that the language cannot express remain visible as unmodeled text.</p>
+      <p class="small ext">Version control records changes to the wording and logic. It does not establish which version a site is authorized to use.</p>
     </section>
     <section class="panel" id="panel-03-compile" data-panel="03-compile" data-plain="p-compile" data-side="right" aria-labelledby="h-03-compile">
-      <p class="eyebrow"><span class="ch">02</span>the whole trick, once</p>
-      <h2 id="h-03-compile">Watch one sentence compile</h2>
-      <p class="lede">the difference between a statute and working code, in four moves</p>
-      <div class="ext">
-        <p class="small"><strong>one synthetic criterion.</strong> A criterion from the synthetic demo protocol, with its original wording preserved.</p>
-        <p class="small"><strong>three parts of the comparison.</strong> A measurement, a direction, a threshold. The unit belongs to the fact model and the rule. Timing requirements need their own representation; a numeric comparison does not check when a measurement was taken.</p>
-      </div>
-      <p class="small"><strong>the words take their posts.</strong> "eGFR" becomes the fact to look up. "at least" becomes <span class="mono">gte</span>, greater than or equal. "30" stays 30.</p>
-      <p class="small"><strong>the sentence never leaves.</strong> The original wording rides along in the <span class="mono">verbatim</span> line, one line above the logic, permanently attached.</p>
+      <p class="eyebrow"><span class="ch">03</span>A worked criterion</p>
+      <h2 id="h-03-compile">Make each comparison explicit.</h2>
+      <p class="lede">The synthetic criterion becomes a comparison: fact <span class="mono">egfr</span>, operator <span class="mono">gte</span>, value <span class="mono">30</span>.</p>
+      <p class="small">The rule includes the measurement unit and preserves the source sentence in <span class="mono">verbatim</span>.</p>
+      <p class="small">Timing needs its own representation. A threshold alone does not check when a measurement was taken.</p>
     </section>
     <section class="panel" id="panel-04-three" data-panel="04-three" data-plain="p-three" data-side="left" aria-labelledby="h-04-three">
-      <p class="eyebrow"><span class="ch">02</span>idea one</p>
-      <h2 id="h-04-three">We want a model to say when it's not sure</h2>
-      <p class="lede">yes, no, and the most crucial - "I don't know"</p>
-      <p class="small mono">one synthetic patient &#183; age: 63 &#183; heart pump strength: 38 &#183; kidney score: missing</p>
-      <div class="ext">
-        <p class="small"><strong>a missing-data failure mode.</strong> If a program treats missing evidence as a negative finding, an exclusion can silently pass without the required measurement. This illustrates an implementation error, not a claim about other screening products.</p>
-        <p class="small"><strong>rulekit.</strong> The missing score comes back as <span class="mono">don't know</span>, a real answer rather than an error. If no criterion fails, this unresolved requirement leaves the overall result "undetermined". The trace keeps the missing evidence visible for review.</p>
-      </div>
-      <p class="small"><strong>the rule that never bends.</strong> An eligible result requires every criterion to pass. A failed criterion makes the overall result ineligible; otherwise, any unknown leaves it undetermined.</p>
+      <p class="eyebrow"><span class="ch">04</span>Missing evidence</p>
+      <h2 id="h-04-three">Keep missing evidence unresolved.</h2>
+      <p class="small mono">Synthetic patient: age 63, LVEF 38%, eGFR missing.</p>
+      <p class="lede">Without eGFR, the renal criterion returns <span class="mono">unknown</span>.</p>
+      <p class="small">Every criterion must pass for an eligible result. Any failure makes the result ineligible. Otherwise, an unknown leaves it undetermined.</p>
     </section>
     <section class="panel" id="panel-05-clash" data-panel="05-clash" data-plain="clash-intro p-clash" data-side="right" aria-labelledby="h-05-clash">
-      <p class="eyebrow"><span class="ch">02</span>idea two</p>
-      <h2 id="h-05-clash">It shows exactly where an exclusion fires</h2>
-      <div class="ext">
-        <p class="small">Once rules are logic, the evaluator can show which values pass an inclusion and then fire an exclusion.</p>
-        <p class="small"><strong>two clauses, pages apart.</strong> Each rule makes sense on its own. One admits decent kidney function, the other protects people with fragile kidneys. Different authors, different sections of the same statute, and no court ever read the two side by side.</p>
-      </div>
-      <p class="small"><strong>the evaluated band.</strong> One rule needs a kidney score of at least 30. The other rejects anything under 45. Every value in [30,45) therefore passes the inclusion and fires the exclusion, producing an ineligible verdict.</p>
-      <p class="small">That is an exclusion doing its job; <span class="mono">rules check</span> does not report a contradiction or fail the build.</p>
+      <p class="eyebrow"><span class="ch">05</span>Combined criteria</p>
+      <h2 id="h-05-clash">Inspect inclusions and exclusions together.</h2>
+      <p class="lede">An inclusion requires eGFR ≥30. An exclusion applies below 45.</p>
+      <p class="small">Values from 30 up to, but excluding, 45 pass the inclusion and trigger the exclusion. The overall result is ineligible.</p>
+      <p class="small">This is ordinary exclusion behavior. <span class="mono">rules check</span> does not report a contradiction or fail the build.</p>
     </section>
     <section class="panel" id="panel-06-chasm" data-panel="06-chasm" data-plain="chasm onecalc" data-side="left" aria-labelledby="h-06-chasm">
-      <p class="eyebrow"><span class="ch">02</span>idea three</p>
-      <h2 id="h-06-chasm">The report and workbench share evaluation logic</h2>
-      <p class="small mono ext">exactly 30: admitted by rule 1, barred by rule 2</p>
-      <p class="lede">The CLI and workbench use the same evaluator and attrition logic. Matching engine versions, rules, facts and evaluation dates let their counts be compared.</p>
-      <p class="small">Patient traces and totals are derived from evaluation results. Shared code and regression tests help keep the displays consistent.</p>
+      <p class="eyebrow"><span class="ch">06</span>Consistent evaluation</p>
+      <h2 id="h-06-chasm">Compare the same results across tools.</h2>
+      <p class="lede">The CLI report and workbench share the evaluator and attrition logic.</p>
+      <p class="small">Pin the engine version, rules, facts and evaluation date to compare results. Each patient trace shows the criteria behind its result.</p>
+      <p class="small ext">At eGFR 30, this example passes the inclusion and triggers the exclusion in both views.</p>
     </section>
     <section class="panel" id="panel-07-ai" data-panel="07-ai" data-plain="sw-ai ai-intro p-ai" data-side="right" aria-labelledby="h-07-ai">
-      <p class="eyebrow"><span class="ch">03</span>the AI part</p>
-      <h2 id="h-07-ai">The AI reads facts. It never decides how they're applied.</h2>
-      <p class="lede"><span class="ext">The hard part of screening is that the facts are buried in doctors' notes, written for other doctors. rulekit lets an LLM read a note and suggest facts. </span>Every suggestion has to carry the exact quote it came from, and a person approves it or throws it out.</p>
-      <p class="small">The suggested fact is an <span class="gloss">NYHA class<span class="gloss-note">a heart-failure severity grade</span></span>, and the number beside it is a <span class="gloss">confidence<span class="gloss-note">the AI's own certainty guess</span></span>, which only decides what gets reviewed first.</p>
-      <p class="small mono">every document, patient and clinician here is synthetic<br>nyha_class = III &#183; confidence 0.94</p>
-      <p class="small ext-tall"><strong>a suggestion, with its receipt.</strong> The AI proposes a fact and highlights the exact sentence it read it from. The quote is the receipt. A reviewer can inspect the quoted passage and its context. Finding a quote does not prove that the proposed value is clinically correct.</p>
-      <p class="small">If the quote is not in the source document word for word, the software throws the suggestion out before any person lays eyes on it.</p>
+      <p class="eyebrow"><span class="ch">07</span>Evidence review</p>
+      <h2 id="h-07-ai">Review proposed facts against their source.</h2>
+      <p class="lede">An LLM can propose facts from a note. Each proposal must include an exact source quote and receive human confirmation before evaluation.</p>
+      <p class="small">The note and patient here are synthetic. A matching quote supports review; it does not prove the proposed value is clinically correct.</p>
+      <p class="small ext">An unmatched quote causes rejection. Model confidence is not a clinical probability or an eligibility score.</p>
     </section>
     <section class="panel" id="panel-08-intake" data-panel="08-intake" data-plain="intake" data-side="left" aria-labelledby="h-08-intake">
-      <p class="eyebrow"><span class="ch">04</span>what exists</p>
-      <h2 id="h-08-intake">Ten charts arriving</h2>
-      <p class="lede">imagine ten synthetic patient charts arriving. seven fail a rule, three need a human, none of these patients get in.</p>
-      <p class="small mono">the funnel below counts the same ten.</p>
+      <p class="eyebrow"><span class="ch">08</span>Cohort review</p>
+      <h2 id="h-08-intake">Trace each cohort result.</h2>
+      <p class="lede">This example contains ten synthetic patients: seven ineligible, three undetermined and none eligible.</p>
+      <p class="small">Open a result to inspect failed criteria and unresolved evidence. These counts describe the demo cases, not a trial population.</p>
     </section>
     <section class="panel" id="panel-09-build" data-panel="09-build" data-plain="exists build" data-side="right" aria-labelledby="h-09-build">
-      <p class="eyebrow"><span class="ch">04</span>what exists</p>
-      <h2 id="h-09-build">What runs today</h2>
-      <p class="small">A public code repository whose bundled demos run locally without an account or required cloud service. CI is configured to run automated regression suites on pushes and pull requests. The repository has no EHR connector, and every person in this project is synthetic.</p>
-      <p class="small"><strong>The honest coverage number.</strong> Of 12,060 entry criteria pulled from 996 real trials, 56.7% look like the rule language could express them as written, 12.2% partially, and 31.1% not at all. That is a <strong>heuristic estimate</strong>: pattern matching over the text, never checked against human judges.</p>
-      <div class="ext">
-        <p class="eyebrow"><span class="ch">05</span>the build</p>
-        <p class="small">This is a prototype built to begin to validate an idea. The next part of it needs people interested in healthtech and people who run trials.</p>
-        <p class="small ext-tall">I've built this against public registry text and invented patients and have yet to hold it up against a real screening day.</p>
-        <p class="small">So: if you run trials, or you sit close to the people who do, I'd love to work with you to take this further.</p>
-      </div>
+      <p class="eyebrow"><span class="ch">09</span>Available now</p>
+      <h2 id="h-09-build">Run the prototype locally.</h2>
+      <p class="lede">The repository includes a rule engine, CLI reports, an amendment workbench and a fact review component.</p>
+      <p class="small">Bundled demos use synthetic patients and need no account or live model call. There is no EHR connector.</p>
+      <p class="small ext">Automated regression tests cover the engine and interfaces. Real screening workflows and language coverage still need evaluation with clinical teams.</p>
     </section>
     <section class="panel" id="panel-10-close" data-panel="10-close" data-plain="assembly close" data-side="left" aria-labelledby="h-10-close">
-      <p class="eyebrow"><span class="ch">06</span>close</p>
-      <h2 id="h-10-close">The limits, up front</h2>
-      <p class="small"><strong>&#9888; not medical software</strong> <span class="ext-tall">This is a demonstration of rule-governance tooling. </span>It is not validated, not cleared by any regulator, and not for clinical, feasibility, or research screening use. Every patient, note, clinician and institution here is invented.</p>
-      <p class="small">This prototype is open for review.<span class="ext-tall"> AI suggestions that carry their quotes. Human confirmation before AI proposals enter evaluation. A <span class="gloss">deterministic<span class="gloss-note">same pinned engine and input, same answer</span></span> engine as the only thing that decides. And the rule format written down separately, so somebody else can go build a second engine.</span></p>
-      <p class="small ext-tall">the architecture demonstrated by this repository</p>
-      <p class="small ext">Where to look next: <span class="mono">README.md</span> in the repository for the runnable version of all this, <span class="mono">FORMAT.md</span> for the rule language itself, and the <a href="https://github.com/emmcygn/rulekit/blob/main/docs/development.md">development guide</a> for setup, architecture and verification.</p>
-      <p class="small"><a href="https://github.com/emmcygn/rulekit/blob/main/docs/clinical-collaboration.md">Clinical operations and trial managers: read the collaboration brief.</a></p>
-      <p class="small"><a href="https://github.com/emmcygn/rulekit">Explore the rulekit repository.</a></p>
-      <!-- .ext, and not a cut: chapter 10's set piece prints the three marks and
-           "there is no fourth" in the room itself, so the portrait card is the
-           one place the sentence can go without saying it twice. -->
-      <p class="small ext-tall">Every verdict this page handed down is one of these three marks. There is no fourth.</p>
-      <p class="small mono">agents propose &#183; humans confirm &#183; the engine decides</p>
-      <p class="small ext-tall">AI-proposed facts stay outside evaluation until a person confirms them.</p>
-      <p class="src">by Emmanuel Cuyugan &#183; rulekit &#183; Apache-2.0 <span class="ext">&#183; set in Public Sans, Spline Sans Mono &amp; Martian Mono</span> &#183; amendment costs: Tufts CSDD &#183; criteria coverage: Chia corpus (CC-BY-4.0, Kury et al. 2020) &#183; trial criteria quoted from ClinicalTrials.gov</p>
+      <p class="eyebrow"><span class="ch">10</span>Collaboration</p>
+      <h2 id="h-10-close">Help test this against a screening workflow.</h2>
+      <p class="small">Clinical operations and trial managers: review a public or invented criterion and help define a useful amendment review. Engineers: inspect the rule format, traces and tests.</p>
+      <p class="small">This prototype is not validated, not cleared by any regulator, and not for clinical, feasibility, or research screening use.</p>
+      <p class="small"><a href="https://github.com/emmcygn/rulekit/blob/main/docs/clinical-collaboration.md">Discuss a clinical workflow</a> · <a href="https://github.com/emmcygn/rulekit/blob/main/docs/development.md">Set up the project</a></p>
+      <p class="src">Emmanuel Cuyugan · <a href="https://github.com/emmcygn/rulekit">RuleKit</a> · Apache-2.0</p>
     </section>
   </main>
-  <a id="flatlink" href="/plain">prefer the flat version?</a>
+  <a id="flatlink" href="/plain">Read the text version</a>
   <div id="spacer" aria-hidden="true"></div>
   <div id="perfbanner" hidden role="status"></div>
   <script type="module" src="/src/main.js"></script>

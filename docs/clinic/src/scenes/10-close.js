@@ -9,8 +9,8 @@
 //      Those are the six things the reader has already met, drawn small and
 //      joined by one continuous rail.
 //   2. THE CLOSE (p ≈ 0.84 → 1.00). The schematic recedes and the three marks
-//      are all that is left: ■ pass, □ fail, ▨ don't know, and one line —
-//      "there is no fourth". p = 1.000 is a HELD pose, not a fly-through: the
+//      are all that is left: ■ pass, □ fail, ▨ unknown, and one caption —
+//      "Criterion outcomes". p = 1.000 is a HELD pose, not a fly-through: the
 //      marks are placed exactly on the p = 1 look axis, so they settle dead
 //      centre and stay there for as long as the reader sits at the bottom.
 //
@@ -41,15 +41,13 @@ import { cloneOwned } from '../lib/materials.js';
 import { sub, smoothstep, lerp } from '../lib/easing.js';
 
 // ── copy ──────────────────────────────────────────────────────────────────
-// Every string below is plain.html's own wording. The four part names are the
-// `#assembly` caption verbatim ("a page, a file, one check, one answer, printed
-// twice"); the two outputs and the caption come from the same section; the
-// three marks and "there is no fourth" come from `#close`.
-const PARTS = ['a page', 'a file', 'one check', 'one answer'];
-const OUTPUTS = ['printed report', 'visual app'];
-const BOARD_CAPTION = 'you have met every one of them';
-const MARK_WORDS = ['pass', 'fail', "don't know"];
-const NO_FOURTH = 'there is no fourth';
+// These labels name the same workflow as plain.html's #assembly. The closing
+// marks describe individual criteria, distinct from the overall eligibility result.
+const PARTS = ['protocol', 'rule file', 'evaluation', 'result'];
+const OUTPUTS = ['report', 'workbench'];
+const BOARD_CAPTION = 'One evaluation, shared outputs';
+const MARK_WORDS = ['pass', 'fail', 'unknown'];
+const OUTCOME_CAPTION = 'Criterion outcomes';
 
 // ── beats ─────────────────────────────────────────────────────────────────
 const B_NODE = 0.16;        // first node lands here...
@@ -67,7 +65,7 @@ const B_RECEDE = [0.82, 0.94];
 // screens are still there at p 0.88. Overlapping them for six hundredths of a
 // scroll puts three seed-sized marks on top of the diagram — so in portrait the
 // marks wait for the drawing to be small and gone upward first. The words and
-// "there is no fourth" shift with them by the same amount, and both orientations
+// outcome caption shift with them by the same amount, and both orientations
 // still land fully composed at p = 1.000.
 const B_MARKS = { L: [0.86, 0.97], P: [0.895, 0.975] };
 const B_WORDS = { L: [0.91, 0.99], P: [0.925, 0.99] };
@@ -142,7 +140,7 @@ function landscapeLayout() {
     marksSpread: 0.95,
     // Landscape has no docked card eating the bottom of the frame — the panel
     // sits on a side third instead — so the original spacing (words a clean
-    // 0.03 of NDC below the squares, "there is no fourth" further below that
+    // 0.03 of NDC below the squares, the outcome caption further below that
     // again) is untouched here. Portrait's own numbers are in portraitLayout().
     markWordsY: -0.44,
     fourthY: -0.86,
@@ -183,29 +181,18 @@ function portraitLayout() {
     // clearance on a 390x844 phone. Landscape does not need it and does not get
     // it: its delta is unchanged, so that frame is bit-identical.
     recede: [0, 2.2, -5.4],
-    // Same rule as landscape, against the portrait p = 1 pose: camera local
-    // (0, 5.2, 1.4), direction (0, -0.512, -0.858), 4.6u out.
-    marksPos: [0, 2.845, -2.547],
+    // Move upward in the final camera's view while retaining its depth plane.
+    marksPos: [0, 3.96, -3.21],
     marksTilt: -0.538,
     // A 31°-wide frame is 2.55u across at that distance. The marks are drawn
     // full size and pulled CLOSER together rather than shrunk — three legible
     // marks beat three correct-looking small ones.
     marksScale: 0.88,
     marksSpread: 0.78,
-    // The docked card's readable top sits at screen y 0.54 (styles.css's 46svh
-    // squeeze). At landscape's numbers the words and "there is no fourth" both
-    // land fully under it — measured off the real p = 1 rig at 390x844: squares
-    // [0.460, 0.540], words [0.560, 0.580], fourth [0.626, 0.648] — and this is
-    // the one frame the piece holds forever once a reader reaches the bottom,
-    // so it was hiding the actual words. -0.15 clears the words fully. The
-    // squares themselves already run flush to 0.54 (bottom AT 0.540), so there
-    // is no headroom left below them for a third stacked line: -0.30 sits
-    // "there is no fourth" immediately under the words without overlapping
-    // them, but it still runs mostly under the card — an accepted residual for
-    // the same reason 06-chasm's near lip is: the squares' own footprint is the
-    // floor, not the shot.
-    markWordsY: -0.15,
-    fourthY: -0.30,
+    // Lift the entire group into the visible scene above the dock. Labels sit
+    // below the marks on white space, including the final outcome caption.
+    markWordsY: -0.44,
+    fourthY: -0.86,
   };
 }
 
@@ -385,7 +372,7 @@ export default {
     board.add(boardCaption);
 
     // ── the parts, arriving ───────────────────────────────────────────────
-    // "pull back and the parts are small, and you have met every one of them."
+    // Small components assemble along the evaluation path.
     // One InstancedMesh, one draw call, sized by the quality tier.
     const chipCount = Math.max(3, ctx.quality.count(CHIP_N));
     const chips = createSwarm({
@@ -411,7 +398,7 @@ export default {
     //                phone makes that half a CSS pixel) with white showing
     //                through, so it reads lighter and emptier than its two
     //                siblings instead of equal to them.
-    //   ▨ don't know hatch body plus the same border, so the diagonal stripes
+    //   ▨ unknown    hatch body plus the same border, so the diagonal stripes
     //                are CUT by a square edge instead of running off it. Without
     //                it the stripe ends fray and the mark has no silhouette.
     //
@@ -437,7 +424,7 @@ export default {
       return m;
     });
 
-    const fourth = caption(NO_FOURTH, 0.14, '#858D95', 64);
+    const fourth = caption(OUTCOME_CAPTION, 0.14, '#858D95', 64);
     fourth.position.set(0, 0, 0.01);
     marks.add(fourth);
 
